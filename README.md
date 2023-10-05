@@ -64,5 +64,19 @@ Here are some general information about this artifact:
 - No additional command or input is required. Simply scolling down the opened script to the end and all proofs should be automatically checked. 
 - There should be no error.
 ## Additional artifact description
+- File structure:
+```
+.
+├── CCPO.thy
+├── Denotational.thy
+├── LambdaCalc.thy
+├── MonoDenotational.thy
+├── Operational.thy
+├── README.md
+├── SemanticsEquivalence.thy
+├── Wp.thy
+├── WpExamples.thy
+└── WpSoundness.thy
+``````
 - All important theorems are highlighted in the list of claims.
 - Using a machine with <=8 GB memory to run these proofs is not recommanded since it will be very slow.
