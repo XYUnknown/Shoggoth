@@ -79,4 +79,4 @@ Here are some general information about this artifact:
 └── WpSoundness.thy
 ``````
 - All important theorems are highlighted in the list of claims.
-- Using a machine with <=8 GB memory to run these proofs is not recommanded since it will be very slow.
+- Using a machine with <=8 GB memory to run these proofs is not recommended since it will be very slow.
