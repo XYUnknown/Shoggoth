@@ -45,7 +45,7 @@ Here are some general information about this artifact:
 	- theorem 4.1 (soundness theorem for weakest must succeed precondition) and theorem 4.2 (soundness theorem for weakest may error precondition) correspond to `theorem wp_wp_err_soundness` (l1846).
 - `WpExamples.thy` contains examples of using the weakest precondition calculus for reasoning the execution of strategies in section 5.1 and 5.2:
 	- in section 5.1, the example strategy `repeat(SIKP)` being a bad strategy is proven by `theorem repeat_skip_div_tot` (l32)
-	- in section 5.1, the example startegy `SKIP >< repeat(SIKP)` being a bad stategy is proven by `theorem choice_has_div_will_div` (l38)
+	- in section 5.1, the example startegy `SKIP <+> repeat(SIKP)` being a bad stategy is proven by `theorem choice_has_div_will_div` (l38)
 	- in section 5.1, the example strategy `SKIP <+ repeat(SIKP)` being a good strategy is proven by `theorem lchoice_has_div_might_not_div` (l45)
 	- in section 5.2, the example strategy `mult_com ; add_com` being a bad strategy is proven by `theorem mult_comm_plus_comm_bad` (l81)
 	- in section 5.2, the example strategy `add_com ; add_id` being a good strategy is proven by `theorem plus_comm_seq_plus_zero_good` (l92)
