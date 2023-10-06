@@ -1,9 +1,9 @@
 # Documentation for Artifact Evaluation
-We provide all mechanised proofs developed in Isabelle/HOL. In total nine files (with .thy extension) containing our proof scripts are provided. This document explains the correspondence between the Isabelle/HOL mechanisation and our paper, as well as how to setup and run these proofs.
+This is the artifact for the POPL 2024 submission: Shoggoth - A Formal Foundation for Strategic Rewriting. We provide all mechanised proofs developed in Isabelle/HOL. In total nine files (with .thy extension) containing our proof scripts are provided. This document explains the correspondence between the Isabelle/HOL mechanisation and our paper, as well as how to setup and run these proofs.
 
 Here are some general information about this artifact:
 - Isabelle/HOL version: 2022. This artifact is also compatible with Isabelle/HOL 2023. 
-- There is no incomplete proof in this artifect.
+- There is no incomplete proof in this artifact.
 - Running Isabelle/HOL proofs consumes a lot of memory. The author's machine is a MacBook pro with 32GB memory and 2.4 GHz 8-Core Intel Core i9 processor. When running these proofs on a MacBook pro with 8GB memory, some of them can take >1 min to finish. 
 
 ## List of claims
