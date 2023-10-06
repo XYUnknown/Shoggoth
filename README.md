@@ -51,7 +51,7 @@ Here are some general information about this artifact:
 	- in section 5.2, the example strategy `add_com ; add_id` being a good strategy is proven by `theorem plus_comm_seq_plus_zero_good` (l92)
 - `LambdaCalc.thy` contains the normalisation example for lambda calculus in section 5.3.
 	- the strategy `normalise(s)` corresponds to the `definition normalise` (l352)
-	- we show Omega cannot be normalised into a beta-eta normal form by `theorem omega_bad"` (l357)
+	- we show Omega cannot be normalised into a beta-eta normal form by `theorem omega_bad` (l357)
 	- the last example in section 5.3 demonstrating that a long expressions can be normalised into a beta-eta normal form is shown by `theorem long_exp_good` (l452)
 
 ## Download, installation, and sanity-testing
