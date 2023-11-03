@@ -8,13 +8,14 @@ Here are some general information about this artifact:
 
 ## List of claims
 - `CCPO.thy` contains:
-	- the syntax of System S introduced in section 2;
-		- the syntax shown in figure 1 corresponds to the `datatype strategy` (l258)
 	- the chain-complete partial order, powerdomain, domain, Egli-Milner ordering and porcupine ordering for defining the denotational semantics in section 3.1 and 3.2.
 		- the Egli-Milner ordering in section 3.1 corresponds to the `definition pd_less_eq` (l85)
 		- the Porcupine ordering in section 3.1 corresponds to the `definition porcupine_less_eq_paper` (l71)
 		- the equivalence of Egli-Milner ordering and Porcupine ordering is shown in `lemma porcupine_eglimilner` (l91)
 		- the Plotkin powerdomain introducted in section 3.2 is instantiated as a chain complete partial order in `instantiation powerdomain :: ccpo` (l218)
+- `Syntax.thy` contains:
+	- the syntax of System S introduced in section 2;
+		- the syntax shown in figure 1 corresponds to the `datatype strategy` (l258)
 - `Denotational.thy` contains the denotational semantics of System S in section 3.2:
 	- semantic combinators shown in figure 2 and semantic traversals shown in figure 3 have correponding definitions in Isabelle/HOL from l7 to l41;
 	- the denotational semantics of System S shown in figure 4 corresponds to `fun exec` (l53).
