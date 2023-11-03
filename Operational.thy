@@ -1,7 +1,7 @@
 (* The big-step operational semantics extended with divergence of System S *)
 
 theory Operational
-  imports CCPO
+  imports CCPO Syntax
 begin
 
 fun substitute :: "strategy \<Rightarrow> var \<Rightarrow> strategy \<Rightarrow> strategy" ("_\<lbrace>_\<mapsto>_\<rbrace>" [59, 60, 61] 60)
