@@ -78,13 +78,13 @@ fun plus_zero :: "exp \<Rightarrow> exp option"
 
 (* Example in section 5.2 *)
 (* A not well composed strategy is a bad strategy *)
-theorem mult_comm_plus_comm_bad: "wp (\<llangle>plus_comm\<rrangle> ;; \<llangle>mult_comm\<rrangle>) \<epsilon> UNIV (\<lambda> x. undefined) = {}"
+theorem mult_comm_plus_comm_bad: "wp (\<llangle>mult_comm\<rrangle> ;; \<llangle>plus_comm\<rrangle>) \<epsilon> UNIV (\<lambda> x. undefined) = {}"
   apply (simp split: option.split)
   apply (rule allI)
   apply (rule conjI)
    apply fastforce
   apply clarsimp
-  apply (erule plus_comm.elims; simp)
+  apply (erule mult_comm.elims; simp)
   by fastforce
 
 (* Example in section 5.2 *)
