@@ -69,6 +69,7 @@ Here are some general information about this artifact:
 ```
 .
 ├── CCPO.thy
+├── Syntax.thy
 ├── Denotational.thy
 ├── LambdaCalc.thy
 ├── MonoDenotational.thy
