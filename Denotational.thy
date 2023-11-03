@@ -1,7 +1,7 @@
 (* The denotational semantics of System S*)
 
 theory Denotational
-  imports CCPO
+  imports CCPO Syntax
 begin
 
 definition seq_s :: "D \<Rightarrow> D \<Rightarrow> D" ("_;;s/ _" [60, 61] 60)
