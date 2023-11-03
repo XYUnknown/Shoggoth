@@ -1,4 +1,4 @@
-(* The Chain-Complete CPO for defining the denotational semantics of System S *)
+(* The Chain-Complete CPO for defining the denotational semantics of extended  System S *)
 
 theory CCPO
   imports Main HOL.Complete_Partial_Order
@@ -251,21 +251,5 @@ instance "fun" :: (type, ccpo) ccpo
 
 abbreviation "PdToSet == Rep_powerdomain"
 abbreviation "SetToPd == Abs_powerdomain"
-
-(* The syntax of System S *)
-type_synonym var = "int"
-type_synonym env = "var \<Rightarrow> D"
-datatype
-  strategy = SKIP
-  | ABORT
-  | FixVar var              ("\<lparr>_\<rparr>")  
-  | Atomic "exp \<Rightarrow> exp option" ("\<llangle>_\<rrangle>")
-  | Seq strategy strategy            ("_;;/ _"  [60, 61] 60)
-  | Left_Choice strategy strategy     ("_<+/ _"  [60, 61] 60)
-  | Choice strategy strategy          ("_></ _"  [60, 61] 60) (* non-deterministic choice *)
-  | One strategy                 ("one")
-  | CSome strategy                ("some") (* I have to do this because isabelle option type is being ridiculous*)
-  | All strategy                 ("all")
-  | Mu var strategy              ("mu_._"   [60, 61] 60)
 
 end
