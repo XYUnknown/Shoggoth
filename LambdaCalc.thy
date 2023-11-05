@@ -90,7 +90,6 @@ lemma wf_downshift:
   qed (auto split: if_split_asm option.split_asm intro!: wf_lambda.intros)
 
 
-
 (* These functions could be used as atomic strategies *)
 
 fun beta :: "exp \<Rightarrow> exp option"  where

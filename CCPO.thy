@@ -1,4 +1,4 @@
-(* The Chain-Complete CPO for defining the denotational semantics of extended  System S *)
+(* The Chain-Complete CPO for defining the denotational semantics of extended System S *)
 
 theory CCPO
   imports Main HOL.Complete_Partial_Order
