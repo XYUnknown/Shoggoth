@@ -40,16 +40,6 @@ definition all_s :: "D \<Rightarrow> D"
                    \<union> {d | l e1 e2 d. (e = Node l e1 e2 \<and> d = Div \<and> Div \<in> PdToSet (s e1) \<union> PdToSet (s e2)) }
                    \<union> {err | e1 e2 l err. err = Err \<and>  (e = Node l e1 e2 \<and> Err \<in> PdToSet (s e1) \<union> PdToSet (s e2))})"
 
-
-definition Try :: "strategy \<Rightarrow> strategy" ("try") where
-  "Try s = s <+ SKIP"
-
-definition Repeat :: "strategy \<Rightarrow> strategy" ("repeat") where
-  "Repeat s = mu 0 . try (s ;; \<lparr>0\<rparr>)"
-
-definition TopDown :: "strategy \<Rightarrow> strategy" ("topDown") where
-  "TopDown s = mu 0 . (s <+ one \<lparr>0\<rparr>)"
-
 fun exec ::  "strategy \<Rightarrow> env \<Rightarrow> D" where
   "exec SKIP \<xi> = (\<lambda> e. SetToPd {E e})" 
 | "exec ABORT \<xi> =  (\<lambda> e. SetToPd {Err})"  

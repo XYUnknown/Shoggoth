@@ -14,7 +14,7 @@ datatype
   | Left_Choice strategy strategy     ("_<+/ _"  [60, 61] 60)
   | Choice strategy strategy          ("_></ _"  [60, 61] 60) (* non-deterministic choice *)
   | One strategy                 ("one")
-  | CSome strategy                ("some") (* I have to do this because isabelle option type is being ridiculous*)
+  | CSome strategy                ("some") (* avoid conflict with isabelle option type *)
   | All strategy                 ("all")
   | Mu var strategy              ("mu_._"   [60, 61] 60)
 
