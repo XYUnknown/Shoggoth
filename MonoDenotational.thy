@@ -75,11 +75,13 @@ lemma iterates_snd2:
   apply (induct rule: iterates.induct)
    apply clarsimp
    apply (metis (mono_tags, lifting) case_prod_conv snd_conv image_iff iterates.step)
+  apply (rename_tac M)
   apply (subgoal_tac "\<exists>M'. M' \<subseteq> ccpo_class.iterates  (\<lambda>(x, y). (f x, g y)) 
                          \<and> Complete_Partial_Order.chain (\<le>) M' \<and> snd ` M' = M")
    apply (clarsimp)
    apply (frule iterates.Sup [where f = "(\<lambda>(x, y). (f x, g y))"], force)
    apply (force simp: prod_Sup)
+  apply (rename_tac M)
   apply (rule_tac x = "{ ((SOME x. (x, y) \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y)), y)) | y. y \<in> M } " in exI)
   apply (intro conjI)
     apply clarsimp
@@ -257,12 +259,15 @@ theorem one_s_mono [simp]:
 (* PH: it's the same 4 lines all over again and again; can we simplify further? *)
   using assms apply (simp add: le_fun_def one_s_def porcupine_eglimilner)
   apply (subst Abs_powerdomain_inverse, clarsimp)
+   apply (rename_tac x)
    apply (case_tac "x", clarsimp)
    apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
   apply (subst Abs_powerdomain_inverse,clarsimp)
+   apply (rename_tac x)
    apply (case_tac "x", clarsimp)
    apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
   apply (subst Abs_powerdomain_inverse, clarsimp)
+   apply (rename_tac x)
    apply (case_tac "x", clarsimp)
    apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
   apply clarsimp
@@ -275,9 +280,11 @@ theorem one_s_mono [simp]:
    apply force  
   apply clarsimp
   apply (rule powerdomain.Abs_powerdomain_inject[THEN iffD2], clarsimp)
-  apply (case_tac "x", clarsimp)
+    apply (rename_tac x)
+    apply (case_tac "x", clarsimp)
     apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
    apply clarsimp
+   apply (rename_tac x)
    apply (case_tac "x", clarsimp)
    apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
   apply (rule set_eqI)
@@ -288,14 +295,17 @@ theorem some_s_mono [simp]:
   shows "some_s a \<le> some_s b"  
   using assms apply (simp add: le_fun_def some_s_def porcupine_eglimilner)
   apply (subst Abs_powerdomain_inverse, clarsimp)
+   apply (rename_tac x)
    apply (case_tac "x", simp)
    apply clarsimp
    apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
   apply (subst Abs_powerdomain_inverse, clarsimp)
+   apply (rename_tac x)
    apply (case_tac "x", simp)
    apply clarsimp
    apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
   apply (subst Abs_powerdomain_inverse)
+   apply (rename_tac x)
    apply (case_tac "x", simp)
    apply clarsimp
    apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
@@ -303,6 +313,7 @@ theorem some_s_mono [simp]:
   apply (rule conjI)
    apply fastforce
   apply clarsimp
+ apply (rename_tac x)
   apply (rule powerdomain.Abs_powerdomain_inject[THEN iffD2])
     apply (case_tac "x", simp)
     apply clarsimp
@@ -318,14 +329,17 @@ theorem all_s_mono [simp]:
   shows "all_s a \<le> all_s b"
   using assms apply (simp add: le_fun_def all_s_def porcupine_eglimilner)
   apply (subst Abs_powerdomain_inverse, clarsimp)
+   apply (rename_tac x)
    apply (case_tac "x", simp)
    apply clarsimp
    apply (metis (mono_tags, lifting) Rep_powerdomain equals0I exp_err_div.exhaust mem_Collect_eq)
   apply (subst Abs_powerdomain_inverse, clarsimp)
+   apply (rename_tac x)
    apply (case_tac "x", simp)
    apply clarsimp
    apply (metis (mono_tags, lifting) Rep_powerdomain equals0I exp_err_div.exhaust mem_Collect_eq)
   apply (subst Abs_powerdomain_inverse, clarsimp)
+   apply (rename_tac x)
    apply (case_tac "x", simp)
    apply clarsimp
    apply (metis (mono_tags, lifting) Rep_powerdomain equals0I exp_err_div.exhaust mem_Collect_eq)
@@ -333,6 +347,7 @@ theorem all_s_mono [simp]:
   apply (rule conjI)
    apply fastforce
   apply clarsimp
+  apply (rename_tac x)
   apply (rule powerdomain.Abs_powerdomain_inject[THEN iffD2], clarsimp)
     apply (case_tac "x", simp)
     apply clarsimp

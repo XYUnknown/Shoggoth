@@ -347,8 +347,10 @@ lemma approximate_seq:
   using assms
   unfolding approximate_def
   apply clarsimp
+  apply (rename_tac e e')
   apply (simp add: PdToSet_seq)
   apply (elim disjE conjE exE)
+   apply (rename_tac x xa)
    apply (case_tac e')
      apply simp
      apply (rule_tac ?e2.0=xa in big_step.SeqEr2)
@@ -370,6 +372,7 @@ lemma approximate_lc:
   using assms
   unfolding approximate_def
   apply clarsimp
+  apply (rename_tac e e')
   apply (simp add: PdToSet_lc)
   apply (elim disjE conjE exE)
    apply (case_tac e')
@@ -396,6 +399,7 @@ lemma approximate_choice:
   using assms
   unfolding approximate_def
   apply clarsimp
+  apply (rename_tac e e')
   apply (simp add: PdToSet_choice)
   apply (elim disjE conjE exE)
     apply (case_tac e')
@@ -600,6 +604,7 @@ next
     unfolding approximate_def
     apply (simp split: option.split)
     apply clarsimp
+    apply (rename_tac e)
     apply (rule conjI)
      apply clarsimp
     using big_step.Atomic[where atomic=atomic]
@@ -688,6 +693,7 @@ next
      apply (simp add: fun_upd_def)
     apply (simp add: approximate_def)
     apply clarsimp
+    apply (rename_tac e e')
     apply (case_tac e' ; simp)
      apply (rule big_step.FixedPointEr)
      apply (subst map_strategy_subst[simplified fun_upd_def])
@@ -708,7 +714,8 @@ next
     apply (rotate_tac 5)
     apply (drule_tac x="e" in spec)
     apply (rotate_tac 7)
-    apply (drule_tac x="E x2" in spec)
+    apply (rename_tac y)
+    apply (drule_tac x="E y" in spec)
     apply (drule mp)
      apply (simp add: fun_upd_def)
     apply (subgoal_tac "(\<lambda>a. if a = x1 then mu x1. map_strategy (\<theta>(x1 := \<lparr>x1\<rparr>)) s else \<theta> a) = (\<lambda>x. if x = x1 then mu x1. map_strategy (\<lambda>a. if a = x1 then \<lparr>x1\<rparr> else \<theta> a) s else \<theta> x)")
@@ -765,8 +772,9 @@ lemma simul_substitution:
   assumes "\<forall>y \<in> fv s1. fv (\<theta> y) = {} \<or> fv (\<theta> y) = {y}"
   shows "exec (map_strategy \<theta> s1) \<xi> = exec s1 (semantics_subst \<theta> \<xi>)"
   using assms apply (induct s1 arbitrary: \<theta> \<xi>; simp)
-  apply (subgoal_tac "\<And> x. exec (map_strategy (\<theta>'(x1 := \<lparr>x1\<rparr>)) s1a) (\<xi>(x1 := x)) 
-                     =  exec s1a ((semantics_subst \<theta>' \<xi>)(x1 := x))")
+  apply (rename_tac x1 s1' \<theta>' \<xi>)
+  apply (subgoal_tac "\<And> x. exec (map_strategy (\<theta>'(x1 := \<lparr>x1\<rparr>)) s1') (\<xi>(x1 := x)) 
+                     =  exec s1' ((semantics_subst \<theta>' \<xi>)(x1 := x))")
    apply simp
   apply (drule_tac x = "(\<theta>'(x1 := \<lparr>x1\<rparr>))" in meta_spec)
   apply (drule_tac x = "(\<xi>(x1 := x))" in meta_spec)
@@ -807,6 +815,7 @@ lemma map_strategy_decomp:
   apply (subst double_substitution)
     apply auto[1]
    apply clarsimp
+   apply (rename_tac y x)
    apply (subgoal_tac "fv (map_strategy (\<theta>(x1 := \<lparr> x1 \<rparr>)) t) \<subseteq> fv t")
     apply (drule_tac x = y in bspec)
      apply simp
@@ -858,6 +867,7 @@ next
       apply fast
      apply (drule sym)
      apply (simp add: simul_substitution)
+     apply (rename_tac e s1' e1)
      apply (subgoal_tac "Div \<in> PdToSet (exec s1 \<xi> e) \<or> E e1 \<in> PdToSet (exec s1 \<xi> e)")
       apply (erule disjE)
        apply (simp add: PdToSet_seq)
@@ -897,6 +907,7 @@ next
       apply (drule meta_mp)
        apply auto[1]
       apply (clarsimp)
+      apply (rename_tac e)
       apply (drule_tac x = e in spec)
       apply simp
       apply (simp add: PdToSet_lc)
@@ -906,6 +917,7 @@ next
      apply (drule meta_mp)
       apply blast
      apply (erule conjE, simp)
+     apply (rename_tac e s1')
      apply (drule_tac x = e in spec)
      apply (erule conjE)
      apply (case_tac "Div \<in> PdToSet (exec s1 \<xi> e)")
@@ -1047,6 +1059,7 @@ next
      apply (simp add: bottom_element)
      apply (rule map_strategy_closed)
      apply simp
+    apply (rename_tac x)
     apply (drule_tac x = "\<theta>(x1 := map_strategy \<theta> (mu x1. t))" in meta_spec)
     apply (drule_tac x = "\<xi>(x1 := x)" in meta_spec)
     apply (drule meta_mp)
@@ -1058,6 +1071,7 @@ next
      apply (simp add: fun_upd_def)
     apply (simp add: rel_def)
     apply clarsimp
+    apply (rename_tac e)
     apply (rule conjI)
      apply clarsimp
      apply (drule_tac x = e in spec)
@@ -1089,6 +1103,7 @@ next
         apply clarsimp
         apply (subst le_fun_def)
         apply (rule allI)
+        apply (rename_tac xa)
         apply (drule_tac x = xa in spec)
         apply (simp add: fun_upd_def)
        apply clarsimp
@@ -1096,6 +1111,7 @@ next
       apply (clarsimp)
       apply (rule conjI)
        apply clarsimp
+       apply (rename_tac xa)
        apply (erule_tac x = xa in ballE)
         apply (erule conjE)
         apply (simp add: le_fun_def)
@@ -1174,15 +1190,19 @@ theorem div_adequacy:
    apply (simp split: prod.split)
   using assms apply simp
   apply (simp split: prod.split)
+  apply (rename_tac x)
   apply (case_tac x)
   apply simp
+  apply (rename_tac a b)
   apply (erule conjE)
   apply (case_tac a)
             apply simp
            apply simp
           apply simp
          apply simp
-         apply (case_tac "x4 b"; simp)
+         apply (rename_tac x1)
+         apply (case_tac "x1 b"; simp)
+        apply (rename_tac x2 x3)
         apply simp
         apply (simp add: PdToSet_seq)
         apply (elim exE conjE disjE)
@@ -1190,6 +1210,7 @@ theorem div_adequacy:
          apply (rule disjI2)
          apply simp
          apply (frule computational_adequacy, simp, simp)
+         apply (rename_tac xa xb)
          apply (rule_tac x = xb in exI)
          apply simp
         apply simp
@@ -1211,7 +1232,8 @@ theorem div_adequacy:
    apply (simp add: PdToSet_all)
    apply blast
   apply simp
-  apply (erule_tac f = "\<lambda>x. exec x112 ((\<lambda>x. undefined)(x111 := x))" and P = "\<lambda>m. Div \<in> PdToSet (m b)" in fixp_unfoldE)
+  apply (rename_tac x1 x2)
+  apply (erule_tac f = "\<lambda>x. exec x2 ((\<lambda>x. undefined)(x1 := x))" and P = "\<lambda>m. Div \<in> PdToSet (m b)" in fixp_unfoldE)
    apply (rule disjI1)
    apply (subst substitution)
     apply simp
@@ -1228,6 +1250,7 @@ theorem sem_equivalence:
   using assms 
   apply -
   apply (rule set_eqI)
+  apply (rename_tac x)
   apply (rule iffI)
    apply simp
    apply (case_tac "x = Div")

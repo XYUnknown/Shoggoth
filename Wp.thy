@@ -195,6 +195,7 @@ theorem mu_wp_mono[rule_format]:
       apply (rule ccpo.admissibleI)
       apply (simp add: prod_Sup ap_def prod_less_eq)
       apply (rule allI)
+      apply (rename_tac loc)
       apply (frule_tac P = loc in Sup_mono_two)
         apply (rule chain_fst_exist, simp)
        apply (rule chain_snd_exist, simp)

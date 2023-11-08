@@ -219,12 +219,14 @@ instantiation powerdomain :: ccpo
 begin
 instance
   apply intro_classes
+  apply (rename_tac A x1)
    apply (case_tac "\<exists>x\<in>A. Div \<notin> Rep_powerdomain x",clarsimp)
     (* If Div is not in one of the PD elements, that element is the LUB *) 
     apply (simp add: no_div_Sup_ub no_div_collapses)
     (* If Div is in all of the PD elements, the LUB is the union *)
    apply (auto simp: porcupine_eglimilner)[1]
   apply (metis (mono_tags, lifting) Abs_powerdomain_inverse UN_I div_Sup_ub empty_not_insert mem_Collect_eq mk_disjoint_insert)
+  apply (rename_tac A z)
   apply (case_tac "\<exists>x\<in>A. Div \<notin> Rep_powerdomain x")
    apply (clarsimp simp: no_div_Sup_ub)
   apply simp

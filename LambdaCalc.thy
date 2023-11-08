@@ -175,9 +175,11 @@ next
         apply simp
        apply (rule Mu(2))
        apply clarsimp
+       apply (rename_tac t)
        apply (case_tac t; simp)
       apply (rule Mu(1))
       apply clarsimp
+      apply (rename_tac t)
       by (case_tac t; simp)
   next
     case 2
@@ -190,9 +192,11 @@ next
         apply simp
        apply (rule Mu(2))
        apply clarsimp
+       apply (rename_tac t)
        apply (case_tac t; simp)
       apply (rule Mu(1))
       apply clarsimp
+      apply (rename_tac t)
       by (case_tac t; simp)
   }
 qed auto
@@ -218,17 +222,18 @@ lemma wp_wp_err_repeat:
        apply simp
        apply (intro mono_intros)
       apply auto[1]
-      apply (simp add: prod_Sup Sup_pt)
-       apply (subst Abs_pt_inverse)
-        apply simp
-        apply (intro mono_intros)
+     apply (simp add: prod_Sup Sup_pt)
+     apply (subst Abs_pt_inverse)
       apply simp
-        apply (intro mono_intros)
-        apply (intro mono_intros)
-   apply simp
-   apply (subst Abs_pt_inverse)
-    apply simp
+      apply (intro mono_intros)
+     apply simp
     apply (intro mono_intros)
+   apply (intro mono_intros)
+  apply simp
+  apply (rename_tac x)
+  apply (subst Abs_pt_inverse)
+   apply simp
+   apply (intro mono_intros)
   apply (subgoal_tac " wp s loc (Rep_pt (fst x loc) P) (env((0, Tot) := fst x, (0, Par) := snd x))
                     =  wp s loc (Rep_pt (fst x loc) P) env")
   apply (subgoal_tac " wp_err s loc (Rep_pt (snd x loc) P) (env((0, Tot) := fst x, (0, Par) := snd x))
@@ -296,6 +301,7 @@ lemma wp_wp_err_topDown:
      apply simp
     apply (intro mono_intros)
    apply (intro mono_intros)
+  apply (rename_tac x y)
   apply (subgoal_tac "\<And> loc P. wp s loc P (env((0, Tot) := fst x, (0, Par) := snd x)) = wp s loc P env")
   apply (subgoal_tac "\<And> loc P. wp_err s loc P (env((0, Tot) := fst x, (0, Par) := snd x)) = wp_err s loc P env")
   apply (simp add: fun_upd_def)
@@ -481,14 +487,26 @@ theorem long_exp_good : "App (Abs (Abs (Abs (App (Idd 1) (App (App (Idd 2) (Idd 
   apply (rule conjI)
    apply (rule term_normalised)
   apply (clarsimp)
+  apply (rename_tac l)
   apply (case_tac l; simp)
+  apply (rename_tac x21 x22)
   apply (case_tac x21; case_tac x22; simp)
+   apply (rename_tac x21a x22a)
    apply (case_tac x21a;simp)
+  apply (rename_tac x21a x22a)
   apply (case_tac x21a; simp; case_tac x22a; simp)
+   apply (rename_tac x21b x22b)
    apply (case_tac x21b;simp)
-  apply (case_tac x21b; simp; case_tac x22b; simp; case_tac x21c; simp; case_tac x22c; simp)
+  apply (rename_tac x21b x22b)
+  apply (case_tac x21b; simp; case_tac x22b; simp)
+   apply (rename_tac x21c x22c)
+   apply (case_tac x21c; simp)
+  apply (rename_tac x21c x22c)
+  apply (case_tac x21c; simp; case_tac x22c; simp)
+   apply (rename_tac x21d x22d)
    apply (case_tac x21d;simp)
-   apply (case_tac x21d;simp)
+  apply (rename_tac x21d x22d)
+  apply (case_tac x21d;simp)
   done
 end
 

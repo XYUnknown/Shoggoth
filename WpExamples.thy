@@ -94,12 +94,14 @@ theorem plus_comm_seq_plus_zero_good: "wp (\<llangle>plus_comm\<rrangle> ;; \<ll
   apply simp
   apply (rule set_eqI)
   apply simp
+  apply (rename_tac x)
   apply (case_tac "plus_comm x")
    apply auto[1]
   apply (simp split: option.split)
   apply (rule iffI)
    apply (erule imageE)
    apply simp
+   apply (rename_tac a xa)
    apply (case_tac "plus_zero xa")
     apply blast
    apply (erule plus_zero.elims; simp)
@@ -111,6 +113,7 @@ theorem plus_zero_seq_plus_comm_good: "wp (\<llangle>plus_zero\<rrangle> ;; \<ll
   apply simp
   apply (rule set_eqI)
   apply simp
+  apply (rename_tac x)
   apply (case_tac "plus_zero x")
    apply simp
    apply auto[1]
@@ -118,6 +121,7 @@ theorem plus_zero_seq_plus_comm_good: "wp (\<llangle>plus_zero\<rrangle> ;; \<ll
   apply (rule iffI)
    apply (erule imageE)
    apply simp
+   apply (rename_tac a xa)
    apply (case_tac "plus_comm xa")
     apply auto[1]
    apply (erule plus_zero.elims; simp)
@@ -138,6 +142,7 @@ theorem choice_mult_comm_plus_comm_good : "wp ((\<llangle>mult_comm\<rrangle> ><
   apply (simp split: option.split)
   apply (rule set_eqI)
   apply simp
+  apply (rename_tac x)
   apply (case_tac "mult_comm x")
    apply simp
    apply (case_tac "plus_comm x")
@@ -158,6 +163,7 @@ theorem lchoice_mult_comm_plus_comm_good : "wp ((\<llangle>mult_comm\<rrangle> <
   apply (simp split: option.split)
   apply (rule set_eqI)
   apply simp
+  apply (rename_tac x)
   apply (case_tac "mult_comm x")
    apply simp
    apply (case_tac "plus_comm x")
@@ -175,17 +181,20 @@ theorem choice_mult_comm_id_bad : "wp ((\<llangle>mult_comm\<rrangle> >< \<llang
   apply (rule conjI)
    apply (rule set_eqI)
    apply simp
+   apply (rename_tac x)
    apply (case_tac "mult_comm x")
     apply clarsimp
    apply clarsimp
    apply (case_tac "mult_zero x")
     apply clarsimp
+    apply (rename_tac xa)
     apply (case_tac "mult_comm xa")
      apply force
     apply (erule mult_comm.elims; simp)
     apply (erule imageE)
     apply clarsimp
    apply clarsimp
+   apply (rename_tac xa xb)
    apply (case_tac "mult_comm xa")
     apply force
    apply (erule mult_comm.elims; simp)
@@ -193,11 +202,13 @@ theorem choice_mult_comm_id_bad : "wp ((\<llangle>mult_comm\<rrangle> >< \<llang
    apply clarsimp
   apply (rule set_eqI)
   apply simp
+  apply (rename_tac x)
   apply (case_tac "mult_comm x")
    apply clarsimp
    apply (case_tac " mult_zero x")
     apply clarsimp
    apply clarsimp
+   apply (rename_tac xa)
    apply (case_tac "mult_comm xa")
     apply force
    apply (erule mult_comm.elims; simp)
@@ -205,6 +216,7 @@ theorem choice_mult_comm_id_bad : "wp ((\<llangle>mult_comm\<rrangle> >< \<llang
   apply (case_tac " mult_zero x")
    apply clarsimp
   apply clarsimp
+  apply (rename_tac xa xb)
   apply (case_tac "mult_comm xa")
    apply force
   apply (erule mult_comm.elims; simp)
@@ -216,6 +228,7 @@ theorem lchoice_mult_comm_id_good : "wp ((\<llangle>mult_comm\<rrangle> <+ \<lla
   apply (simp split: option.split)
   apply (rule set_eqI)
   apply simp
+  apply (rename_tac x)
   apply (case_tac "mult_comm x")
    apply clarsimp
    apply (case_tac "mult_zero x")
@@ -224,6 +237,7 @@ theorem lchoice_mult_comm_id_good : "wp ((\<llangle>mult_comm\<rrangle> <+ \<lla
    apply clarsimp
    apply (erule mult_comm.elims; simp)
   apply clarsimp
+  apply (rename_tac a)
   apply (case_tac "mult_comm a")
    apply (erule mult_comm.elims; simp)
   apply (rule iffI)
@@ -243,6 +257,7 @@ theorem one_plus_zero : "wp (one \<llangle>plus_zero\<rrangle>) \<epsilon> UNIV 
   apply (simp split: option.split)
   apply (rule set_eqI)
   apply simp
+  apply (rename_tac x)
   apply (case_tac "plus_zero (lookup (pos.Left\<triangleleft>\<epsilon>) x)")
    apply clarsimp
    apply (case_tac "plus_zero (lookup (pos.Right\<triangleleft>\<epsilon>) x)")
@@ -260,5 +275,4 @@ theorem one_plus_zero : "wp (one \<llangle>plus_zero\<rrangle>) \<epsilon> UNIV 
   apply clarsimp
   apply (erule plus_zero.elims; simp)
   by auto
-
 end
