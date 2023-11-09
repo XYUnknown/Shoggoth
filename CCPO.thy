@@ -69,7 +69,7 @@ end
 abbreviation fix_syn :: "(('a::ccpo) \<Rightarrow> 'a) \<Rightarrow> 'a"  (binder "\<mu> " 10)
   where "fix_syn (\<lambda>x. f x) \<equiv> Complete_Partial_Order.fixp (\<lambda> x. f x)"
 
-text \<open>The porcupine presented in paper\<close>
+text \<open>The porcupine ordering presented in paper\<close>
 (* The porcupine ordering on a flat domain *)
 definition porcupine_less_eq_paper :: "powerdomain \<Rightarrow> powerdomain \<Rightarrow> bool" where
  "porcupine_less_eq_paper a b \<longleftrightarrow> a = b 
@@ -83,7 +83,6 @@ definition porcupine_less_eq :: "powerdomain \<Rightarrow> powerdomain \<Rightar
 theorem porcupine_eq: "porcupine_less_eq_paper a b = porcupine_less_eq a b"
   using porcupine_less_eq_paper_def porcupine_less_eq_def by auto
 
-(* cite A Powerdomain Construction Gordon D. Plotkin *)
 subsection \<open>The powerdomain for defining our denotational semantics\<close>
 instantiation powerdomain :: ord
 begin
@@ -131,7 +130,7 @@ definition downclose :: "exp_err_div set \<Rightarrow> exp_err_div set" where
 instantiation powerdomain :: Sup
 begin
 text \<open>
-Basically: If any element of the chain has no Div, the upper bound is that element.
+Basically, if any element of the chain has no Div, the upper bound is that element.
 Otherwise, if all elements of the chain have Div, the upper bound is the union of all elements.
 
 The definitions from the literature define the same in terms of unions and intersections,
