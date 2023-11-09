@@ -1,0 +1,31 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{isabelle,isabellesym}
+
+% this should be the last package used
+\usepackage{pdfsetup}
+
+% urls in roman style, theory text in math-similar italics
+\urlstyle{rm}
+\isabellestyle{it}
+
+
+\begin{document}
+
+\title{Shoggoth}
+\author{Xueying Qin \and Liam O’Connor \and Rob van Glabbeek \and Peter H\"ofner \and Ohad Kammar \and Michel Steuwer}
+\maketitle
+
+\begin{abstract}
+  This is the mechanised formalism of the semantics, weakest precondition calculus, equivalence and soundness theorems as well as case studies in our POPL 2024 paper: Shoggoth - A Formal Foundation for Strategic Rewriting.
+\end{abstract}
+
+\tableofcontents
+
+% include generated text of all theories
+\input{session}
+
+\bibliographystyle{abbrv}
+\bibliography{root}
+
+\end{document}
