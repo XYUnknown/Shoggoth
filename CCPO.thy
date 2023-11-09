@@ -1,4 +1,6 @@
-(* The Chain-Complete CPO for defining the denotational semantics of extended System S *)
+section \<open>Chain Complete Partial Order\<close>
+
+text \<open>The Chain-Complete Partial Order for defining the denotational semantics of extended System S\<close>
 
 theory CCPO
   imports Main HOL.Complete_Partial_Order
@@ -67,6 +69,7 @@ end
 abbreviation fix_syn :: "(('a::ccpo) \<Rightarrow> 'a) \<Rightarrow> 'a"  (binder "\<mu> " 10)
   where "fix_syn (\<lambda>x. f x) \<equiv> Complete_Partial_Order.fixp (\<lambda> x. f x)"
 
+text \<open>The porcupine presented in paper\<close>
 (* The porcupine ordering on a flat domain *)
 definition porcupine_less_eq_paper :: "powerdomain \<Rightarrow> powerdomain \<Rightarrow> bool" where
  "porcupine_less_eq_paper a b \<longleftrightarrow> a = b 
@@ -80,8 +83,11 @@ definition porcupine_less_eq :: "powerdomain \<Rightarrow> powerdomain \<Rightar
 theorem porcupine_eq: "porcupine_less_eq_paper a b = porcupine_less_eq a b"
   using porcupine_less_eq_paper_def porcupine_less_eq_def by auto
 
+(* cite A Powerdomain Construction Gordon D. Plotkin *)
+subsection \<open>The powerdomain for defining our denotational semantics\<close>
 instantiation powerdomain :: ord
 begin
+text \<open>This is the Egli-Milner ordering cite\<open>"plotkin:powerdomain"\<close>\<close>
 definition pd_less_eq : "a \<le> b \<longleftrightarrow> (\<forall> x \<in> (Rep_powerdomain a) . \<exists> y \<in> (Rep_powerdomain b) . x \<le> y) 
                         \<and> (\<forall> y \<in> (Rep_powerdomain b) . \<exists> x \<in> (Rep_powerdomain a) . x \<le> y)" (* Egli-Milner ordering *)
 definition pd_less : "(a:: powerdomain) < b \<longleftrightarrow> a \<le> b \<and> a \<noteq> b "
@@ -124,14 +130,13 @@ definition downclose :: "exp_err_div set \<Rightarrow> exp_err_div set" where
 
 instantiation powerdomain :: Sup
 begin
-(* 
+text \<open>
 Basically: If any element of the chain has no Div, the upper bound is that element.
 Otherwise, if all elements of the chain have Div, the upper bound is the union of all elements.
 
 The definitions from the literature define the same in terms of unions and intersections,
 so we define it that way here. But below the definition I prove some theorems that 
-confirm the above intuition.
-*)
+confirm the above intuition. \<close>
 definition pd_Sup : "Sup (a :: powerdomain set) = 
   (if a = {} then Abs_powerdomain {Div} 
              else (Abs_powerdomain ((\<Union> (downclose ` Rep_powerdomain ` a)) 
@@ -169,10 +174,10 @@ shows "pd2 \<le> pd1"
 theorem helper : "\<exists>x. x \<in> P \<Longrightarrow> P \<noteq> {} "
   by force
 
-(* If any element of the chain has no Div, that is the upper bound 
- no_div_Sup_ub: 
-   If there is a point in the Chain with no Div, it is the upper bound:
-     p \<in> A \<Longrightarrow> Div \<notin> Rep_powerdomain p \<Longrightarrow> Sup A = p *)
+text \<open> If any element of the chain has no Div, that is the upper bound 
+       no_div_Sup_ub: 
+       If there is a point in the Chain with no Div, it is the upper bound:
+       p \<in> A \<Longrightarrow> Div \<notin> Rep_powerdomain p \<Longrightarrow> Sup A = p \<close>
 theorem no_div_Sup_ub : "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow>
            p \<in> A \<Longrightarrow> Div \<notin> Rep_powerdomain p \<Longrightarrow> Sup A = p"
   apply (clarsimp simp: pd_Sup)
@@ -191,9 +196,10 @@ theorem no_div_Sup_ub : "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow
   by (metis (no_types, lifting) Int_Collect image_iff no_div_collapses no_div_means_eq)
 
 declare Abs_powerdomain_inverse[simp]
-  (* div_Sup_ub:
-   If Div is in all points on the chain, then the upper bound is the union:
-     (\<forall>p \<in> A. Div \<in> Rep_powerdomain p) \<Longrightarrow> Sup A = Abs_powerdomain (\<Union> (Rep_powerdomain ` A)) *)
+
+text \<open> div_Sup_ub:
+       If Div is in all points on the chain, then the upper bound is the union:
+       (\<forall>p \<in> A. Div \<in> Rep_powerdomain p) \<Longrightarrow> Sup A = Abs_powerdomain (\<Union> (Rep_powerdomain ` A)) \<close>
 theorem div_Sup_ub : 
   assumes "A \<noteq> {}" 
   shows "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow>
@@ -202,16 +208,16 @@ theorem div_Sup_ub :
   apply (simp add: pd_Sup)
   by (rule pd_ord_anti_sym; simp add: porcupine_eglimilner)
 
-(* Div is the bottom element *)
+text \<open> Div is the bottom element \<close>
 theorem bottom_element: "Abs_powerdomain {Div} \<le> x"
   by (simp add: porcupine_eglimilner)
 
 theorem bottom_element': "(\<forall> y. x \<le> y) \<Longrightarrow> Abs_powerdomain {Div} = x"
   using bottom_element pd_ord_anti_sym by blast
 
-(* Sup_empty: 
-   If the chain A contains no elements at all, the LUB is just the bottom element {Div}
-     Sup {} = Abs_powerdomain {Div} *)
+text \<open> Sup_empty: 
+       If the chain A contains no elements at all, the LUB is just the bottom element {Div}
+       Sup {} = Abs_powerdomain {Div} \<close>
 theorem Sup_empty: "Sup {} = Abs_powerdomain {Div}"
   by (simp add: pd_Sup)
 
@@ -219,7 +225,7 @@ instantiation powerdomain :: ccpo
 begin
 instance
   apply intro_classes
-  apply (rename_tac A x1)
+   apply (rename_tac A x1)
    apply (case_tac "\<exists>x\<in>A. Div \<notin> Rep_powerdomain x",clarsimp)
     (* If Div is not in one of the PD elements, that element is the LUB *) 
     apply (simp add: no_div_Sup_ub no_div_collapses)
@@ -241,7 +247,7 @@ instance
   by blast
 end
 
-(* point-wise lifting to *)
+text \<open> point-wise lifting to the domain D \<close>
 type_synonym D = "exp \<Rightarrow> powerdomain"
 
 instance "fun" :: (type, ccpo) ccpo

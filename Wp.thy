@@ -1,4 +1,4 @@
-(* The location-based weakest precondition calculus *)
+section \<open>The location-based weakest precondition calculus\<close>
 
 theory Wp
   imports CCPO Denotational MonoDenotational
@@ -14,13 +14,15 @@ fun append :: "location \<Rightarrow> pos \<Rightarrow> location" ("_\<triangler
   | "append (i \<triangleleft> loc) p = i \<triangleleft> (append loc p) "
 
 
-(* A predicate transformer is internally just a function from a set of expressions to a set of 
-   expressions, with a side condition that it is monotonic *)
+text 
+ \<open> A predicate transformer is internally just a function from a set of expressions to a set of 
+   expressions, with a side condition that it is monotonic \<close>
 typedef pt = "{pt::exp set \<Rightarrow> exp set. mono pt}"
   by (simp add: mono_def, rule_tac x = "\<lambda>x. x" in exI, simp)
 
-(* For predicate transformers a and b, a \<le> b not only requires that they are equal pointwise, but 
-   also that a and b are both monotonic *) 
+text
+ \<open> For predicate transformers a and b, a \<le> b not only requires that they are equal pointwise, but 
+   also that a and b are both monotonic \<close> 
 instantiation pt :: ccpo begin
 definition less_eq_pt : 
   "(a :: pt) \<le> b \<longleftrightarrow> mono (Rep_pt a) \<and>  mono (Rep_pt b) \<and> (\<forall>x. Rep_pt a x \<subseteq> Rep_pt b x)"
@@ -70,11 +72,12 @@ instance
 *)
 end
 
-(* In the environment, we use the pt type to add the side condition we need that 
-   every function in the environment is monotone *)
+text
+ \<open> In the environment, we use the pt type to add the side condition we need that 
+   every function in the environment is monotone \<close>
 type_synonym lenv = "var \<times> tag \<Rightarrow> location \<Rightarrow> pt "
 
-(* Helper functions *)
+subsection \<open>Helper functions\<close>
 fun update :: "location \<Rightarrow> exp \<Rightarrow> exp_err_div set \<Rightarrow> exp_err_div set" 
   where
     "update \<epsilon> e xs = xs"
@@ -95,7 +98,7 @@ fun defined :: "location \<Rightarrow> exp set"
   | "defined (Left\<triangleleft>loc) = {Node l e1 e2 | l e1 e2. e1 \<in> defined loc}"
   | "defined (Right\<triangleleft>loc) = {Node l e1 e2 | l e1 e2. e2 \<in> defined loc}"
 
-
+subsection \<open>Weakest must succeed and weakest may fail preconditions\<close>
 fun wp_err :: "strategy \<Rightarrow> location \<Rightarrow> exp set \<Rightarrow> lenv \<Rightarrow> exp set" and wp :: "strategy \<Rightarrow> location \<Rightarrow> exp set \<Rightarrow> lenv \<Rightarrow> exp set"
   where
     "wp_err SKIP loc P env = P \<inter> (defined loc)"
@@ -142,7 +145,7 @@ fun wp_err :: "strategy \<Rightarrow> location \<Rightarrow> exp set \<Rightarro
                     )) loc) P" 
 
 
-(* Monotonicity proofs for wp and wp_err *)
+subsection \<open> Monotonicity proofs for wp and wp_err \<close>
 
 definition ap :: "('a \<Rightarrow> 'b) \<times> ('a \<Rightarrow> 'b) \<Rightarrow> 'a \<Rightarrow> ('b \<times>'b)"
   where "ap \<equiv> \<lambda>fg a. (fst fg a, snd fg a)" 
@@ -181,7 +184,6 @@ lemma Sup_snd: "Sup (snd ` A) = snd (Sup A)"
   apply (subst prod_Sup)
   apply simp
   done
-
 
 theorem mu_wp_mono[rule_format]:
   assumes f_mono: "\<And> (env1 :: lenv) env2 loc. \<forall> loc p. env1 p loc \<le> env2 p loc \<Longrightarrow> f loc env1 \<le> f loc env2"
@@ -854,7 +856,6 @@ lemma mono_inter [mono_intros]:
   apply (intro allI impI)
   by (rule Int_mono, force, force)
 
-
 lemma mono_Abs_pt [mono_intros]: 
   assumes "\<And>y. mono (\<lambda>x. f x y)" 
     and     "\<And>x. mono (\<lambda>y. f x y)"
@@ -926,6 +927,8 @@ lemma mono_wp_err_intro [mono_intros]:
   apply (intro allI impI)
   by (metis le_funE order.trans  wp_wp_err_mono(3,4))
 
+
+subsection \<open>The weakest preconditions for some strategies\<close>
 theorem wp_try[simp] : "wp (try s) loc P env = wp s loc P env \<union> (wp_err s loc P env \<inter> (P \<inter> (defined loc)))"
   using Try_def by simp
 
@@ -944,6 +947,7 @@ theorem wp_topDown : "wp (topDown s) loc P env = wp (mu 0. (s <+ one \<lparr>0\<
 theorem wp_err_topDown : "wp_err (topDown s) loc P env = wp_err (mu 0. (s <+ one \<lparr>0\<rparr>)) loc P env"
   using TopDown_def by simp
 
+text \<open>The weakest must succeed precondition and weakest may fail precondition for repeat are the same\<close>
 (* We need to use the monotonicity proofs of wp/wp_err *)
 theorem eq_wp_repeat_wp_err_repeat : "\<forall>loc P. wp (repeat s) loc P env = wp_err (repeat s) loc P env"
   apply (simp add: Repeat_def)

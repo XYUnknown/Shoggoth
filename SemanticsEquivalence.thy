@@ -1,3 +1,5 @@
+section \<open>The Denotational Semantics and Big-Step Operational Semantics are Equivalent\<close>
+
 theory SemanticsEquivalence
   imports Denotational Operational WpSoundness
 begin
@@ -72,7 +74,7 @@ next
     by auto
 qed
 
-section \<open>Computational Soundness One\<close>
+subsection \<open>Computational soundness one\<close>
 lemma substitution: 
   assumes "fv s' = {}"
   shows "exec (s \<lbrace> X \<mapsto> s'\<rbrace>) \<xi> = exec s (\<xi>(X := (exec s' \<xi>)))"
@@ -182,8 +184,7 @@ next
     by blast
 qed
 
-
-(* Computational soundness one for non-diverging executions*)
+text \<open>Computational soundness one for non-diverging executions\<close>
 theorem soundness:
   assumes "(s , e) \<Down> e'"
     and "fv s = {}"
@@ -319,7 +320,7 @@ next
     by blast
 qed
 
-section \<open>Computational Adequacy One\<close>
+subsection \<open>Computational adequacy one\<close>
 definition approximate :: "strategy \<Rightarrow> D \<Rightarrow> bool"
   where
     "approximate s d \<longleftrightarrow> (fv s = {}) \<and> (\<forall> e e'. (e' \<in> PdToSet (d e)) \<and> (e' \<noteq> Div) \<longrightarrow> (s, e) \<Down> e')"
@@ -578,7 +579,6 @@ next
     by simp
 qed
 
-
 lemma approximation_lemma : 
   assumes "\<forall> y \<in> (fv s). approximate (\<theta> y) (\<xi> y)"
     and "sc = map_strategy \<theta> s"
@@ -731,7 +731,7 @@ lemma map_closed_strategy_unchanged:
 proof (induct s arbitrary: \<theta>)
 qed auto
 
-(* The computational adequacy theorem one for non-diverging executions *)
+text \<open> The computational adequacy theorem one for non-diverging executions \<close>
 theorem computational_adequacy:
   assumes "fv (s) = {}"
     and "e' \<in> PdToSet (exec s \<xi> e)"
@@ -747,7 +747,7 @@ theorem computational_adequacy:
   apply (simp add : map_closed_strategy_unchanged)
   by (simp add : approximate_def)
 
-section \<open>Computational Soundness Two\<close>
+subsection \<open>Computational soundness two\<close>
 definition rel :: "strategy \<Rightarrow> D \<Rightarrow> bool" where
   rel_def: "rel s d \<longleftrightarrow> (fv s = {}) \<and> (\<forall>e. (((s,e) \<Up>) \<longrightarrow> Div \<in> PdToSet (d e)) \<and> (d e \<le> exec s (\<lambda>x. undefined) e) )" 
 
@@ -1162,7 +1162,7 @@ qed
 lemma map_strategy_fixvar[simp]: "map_strategy (\<lambda>x. \<lparr> x \<rparr>) s = s" 
   by (induct s; simp)
 
-(* Computational soundness two for diverging executions *)
+text \<open>Computational soundness two for diverging executions\<close>
 theorem div_soundness:
   assumes "fv s = {}"
   shows "(s, e) \<Up> \<Longrightarrow> Div \<in> PdToSet (exec s \<xi> e)"
@@ -1172,7 +1172,7 @@ theorem div_soundness:
   apply (simp add: rel_def)
   done
 
-section \<open>Computational Adequacy Two\<close>
+section \<open>Computational adequacy two\<close>
 lemma fixp_unfoldE[rule_format, rotated]:
   assumes "mono f" 
   shows   "P (\<mu> X. f X) \<longrightarrow> (P (f (\<mu> X. f X)) \<longrightarrow> R) \<longrightarrow> R" 
@@ -1180,7 +1180,7 @@ lemma fixp_unfoldE[rule_format, rotated]:
   using assms apply simp
   by simp 
 
-(* Computational adequacy two for diverging executions *)
+text \<open>Computational adequacy two for diverging executions\<close>
 theorem div_adequacy:
   assumes "fv s = {}" 
     and "Div \<in> PdToSet (exec s (\<lambda>x. undefined) e)" 
@@ -1243,7 +1243,7 @@ theorem div_adequacy:
   apply (rule exec_mono)
   by simp
 
-section \<open>The Denotational Semantics and Big-Step Operational Semantics are Equivalent\<close>
+subsection \<open>The semantic equivalence theorem\<close>
 theorem sem_equivalence: 
   assumes "fv s = {}" 
   shows "PdToSet (exec s (\<lambda>x. undefined) e) = { r |r. (s,e) \<Down> r } \<union> { r |r. r = Div \<and> ((s,e) \<Up>) }"

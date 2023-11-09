@@ -1,12 +1,13 @@
-(* The monotonicity proofs for denotational semantics *)
+section \<open>The Monotonicity Proofs for the Denotational Semantics\<close>
 
 theory MonoDenotational
   imports CCPO Denotational
 begin
 
-section "Preliminary lemmas"
+subsection \<open>Preliminary Lemmas\<close>
 
-(* This section consists of ported proofs from HOLCF that allow us to define a parallel 
+text \<open> 
+   This section consists of ported proofs from HOLCF cite\<open>"holcf"\<close> that allow us to define a parallel 
    fixp induction principle over two mus at once.
 
    HOLCF does this by transforming induction over two mus into induction over one mu for a product
@@ -19,15 +20,14 @@ section "Preliminary lemmas"
    infinitely. 
 
    The least fixed point of f is the least upper bound of `iterates f`.
-*)
 
 
-(* We have four tedious lemmas that allow us to prove some theorems about `iterates`
+   We have four tedious lemmas that allow us to prove some theorems about `iterates`
    for a function on products and relating it to `iterates` for each side of the product.
 
    These first two lemmas show each direction of the equivalence iterates_fst:
-     (iterates f) = fst ` (iterates (\<lambda>(x,y). (f x, g y)))
-*)
+   (iterates f) = fst ` (iterates (\<lambda>(x,y). (f x, g y)))
+\<close>
 
 lemma iterates_fst1: "x \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y)) \<Longrightarrow> fst x \<in> ccpo_class.iterates f"
   apply (induct rule: ccpo_class.iterates.induct)
@@ -43,6 +43,7 @@ lemma iterates_fst2:
    apply (metis (mono_tags, lifting) case_prod_conv fst_conv image_iff iterates.step)
     (* Case: If x is the Sup of some chain Msubset of `iterates f`, we must construct a new chain 
      of products, whose left side is M. First, we postulate its existence, and prove it later. *)
+  apply (rename_tac M)
   apply (subgoal_tac "\<exists>M'. M' \<subseteq> ccpo_class.iterates  (\<lambda>(x, y). (f x, g y)) 
                          \<and> Complete_Partial_Order.chain (\<le>) M' \<and> fst ` M' = M")
    apply (clarsimp)
@@ -61,14 +62,13 @@ lemma iterates_fst2:
   apply force+
   done
 
-(* The next two lemmas show each direction of the equivalence iterates_snd, much the same way:
-     (iterates g) = snd ` (iterates (\<lambda>(x,y). (f x, g y)))
-*)
+text \<open> The next two lemmas show each direction of the equivalence iterates_snd, much the same way:
+       (iterates g) = snd ` (iterates (\<lambda>(x,y). (f x, g y))) \<close>
 lemma iterates_snd1: "x \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y)) \<Longrightarrow> snd x \<in> ccpo_class.iterates g"
   apply (induct rule: ccpo_class.iterates.induct)
   by (auto simp add: chain_snd_exist prod_Sup iterates.step iterates.Sup)
 
-(* And the other direction, which is structurally the same as for iterates_fst2. *)
+text \<open> And the other direction, which is structurally the same as for iterates_fst2. \<close>
 lemma iterates_snd2:
   assumes mono: "mono (\<lambda>(x,y). (f x, g y))"
   shows "x \<in> ccpo_class.iterates g \<Longrightarrow> x \<in> snd ` ccpo_class.iterates (\<lambda>(x, y). (f x, g y))"
@@ -107,7 +107,7 @@ lemma iterates_snd:
   using iterates_snd2 mono apply auto[1]
   by (simp add: image_subset_iff iterates_snd1)
 
-section "Parallel fixed point induction principle"
+subsection \<open>Parallel fixed point induction principle\<close>
 
 (* This is just a specialisation of the definition of admissible
    specifically for use with binary predicates. *)
@@ -121,15 +121,15 @@ lemma admissibleD2:
   apply (simp add: ccpo.admissible_def)
   by (simp add: prod_Sup)
 
-(* First, we define parallel fixpoint induction using a unary predicate that takes in 
+text 
+ \<open> First, we define parallel fixpoint induction using a unary predicate that takes in 
    a product type. This is more convenient to prove but not easy to use because the 
    product types interfere with Isabelle's unifier sometimes.
 
    The parallel_fix_ind theorem below, which is derived from this, should be used instead.
 
    Most of this proof code was copied from the fixp_induct proof in Complete_Partial_Order,
-   with modifications inspired by HOLCF.
-*)
+   with modifications inspired by HOLCF. \<close>
 lemma parallel_fixp_induct_prod:
   assumes adm: "ccpo.admissible Sup (\<le>) (\<lambda>x. P x)"
   assumes base: "P (Sup {}, Sup {})"
@@ -174,9 +174,10 @@ theorem parallel_fixp_induct:
    apply (simp add: prod_less_eq, force intro: assms)
   done
 
-section "A missing theorem about parallel chains"
+subsection \<open>A missing theorem about parallel chains\<close>
 
-(* This theorem, Sup_mono, is proven in HOLCF (as lub_mono) but not Complete_Partial_Order.
+text 
+ \<open> This theorem, Sup_mono, is proven in HOLCF (as lub_mono) but not Complete_Partial_Order.
 
    It says that if one chain A is always less than another chain B, the Sup of A will also be 
    less than the Sup of B.
@@ -184,8 +185,7 @@ section "A missing theorem about parallel chains"
    By "always less than", we mean that the chains are arranged in parallel ordering. In countable 
    chains like HOLCF, this means \<forall>i. A i \<le> B i, for all indices i. But for our uncountable chains,
    we must use a chain of pairs, and the individual chains A and B are retrieved by using 
-   fst and snd.
- *)
+   fst and snd. \<close>
 
 lemma below_Sup: "Complete_Partial_Order.chain (\<le>) (S :: ('a::ccpo) set) \<Longrightarrow>
                   x \<in> S \<Longrightarrow> i \<le> x \<Longrightarrow> i \<le> Sup S"
@@ -206,7 +206,7 @@ theorem Sup_mono:
   apply (rule below_Sup, simp, force, force)
   done
 
-section "Basic Semantic Operations are Monotonic"
+subsection \<open>Basic Semantic Operations are Monotonic\<close>
 
 theorem seq_s_mono [simp]:
 assumes "a1 \<le> a2"
@@ -256,7 +256,6 @@ shows "(a1 <+s b1) \<le> (a2 <+s b2)"
 theorem one_s_mono [simp]:
   assumes "a \<le> b"
   shows "one_s a \<le> one_s b"
-(* PH: it's the same 4 lines all over again and again; can we simplify further? *)
   using assms apply (simp add: le_fun_def one_s_def porcupine_eglimilner)
   apply (subst Abs_powerdomain_inverse, clarsimp)
    apply (rename_tac x)
@@ -358,9 +357,10 @@ theorem all_s_mono [simp]:
   apply (rule set_eqI, clarsimp)
   by fastforce
 
-section "Mu is monotonic"
+subsection \<open>Mu is monotonic\<close>
 
-(* I proved monotonicity here for the fixed point of a function `f` that takes an environment as 
+text
+ \<open> I proved monotonicity here for the fixed point of a function `f` that takes an environment as 
    input. When this is used for the proof of monotonicity of exec, the function `f` is `exec s`.
 
    Assuming the input environments are ordered (pointwise), then the result of the mu 
@@ -368,8 +368,7 @@ section "Mu is monotonic"
 
    The function f must itself be monotone with respect to the environment ordering.
 
-   The proof of this uses the parallel induction principle we ported over from HOLCF.
-*)
+   The proof of this uses the parallel induction principle we ported over from HOLCF. \<close>
 (* NB this feels more specialised than necessary... *)
 theorem mu_s_mono [simp]:
 assumes input_ordered: "\<forall>x. env1 x \<le> env2 x"  
@@ -382,12 +381,12 @@ shows "(\<mu> x. f (env1(x1 := x))) \<le> (\<mu> x. f (env2(x1 := x)))"
   apply (fastforce simp: mono_def intro: f_mono)[1]
   using input_ordered by (auto intro: f_mono)
 
-section "Exec is monotonic"
+subsection \<open>Exec is monotonic\<close>
 
-(* The theorem that exec is monotonic in its input environment.
+text
+ \<open> The theorem that exec is monotonic in its input environment.
    By induction over the strategy. All the existing monotonicity theorems make this proof 
-   go through easily.
-*)
+   go through easily.\<close>
 theorem exec_mono [simp]:
   assumes "\<forall>x. env1 x \<le> env2 x"  
   shows "exec s env1 \<le> exec s env2"

@@ -1,3 +1,4 @@
+section \<open>Examples of Using the Location Based Weakest Precondition Calculus to Reason about Strategies \<close>
 theory WpExamples
   imports Wp WpSoundness
 begin

@@ -1,10 +1,10 @@
-(* Weakest precondition is sound w.r.t. the denotational semantics *)
+section \<open>Weakest Precondition is Sound w.r.t. the Denotational Semantics\<close>
 
 theory WpSoundness
   imports  Denotational MonoDenotational Wp
 begin
 
-section "Theorems about update"
+subsection \<open>Theorems about update\<close>
 
 theorem UpdateWithLookupUnchanged:
   assumes "e \<in> defined l"
@@ -43,7 +43,6 @@ next
   then show ?case by (case_tac pos, fastforce+)+
 qed
 
-
 lemma defined_append : "x \<in> defined (loc \<triangleright> pos) \<Longrightarrow> x \<in> defined loc"
 proof (induct loc arbitrary: x)
   case empty
@@ -81,13 +80,14 @@ next
   then show ?case by (case_tac pos, fastforce+)+
 qed
 
-section "The lookup_exec_update function" 
+subsection \<open>The lookup_exec_update function\<close>
 definition lookup_exec_update :: "strategy \<Rightarrow> location \<Rightarrow> exp \<Rightarrow> env \<Rightarrow> exp_err_div set"
   where "lookup_exec_update s loc e senv = (update loc e (PdToSet (exec s senv (lookup loc e))))"
 
-(* The following simp rules mean that (for defined locations), you shouldn't usually need to use 
+text
+ \<open> The following simp rules mean that (for defined locations), you shouldn't usually need to use 
    lookup_exec_update_def. Instead, these rules give an alternative defn. for lookup_exec_update
-   that doesn't refer to other functions like update, lookup etc. at all *)
+   that doesn't refer to other functions like update, lookup etc. at all \<close>
 lemma lookup_exec_update_simp1[simp] : 
   "lookup_exec_update s \<epsilon> e senv = PdToSet (exec s senv e)" 
   by (simp add: lookup_exec_update_def)
@@ -102,8 +102,9 @@ lemma lookup_exec_update_simp3[simp] :
        = {E (Node l e1 x) | x. E x \<in> lookup_exec_update s loc e2 senv} \<union> (lookup_exec_update s loc e2 senv \<inter> {Err, Div})" 
   using assms by (force simp add: lookup_exec_update_def update_inter_err_div)
 
-(* If l is defined in an expression, updating that expression with lookup_exec_update will maintain
-   the definedness of l. *)
+text
+ \<open> If l is defined in an expression, updating that expression with lookup_exec_update will maintain
+   the definedness of l. \<close>
 theorem lookup_exec_update_defined:
   assumes "e \<in> defined l"
   shows "\<forall> x. E x \<in> lookup_exec_update s l e senv \<longrightarrow> x \<in> defined l"
@@ -152,10 +153,9 @@ next
     by blast
 qed
 
-section "Order independence lemmas" 
-  (* A collection of lemmas about defined and lookup_exec_update that are useful for reordering 
-   executions, in e.g. the soundness proofs of all *)
-
+subsection \<open>Order independence lemmas\<close>
+text \<open> A collection of lemmas about defined and lookup_exec_update that are useful for reordering 
+   executions, in e.g. the soundness proofs of all \<close>
 lemma defined_left_right : "x \<in> defined (loc \<triangleright> Left) \<Longrightarrow> x \<in> defined (loc \<triangleright> Right)"
 proof (induct loc arbitrary: x)
   case empty
@@ -191,7 +191,6 @@ lemma defined_left_after_right:
   apply (drule defined_left_right)
   apply (frule lookup_exec_update_defined[rule_format], simp)
   by (rule defined_right_left, simp)
-
 
 lemma lookup_exec_update_left_right_swap : 
   assumes "x1 \<in> defined (loc \<triangleright> Left)"
@@ -355,10 +354,11 @@ next
     using defined_right_left by auto[1]
 qed
 
-section "wp_sound_set and wp_err_sound_set" 
+subsection \<open>wp_sound_set and wp_err_sound_set\<close> 
 
-(* These definitions are an aid to help us to formulate our inductive hypotheses.
-   They are the semantic meaning of wp.  *)
+text 
+ \<open> These definitions are an aid to help us to formulate our inductive hypotheses.
+   They are the semantic meaning of wp. \<close>
 definition wp_sound_set :: "strategy \<Rightarrow> location \<Rightarrow> exp set \<Rightarrow> env \<Rightarrow> exp set"
   where "wp_sound_set s loc P senv = 
           {e | e. e \<in> defined loc \<and> lookup_exec_update s loc e senv \<subseteq> E ` P}"
@@ -367,7 +367,7 @@ definition wp_err_sound_set :: "strategy \<Rightarrow> location \<Rightarrow> ex
   where "wp_err_sound_set s loc P senv = 
           {e | e. e \<in> defined loc \<and>  lookup_exec_update s loc e senv \<subseteq> E ` P \<union> {Err}}"
 
-subsection "Sequential Composition Lemmas"
+subsection \<open>Sequential Composition Lemmas\<close>
   (* Helper to avoid having to do lots of SetToPd (PdToSet ..) reasoning *)
 lemma PdToSet_seq : "PdToSet ((s1 ;;s s2) e)
                    =  (\<Union>{PdToSet (s2 x) | x. E x \<in> PdToSet (s1 e)}
@@ -427,7 +427,6 @@ lemma seq_wp_sound_set: "wp_sound_set (s1 ;; s2) loc P senv = wp_sound_set s1 lo
   apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 in lookup_exec_update_seq, simp)
   by blast
 
-
 (* wp_err_sound_set rule for sequential_composition  (mirrors the wp_err rule) *)
 lemma seq_wp_err_sound_set: "wp_err_sound_set (s1 ;; s2) loc P senv = wp_err_sound_set s1 loc (wp_err_sound_set s2 loc P senv) senv"
   apply (simp add: wp_err_sound_set_def)
@@ -450,9 +449,7 @@ lemma seq_wp_err_sound_set: "wp_err_sound_set (s1 ;; s2) loc P senv = wp_err_sou
   apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv=senv in lookup_exec_update_seq, simp)
   by blast
 
-
-subsection "Left Choice Lemmas"
-
+subsection \<open>Left Choice Lemmas\<close>
 (* Helper for PdToSet of left choice *)
 lemma PdToSet_lc : "PdToSet ((s <+s t) e) = (PdToSet (s e) - {Err})  \<union> {x | x. x \<in> PdToSet (t e) \<and> Err \<in> PdToSet (s e)}"
   unfolding lchoice_s_def
@@ -511,7 +508,7 @@ lemma lc_wp_err_sound_set: "wp_err_sound_set (s1 <+ s2) loc P senv = wp_sound_se
   apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_lc, simp)
   by blast
 
-subsection "Choice Lemmas"
+subsection \<open>Choice Lemmas\<close>
   (* Helper for PdToSet of choice *)
 lemma PdToSet_choice : "PdToSet ((s1 ><s s2) e) = {E x | x. E x \<in> PdToSet (s1 e)}
                                   \<union> {d. d = Div \<and> Div \<in> PdToSet (s1 e)}
@@ -668,8 +665,7 @@ lemma choice_wp_err_sound_set: "wp_err_sound_set (s1 >< s2) loc P senv = wp_err_
   apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_choice, simp)
   by blast
 
-subsection "One Lemmas"
-
+subsection \<open>One Lemmas\<close>
 lemma PdToSet_one: 
   "PdToSet ((one_s s) e) = {E (Node l x e2) | l x e1 e2. e = Node l e1 e2 \<and> E x \<in> PdToSet (s e1)}
                    \<union> {d | l e1 e2 d. e = Node l e1 e2 \<and> d = Div \<and> Div \<in> PdToSet (s e1)}
@@ -727,7 +723,6 @@ next
     apply clarsimp
     by auto[1]
 qed
-
 
 (* wp_sound_set rule for one (simplified wp rule) *)
 lemma one_wp_sound_set: "wp_sound_set (one s) loc P senv 
@@ -838,8 +833,7 @@ lemma one_wp_err_sound_set: "wp_err_sound_set (one s) loc P senv
   apply (clarsimp simp add: lookup_exec_update_one)
   by blast
 
-subsection "All Lemmas"
-
+subsection \<open>All Lemmas\<close>
 lemma PdToSet_all:
   "PdToSet ((all_s s) e) = {E (Node l x1 x2) | l x1 x2 e1 e2. e = Node l e1 e2 \<and> E x1 \<in> PdToSet (s e1) \<and> E x2 \<in> PdToSet (s e2)}
                    \<union> {E (Leaf l) | l. e = Leaf l }
@@ -1140,7 +1134,7 @@ lemma all_wp_err_sound_set: "wp_err_sound_set (all s) loc P senv
    apply blast
   by blast
 
-subsection "Some Lemmas"
+subsection \<open>Some Lemmas\<close>
 lemma PdToSet_some: 
   "PdToSet ((some_s s) e) = {E (Node l x1 x2) | l x1 x2 e1 e2. e = Node l e1 e2 \<and> E x1 \<in> PdToSet (s e1) \<and> E x2 \<in> PdToSet (s e2)}
                     \<union> {E (Node l x e2) | l x e1 e2. e = Node l e1 e2 \<and> E x \<in> PdToSet (s e1) \<and> Err \<in> PdToSet (s e2)} 
@@ -1259,7 +1253,6 @@ next
     using defined_right_after_left apply auto[1]
     by blast
 qed
-
 
 (* wp_sound_set rule for some (simplified wp rule) *)
 lemma some_wp_sound_set: "wp_sound_set (some s) loc P senv 
@@ -1761,7 +1754,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
    apply blast
   using defined_append by blast
 
-subsection "Mu lemmas"
+subsection \<open>Mu lemmas\<close>
 
 lemma update_big_union_equals_big_union_update:
   assumes "x \<in> defined loc"
@@ -1932,7 +1925,7 @@ lemma wp_err_mu_admissible : "ccpo.admissible Sup (\<le>)
   by fastforce
 
 
-section "Soundness theorem"
+subsection \<open>Soundness theorem\<close>
 
 theorem wp_wp_err_soundness: 
   assumes "\<forall> X l P. (Rep_pt (env (X, Tot) l) P) 

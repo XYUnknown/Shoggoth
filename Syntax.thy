@@ -1,8 +1,8 @@
+section \<open>The syntax of extended System S\<close>
 theory Syntax
   imports CCPO
 begin
 
-(* The syntax of extended System S *)
 type_synonym var = "int"
 type_synonym env = "var \<Rightarrow> D"
 datatype
@@ -17,7 +17,6 @@ datatype
   | CSome strategy                ("some") (* avoid conflict with isabelle option type *)
   | All strategy                 ("all")
   | Mu var strategy              ("mu_._"   [60, 61] 60)
-
 
 definition Try :: "strategy \<Rightarrow> strategy" ("try") where
   "Try s = s <+ SKIP"

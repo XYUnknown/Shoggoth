@@ -1,9 +1,9 @@
-theory LambdaCalc 
+section \<open>Case Study: Lambda Calculus\<close>
+theory LambdaCalc
 imports WpSoundness SemanticsEquivalence
 begin
 
-(* The normalisation example in section 5.3 *)
-
+(* The normalisation example in paper section 5.3 *)
 abbreviation "Abs \<equiv> Node ABS (Leaf EMPTY)"
 abbreviation "App l r \<equiv> Node APP l r"
 abbreviation "Idd n \<equiv> Leaf (Var n)" (* Isabelle does not like Id to be used here *)
@@ -91,7 +91,6 @@ lemma wf_downshift:
 
 
 (* These functions could be used as atomic strategies *)
-
 fun beta :: "exp \<Rightarrow> exp option"  where
   "beta (App (Abs f) e) = Some (f [ e \<setminus> 0 ])" 
 | "beta _ = None"
@@ -103,7 +102,6 @@ fun eta :: "exp \<Rightarrow> exp option" where
 
 (* Some helpers to simplify reasoning about repeat and topdown, avoiding
    the need to think about environments for those combinators. *)
-
 lemma wp_env_irrelevant: 
   assumes "\<forall>y \<in> fv s. \<forall>t. env1 (y , t) = env2 (y , t)" 
   shows "wp     s loc P env1 = wp     s loc P env2"
@@ -314,7 +312,6 @@ lemma wp_wp_err_topDown:
   using assms apply auto[1]
    apply (rule wp_env_irrelevant)
   using assms by auto[1]
-
 
 lemma wp_topDown:
   assumes "0 \<notin> fv s" 
