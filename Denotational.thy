@@ -1,4 +1,4 @@
-(* The denotational semantics of System S*)
+section \<open> The denotational semantics of System S \<close>
 
 theory Denotational
   imports CCPO Syntax
@@ -33,7 +33,7 @@ definition some_s :: "D \<Rightarrow> D"
                     \<union> {d | l e1 e2 d. (e = Node l e1 e2 \<and> d = Div \<and> Div \<in> PdToSet (s e1) \<union> PdToSet (s e2))}
                     \<union> {err | e1 e2 l err. err = Err \<and> (e = Leaf l \<or> (e = Node l e1 e2 \<and> Err \<in> PdToSet (s e1) \<inter> PdToSet (s e2)))})"
 
-(* all shall succeed  on leaf node *)
+(* all shall succeed on leaf node *)
 definition all_s :: "D \<Rightarrow> D" 
   where "all_s s e = SetToPd ({E (Node l x1 x2) | l x1 x2 e1 e2. e = Node l e1 e2 \<and> E x1 \<in> PdToSet (s e1) \<and> E x2 \<in> PdToSet (s e2)}
                    \<union> {E (Leaf l) | l.  e = Leaf l} 

@@ -1,4 +1,4 @@
-(* The big-step operational semantics extended with divergence of System S *)
+section \<open> The big-step operational semantics extended with divergence of System S \<close>
 
 theory Operational
   imports CCPO Syntax
@@ -18,7 +18,7 @@ fun substitute :: "strategy \<Rightarrow> var \<Rightarrow> strategy \<Rightarro
     "(all s1)  \<lbrace> X \<mapsto> s2 \<rbrace> = all (s1\<lbrace> X \<mapsto> s2 \<rbrace>)" |
     "(mu V. s1) \<lbrace> X \<mapsto> s2 \<rbrace>  = (if V = X then (mu V. s1) else (mu V. (s1 \<lbrace> X \<mapsto> s2 \<rbrace>)))"
 
-
+subsection \<open>Non-diverging cases\<close>
 inductive big_step :: "strategy \<times> exp \<Rightarrow> exp_err_div \<Rightarrow> bool" (infix "\<Down>" 55)
   where
     Skip:     "(SKIP, e) \<Down> E e"  |
@@ -49,6 +49,7 @@ inductive big_step :: "strategy \<times> exp \<Rightarrow> exp_err_div \<Rightar
     FixedPoint: "(s\<lbrace> X \<mapsto> (mu X. s)\<rbrace>, e) \<Down> E e' \<Longrightarrow> (mu X. s, e) \<Down> E e'" |
     FixedPointEr: "(s\<lbrace> X \<mapsto> (mu X. s)\<rbrace>, e) \<Down> Err \<Longrightarrow> (mu X. s, e) \<Down> Err"
 
+subsection \<open>Diverging cases\<close>
 coinductive big_step_div :: "strategy \<times> exp \<Rightarrow> bool" ( "_ \<Up>" 55) where
   SeqCompDiv1: "(s1, e) \<Up> \<Longrightarrow> (s1 ;; s2 , e) \<Up>" |
   SeqCompDiv2: "\<lbrakk> (s1, e) \<Down> E e1 ; (s2, e1) \<Up> \<rbrakk> \<Longrightarrow>  (s1 ;; s2 , e) \<Up>" | 
@@ -66,7 +67,6 @@ coinductive big_step_div :: "strategy \<times> exp \<Rightarrow> bool" ( "_ \<Up
 
 inductive_cases SkipE: "(SKIP, e) \<Down> x"
 inductive_cases AbortE: "(ABORT, e) \<Down> x"
-
 
 end
 

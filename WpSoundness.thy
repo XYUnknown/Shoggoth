@@ -1,10 +1,10 @@
-(* Weakest precondition is sound w.r.t. the denotational semantics *)
+section \<open>Weakest Precondition is Sound w.r.t. the Denotational Semantics\<close>
 
 theory WpSoundness
   imports  Denotational MonoDenotational Wp
 begin
 
-section "Theorems about update"
+subsection \<open>Theorems about update\<close>
 
 theorem UpdateWithLookupUnchanged:
   assumes "e \<in> defined l"
@@ -43,7 +43,6 @@ next
   then show ?case by (case_tac pos, fastforce+)+
 qed
 
-
 lemma defined_append : "x \<in> defined (loc \<triangleright> pos) \<Longrightarrow> x \<in> defined loc"
 proof (induct loc arbitrary: x)
   case empty
@@ -81,13 +80,14 @@ next
   then show ?case by (case_tac pos, fastforce+)+
 qed
 
-section "The lookup_exec_update function" 
+subsection \<open>The lookup_exec_update function\<close>
 definition lookup_exec_update :: "strategy \<Rightarrow> location \<Rightarrow> exp \<Rightarrow> env \<Rightarrow> exp_err_div set"
   where "lookup_exec_update s loc e senv = (update loc e (PdToSet (exec s senv (lookup loc e))))"
 
-(* The following simp rules mean that (for defined locations), you shouldn't usually need to use 
+text
+ \<open> The following simp rules mean that (for defined locations), you shouldn't usually need to use 
    lookup_exec_update_def. Instead, these rules give an alternative defn. for lookup_exec_update
-   that doesn't refer to other functions like update, lookup etc. at all *)
+   that doesn't refer to other functions like update, lookup etc. at all \<close>
 lemma lookup_exec_update_simp1[simp] : 
   "lookup_exec_update s \<epsilon> e senv = PdToSet (exec s senv e)" 
   by (simp add: lookup_exec_update_def)
@@ -102,8 +102,9 @@ lemma lookup_exec_update_simp3[simp] :
        = {E (Node l e1 x) | x. E x \<in> lookup_exec_update s loc e2 senv} \<union> (lookup_exec_update s loc e2 senv \<inter> {Err, Div})" 
   using assms by (force simp add: lookup_exec_update_def update_inter_err_div)
 
-(* If l is defined in an expression, updating that expression with lookup_exec_update will maintain
-   the definedness of l. *)
+text
+ \<open> If l is defined in an expression, updating that expression with lookup_exec_update will maintain
+   the definedness of l. \<close>
 theorem lookup_exec_update_defined:
   assumes "e \<in> defined l"
   shows "\<forall> x. E x \<in> lookup_exec_update s l e senv \<longrightarrow> x \<in> defined l"
@@ -131,27 +132,30 @@ next
      apply simp
      apply (elim disjE conjE exE)
      apply clarsimp
+     apply (rename_tac l e1 e2)
      apply (drule_tac x = e1 in meta_spec, drule meta_mp, simp)
      apply clarsimp
+     apply (rename_tac r)
      apply (case_tac r)
        apply blast
       apply auto[1]
      apply blast
     apply simp
     apply (elim disjE conjE exE)
+    apply (rename_tac l e1 e2)
     apply clarsimp
     apply (drule_tac x = e2 in meta_spec, drule meta_mp, simp)
     apply clarsimp
+    apply (rename_tac r)
     apply (case_tac r)
       apply blast
      apply auto[1]
     by blast
 qed
 
-section "Order independence lemmas" 
-  (* A collection of lemmas about defined and lookup_exec_update that are useful for reordering 
-   executions, in e.g. the soundness proofs of all *)
-
+subsection \<open>Order independence lemmas\<close>
+text \<open> A collection of lemmas about defined and lookup_exec_update that are useful for reordering 
+   executions, in e.g. the soundness proofs of all \<close>
 lemma defined_left_right : "x \<in> defined (loc \<triangleright> Left) \<Longrightarrow> x \<in> defined (loc \<triangleright> Right)"
 proof (induct loc arbitrary: x)
   case empty
@@ -188,7 +192,6 @@ lemma defined_left_after_right:
   apply (frule lookup_exec_update_defined[rule_format], simp)
   by (rule defined_right_left, simp)
 
-
 lemma lookup_exec_update_left_right_swap : 
   assumes "x1 \<in> defined (loc \<triangleright> Left)"
     and     "x1 \<in> defined (loc \<triangleright> Right)"
@@ -205,10 +208,12 @@ next
      apply simp
      apply (elim exE conjE disjE)
      apply clarsimp
+     apply (rename_tac l e1 e2)
      apply (rule iffI)
       apply clarsimp
       apply (frule defined_right_after_left, simp)
       apply clarsimp
+      apply (rename_tac x xa)
       apply (drule_tac x = e1 in meta_spec)
       apply (drule_tac x = xa in meta_spec)
       apply (drule meta_mp, simp)
@@ -216,6 +221,7 @@ next
       apply (drule iffD1)
        apply auto[1]
       apply clarsimp
+      apply (rename_tac i)
       apply (rule_tac x = "Node l i e2" in exI)
       apply (rule)
        apply clarsimp
@@ -223,6 +229,7 @@ next
      apply clarsimp
      apply (frule defined_left_after_right, simp)
      apply clarsimp
+     apply (rename_tac x xa)
      apply (drule_tac x = e1 in meta_spec)
      apply (drule_tac x = xa in meta_spec)
      apply (drule meta_mp, simp)
@@ -230,6 +237,7 @@ next
      apply (drule iffD2)
       apply auto[1]
      apply clarsimp
+     apply (rename_tac i)
      apply (rule_tac x = "Node l i e2" in exI)
      apply (rule)
       apply clarsimp
@@ -237,10 +245,12 @@ next
     apply simp
     apply (elim exE conjE disjE)
     apply clarsimp
+    apply (rename_tac l e1 e2)
     apply (rule iffI)
      apply clarsimp
      apply (frule defined_right_after_left, simp)
      apply clarsimp
+     apply (rename_tac x xa)
      apply (drule_tac x = e2 in meta_spec)
      apply (drule_tac x = xa in meta_spec)
      apply (drule meta_mp, simp)
@@ -248,6 +258,7 @@ next
      apply (drule iffD1)
       apply auto[1]
      apply clarsimp
+     apply (rename_tac i)
      apply (rule_tac x = "Node l e1 i" in exI)
      apply (rule)
       apply clarsimp
@@ -255,6 +266,7 @@ next
     apply clarsimp
     apply (frule defined_left_after_right, simp)
     apply clarsimp
+    apply (rename_tac x xa)
     apply (drule_tac x = e2 in meta_spec)
     apply (drule_tac x = xa in meta_spec)
     apply (drule meta_mp, simp)
@@ -262,6 +274,7 @@ next
     apply (drule iffD2)
      apply auto[1]
     apply clarsimp
+    apply (rename_tac i)
     apply (rule_tac x = "Node l e1 i" in exI)
     apply (rule)
      apply clarsimp
@@ -341,10 +354,11 @@ next
     using defined_right_left by auto[1]
 qed
 
-section "wp_sound_set and wp_err_sound_set" 
+subsection \<open>wp_sound_set and wp_err_sound_set\<close> 
 
-(* These definitions are an aid to help us to formulate our inductive hypotheses.
-   They are the semantic meaning of wp.  *)
+text 
+ \<open> These definitions are an aid to help us to formulate our inductive hypotheses.
+   They are the semantic meaning of wp. \<close>
 definition wp_sound_set :: "strategy \<Rightarrow> location \<Rightarrow> exp set \<Rightarrow> env \<Rightarrow> exp set"
   where "wp_sound_set s loc P senv = 
           {e | e. e \<in> defined loc \<and> lookup_exec_update s loc e senv \<subseteq> E ` P}"
@@ -353,7 +367,7 @@ definition wp_err_sound_set :: "strategy \<Rightarrow> location \<Rightarrow> ex
   where "wp_err_sound_set s loc P senv = 
           {e | e. e \<in> defined loc \<and>  lookup_exec_update s loc e senv \<subseteq> E ` P \<union> {Err}}"
 
-subsection "Sequential Composition Lemmas"
+subsection \<open>Sequential Composition Lemmas\<close>
   (* Helper to avoid having to do lots of SetToPd (PdToSet ..) reasoning *)
 lemma PdToSet_seq : "PdToSet ((s1 ;;s s2) e)
                    =  (\<Union>{PdToSet (s2 x) | x. E x \<in> PdToSet (s1 e)}
@@ -397,6 +411,7 @@ lemma seq_wp_sound_set: "wp_sound_set (s1 ;; s2) loc P senv = wp_sound_set s1 lo
   apply (simp add: wp_sound_set_def)
   apply (rule subset_antisym)
    apply clarsimp
+   apply (rename_tac xa)
    apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 in lookup_exec_update_seq, simp)
    apply (case_tac xa)
      apply blast
@@ -412,12 +427,12 @@ lemma seq_wp_sound_set: "wp_sound_set (s1 ;; s2) loc P senv = wp_sound_set s1 lo
   apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 in lookup_exec_update_seq, simp)
   by blast
 
-
 (* wp_err_sound_set rule for sequential_composition  (mirrors the wp_err rule) *)
 lemma seq_wp_err_sound_set: "wp_err_sound_set (s1 ;; s2) loc P senv = wp_err_sound_set s1 loc (wp_err_sound_set s2 loc P senv) senv"
   apply (simp add: wp_err_sound_set_def)
   apply (rule subset_antisym)
    apply clarsimp
+   apply (rename_tac xa)
    apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_seq, simp)
    apply (case_tac xa)
      apply blast
@@ -434,9 +449,7 @@ lemma seq_wp_err_sound_set: "wp_err_sound_set (s1 ;; s2) loc P senv = wp_err_sou
   apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv=senv in lookup_exec_update_seq, simp)
   by blast
 
-
-subsection "Left Choice Lemmas"
-
+subsection \<open>Left Choice Lemmas\<close>
 (* Helper for PdToSet of left choice *)
 lemma PdToSet_lc : "PdToSet ((s <+s t) e) = (PdToSet (s e) - {Err})  \<union> {x | x. x \<in> PdToSet (t e) \<and> Err \<in> PdToSet (s e)}"
   unfolding lchoice_s_def
@@ -495,7 +508,7 @@ lemma lc_wp_err_sound_set: "wp_err_sound_set (s1 <+ s2) loc P senv = wp_sound_se
   apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_lc, simp)
   by blast
 
-subsection "Choice Lemmas"
+subsection \<open>Choice Lemmas\<close>
   (* Helper for PdToSet of choice *)
 lemma PdToSet_choice : "PdToSet ((s1 ><s s2) e) = {E x | x. E x \<in> PdToSet (s1 e)}
                                   \<union> {d. d = Div \<and> Div \<in> PdToSet (s1 e)}
@@ -541,6 +554,7 @@ lemma choice_wp_sound_set: "wp_sound_set (s1 >< s2) loc P senv = (wp_sound_set s
     apply clarsimp
     apply (erule impE)
      apply clarsimp
+     apply (rename_tac xb)
      apply (case_tac "Err \<in> lookup_exec_update s1 loc x senv")
       apply (case_tac xb)
         apply blast
@@ -554,6 +568,7 @@ lemma choice_wp_sound_set: "wp_sound_set (s1 >< s2) loc P senv = (wp_sound_set s
       apply blast
      apply blast
     apply clarsimp
+    apply (rename_tac xa xb)
     apply (case_tac "Err \<in> lookup_exec_update s2 loc x senv")
      apply (case_tac xb)
        apply clarsimp
@@ -571,10 +586,12 @@ lemma choice_wp_sound_set: "wp_sound_set (s1 >< s2) loc P senv = (wp_sound_set s
      apply auto[1]
     apply blast
    apply clarsimp
+  apply (rename_tac xa)
    apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_choice, simp)
    apply clarsimp
    apply (erule impE)
     apply clarsimp
+    apply (rename_tac xb)
     apply (case_tac "Err \<in> lookup_exec_update s1 loc x senv")
      apply (case_tac xb)
        apply blast
@@ -587,6 +604,7 @@ lemma choice_wp_sound_set: "wp_sound_set (s1 >< s2) loc P senv = (wp_sound_set s
      apply blast
     apply blast
    apply clarsimp
+   apply (rename_tac xb)
    apply (case_tac "Err \<in> lookup_exec_update s2 loc x senv")
     apply (case_tac xb)
       apply clarsimp
@@ -618,6 +636,7 @@ lemma choice_wp_err_sound_set: "wp_err_sound_set (s1 >< s2) loc P senv = wp_err_
    apply clarsimp
    apply (rule conjI)
     apply clarsimp
+    apply (rename_tac xa)
     apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_choice, simp)
     apply clarsimp
     apply (case_tac "Err \<in> lookup_exec_update s1 loc x senv")
@@ -630,6 +649,7 @@ lemma choice_wp_err_sound_set: "wp_err_sound_set (s1 >< s2) loc P senv = wp_err_
      apply blast
     apply blast
    apply clarsimp
+   apply (rename_tac xa)
    apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_choice, simp)
    apply clarsimp
    apply (case_tac "Err \<in> lookup_exec_update s2 loc x senv")
@@ -645,8 +665,7 @@ lemma choice_wp_err_sound_set: "wp_err_sound_set (s1 >< s2) loc P senv = wp_err_
   apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_choice, simp)
   by blast
 
-subsection "One Lemmas"
-
+subsection \<open>One Lemmas\<close>
 lemma PdToSet_one: 
   "PdToSet ((one_s s) e) = {E (Node l x e2) | l x e1 e2. e = Node l e1 e2 \<and> E x \<in> PdToSet (s e1)}
                    \<union> {d | l e1 e2 d. e = Node l e1 e2 \<and> d = Div \<and> Div \<in> PdToSet (s e1)}
@@ -658,12 +677,12 @@ lemma PdToSet_one:
   apply (case_tac e)
    apply simp
   apply simp
-  apply (subgoal_tac "\<exists>r. r \<in> PdToSet (s x22)")
+  apply (subgoal_tac "\<exists>r1. r1 \<in> PdToSet (s x22)")
    apply (erule exE)
-   apply (case_tac r)
-     apply (subgoal_tac "\<exists>r. r \<in> PdToSet (s x23)")
+   apply (case_tac r1)
+     apply (subgoal_tac "\<exists>r2. r2 \<in> PdToSet (s x23)")
       apply (erule exE)
-      apply (case_tac ra)
+      apply (case_tac r2)
         apply blast
        apply blast
       apply blast
@@ -705,7 +724,6 @@ next
     by auto[1]
 qed
 
-
 (* wp_sound_set rule for one (simplified wp rule) *)
 lemma one_wp_sound_set: "wp_sound_set (one s) loc P senv 
                       = (wp_err_sound_set s (loc \<triangleright> Left) P senv \<inter> wp_sound_set s (loc \<triangleright> Right) P senv)
@@ -714,10 +732,12 @@ lemma one_wp_sound_set: "wp_sound_set (one s) loc P senv
   apply (rule subset_antisym)
    apply (rule subsetI)
    apply clarsimp
+   apply (rename_tac x)
    apply (simp add: lookup_exec_update_one)
    apply (intro conjI)
       apply auto[1]
      apply clarsimp
+     apply (rename_tac xa)
      apply (case_tac xa)
        apply blast
       apply blast
@@ -732,6 +752,7 @@ lemma one_wp_sound_set: "wp_sound_set (one s) loc P senv
     apply (case_tac "Err \<in> lookup_exec_update s (loc\<triangleright>Right) x senv")
      apply auto[1]
     apply clarsimp
+    apply (rename_tac xa)
     apply (case_tac xa)
       apply blast
      apply blast
@@ -739,17 +760,20 @@ lemma one_wp_sound_set: "wp_sound_set (one s) loc P senv
    apply (case_tac "Err \<in> lookup_exec_update s (loc\<triangleright>Right) x senv")
     apply (drule mp)
      apply (rule subsetI)
+     apply (rename_tac xa)
      apply (case_tac xa)
        apply simp
       apply auto[1]
      apply blast
     apply (rotate_tac 6, erule notE)
     apply (clarsimp)
+    apply (rename_tac xa)
     apply (case_tac xa)
       apply blast
      apply blast
     apply simp
    apply (clarsimp)
+   apply (rename_tac xa)
    apply (case_tac xa)
      apply blast
     apply blast
@@ -773,18 +797,21 @@ lemma one_wp_err_sound_set: "wp_err_sound_set (one s) loc P senv
   apply (rule subset_antisym)
    apply (rule subsetI)
    apply (clarsimp)
+   apply (rename_tac x)
    apply (simp add: lookup_exec_update_one)
    apply (elim conjE)
    apply (case_tac "x \<in> defined (loc \<triangleright> Right) \<and> x \<in> defined (loc \<triangleright> Left)")
     apply clarsimp
     apply (drule mp)
      apply clarsimp
+     apply (rename_tac xa)
      apply (case_tac xa)
        apply simp
       apply blast
      apply blast
     apply (erule notE)
     apply clarsimp
+    apply (rename_tac xa)
     apply (case_tac xa)
       apply simp
      apply blast
@@ -806,8 +833,7 @@ lemma one_wp_err_sound_set: "wp_err_sound_set (one s) loc P senv
   apply (clarsimp simp add: lookup_exec_update_one)
   by blast
 
-subsection "All Lemmas"
-
+subsection \<open>All Lemmas\<close>
 lemma PdToSet_all:
   "PdToSet ((all_s s) e) = {E (Node l x1 x2) | l x1 x2 e1 e2. e = Node l e1 e2 \<and> E x1 \<in> PdToSet (s e1) \<and> E x2 \<in> PdToSet (s e2)}
                    \<union> {E (Leaf l) | l. e = Leaf l }
@@ -825,16 +851,6 @@ lemma PdToSet_all:
   using Rep_powerdomain[simplified] 
   by (metis equals0I exp_err_div.exhaust)
 
-(*lemma lookup_exec_update_all:
-  assumes "e \<in> defined loc" 
-  shows  "lookup_exec_update (all s) loc e senv 
-                                    = {E y | x y. e \<in> defined (loc \<triangleright> Left) \<and> x \<in> defined (loc \<triangleright> Right) \<and> E x \<in> lookup_exec_update s (loc \<triangleright> Left) e senv
-                                            \<and> E y \<in> lookup_exec_update s (loc \<triangleright> Right) x senv}
-                                      \<union> {d. d = Div \<and> e \<in> defined (loc \<triangleright> Left) \<and> Div \<in> lookup_exec_update s (loc \<triangleright> Left) e senv}
-                                      \<union> {d. d = Div \<and> e \<in> defined (loc \<triangleright> Right) \<and> Div \<in> lookup_exec_update s (loc \<triangleright> Right) e senv}
-                                      \<union> {err. err = Err \<and> (e \<in> defined (loc \<triangleright> Left) 
-                                                  \<longrightarrow> e \<in> defined (loc \<triangleright> Right) 
-                                                  \<longrightarrow> Err \<in> lookup_exec_update s (loc \<triangleright> Left) e senv \<union> lookup_exec_update s (loc \<triangleright> Right) e senv)}"*)
 lemma lookup_exec_update_all:
   assumes "e \<in> defined loc" 
   shows  "lookup_exec_update (all s) loc e senv 
@@ -935,12 +951,14 @@ lemma all_wp_sound_set: "wp_sound_set (all s) loc P senv = (P \<inter> {e | e x.
   apply (simp add: wp_sound_set_def)
   apply (rule subset_antisym)
    apply (rule subsetI)
+  apply (rename_tac x)
    apply clarsimp
    apply (simp add: lookup_exec_update_all)
    apply clarsimp
    apply (rule conjI)
   using append_undefined_lookup_id apply (smt (verit, ccfv_threshold) Collect_mono_iff Setcompr_eq_image exp_err_div.inject)
    apply clarsimp
+  apply (rename_tac xa)
    apply (case_tac xa)
      apply clarsimp
   using append_undefined_lookup_id apply (smt (verit, ccfv_threshold) Collect_mem_eq Collect_mono_iff exp_err_div.distinct(1) exp_err_div.inject image_iff)
@@ -961,12 +979,14 @@ lemma all_wp_sound_set: "wp_sound_set (all s) loc P senv = (P \<inter> {e | e x.
   using append_undefined_lookup_id apply (smt (verit, del_insts) exp_err_div.inject exp_err_div.simps(7) imageE mem_Collect_eq subsetD)
   apply (rule subsetI)
   apply clarsimp
+  apply (rename_tac x)
   apply (rule conjI)
   using defined_append apply blast
   apply (elim conjE disjE)
     apply (simp add: lookup_exec_update_all)
   using lookup_id_append_undefined apply blast
    apply clarsimp
+   apply (rename_tac xa)
    apply (frule defined_append)
    apply (simp add: lookup_exec_update_all)
    apply (case_tac xa)
@@ -985,6 +1005,7 @@ lemma all_wp_sound_set: "wp_sound_set (all s) loc P senv = (P \<inter> {e | e x.
   apply clarsimp
   apply (frule defined_append)
   apply (simp add: lookup_exec_update_all)
+  apply (rename_tac xa)
   apply (case_tac xa)
     apply clarsimp
     apply (frule_tac s = s and x = x and senv = senv in lookup_exec_update_nonempty)
@@ -999,7 +1020,6 @@ lemma all_wp_sound_set: "wp_sound_set (all s) loc P senv = (P \<inter> {e | e x.
   apply clarsimp
   using div_left_after_right by blast
 
-
 (* wp_err_sound_set rule for all (simplified wp rule) *)
 lemma all_wp_err_sound_set: "wp_err_sound_set (all s) loc P senv 
                       = (P \<inter> {e | e x. e \<in> defined loc \<and> lookup loc e = Leaf x})
@@ -1008,6 +1028,7 @@ lemma all_wp_err_sound_set: "wp_err_sound_set (all s) loc P senv
   apply (simp add: wp_err_sound_set_def)
   apply (rule subset_antisym)
    apply (rule subsetI)
+   apply (rename_tac x)
    apply simp
    apply (case_tac "x \<notin> defined (loc\<triangleright>pos.Left)")
     apply clarsimp
@@ -1022,21 +1043,24 @@ lemma all_wp_err_sound_set: "wp_err_sound_set (all s) loc P senv
    apply (clarsimp)
    apply (intro conjI)
      apply (rule subsetI)
+     apply (rename_tac xa)
      apply (frule defined_left_right)
      apply (case_tac xa)
        apply simp
       apply simp
       apply (rule imageI)
       apply clarsimp
+      apply (rename_tac x1)
       apply (frule lookup_exec_update_defined[rule_format], simp)
       apply (rule conjI)
        apply (rule defined_left_right, simp)
       apply (rule subsetI)
-      apply (case_tac xa)
+      apply (rename_tac xb)
+      apply (case_tac xb)
         apply simp
-       apply (drule_tac c = xa in subsetD)
+       apply (drule_tac c = xb in subsetD)
         apply simp
-        apply (rule_tac x = x2 in exI)
+        apply (rule_tac x = x1 in exI)
         apply (rule conjI)
          apply (rule defined_left_right, simp)
         apply blast
@@ -1048,25 +1072,30 @@ lemma all_wp_err_sound_set: "wp_err_sound_set (all s) loc P senv
      apply blast
     apply (rule defined_left_right,simp)
    apply (rule subsetI)
+   apply (rename_tac xa)
    apply (case_tac xa)
      apply simp
+    apply (rename_tac x1)
     apply simp
     apply (rule imageI)
     apply simp
     apply (rule)
      apply (rule defined_right_left, rule lookup_exec_update_defined[rule_format], rule defined_left_right, simp, simp)
     apply (rule subsetI)
+    apply (rename_tac xb)
     apply (case_tac xb)
       apply simp
+     apply (rename_tac x2)
      apply simp
      apply (frule lookup_exec_update_left_right_swap[THEN iffD2], rule defined_left_right, simp)
-      apply (rule_tac x = "x2" in exI, rule conjI)
+      apply (rule_tac x = "x1" in exI, rule conjI)
        apply simp
       apply simp
      apply (elim exE conjE)
-     apply (drule_tac c = "E x2a" in subsetD)
+     apply (drule_tac c = "E x2" in subsetD)
       apply simp
-      apply (rule_tac x = i in exI)
+      apply (rename_tac x3)
+      apply (rule_tac x = x3 in exI)
       apply (intro conjI)
         apply (rule defined_right_after_left, simp, rule defined_left_right, simp)
        apply simp
@@ -1082,6 +1111,7 @@ lemma all_wp_err_sound_set: "wp_err_sound_set (all s) loc P senv
   apply (intro conjI)
    apply (rule subsetI)
    apply clarsimp
+   apply (rename_tac x xa xb)
    apply (case_tac xa, simp)
     apply (simp add: lookup_exec_update_all)
     apply clarsimp
@@ -1104,7 +1134,7 @@ lemma all_wp_err_sound_set: "wp_err_sound_set (all s) loc P senv
    apply blast
   by blast
 
-subsection "Some Lemmas"
+subsection \<open>Some Lemmas\<close>
 lemma PdToSet_some: 
   "PdToSet ((some_s s) e) = {E (Node l x1 x2) | l x1 x2 e1 e2. e = Node l e1 e2 \<and> E x1 \<in> PdToSet (s e1) \<and> E x2 \<in> PdToSet (s e2)}
                     \<union> {E (Node l x e2) | l x e1 e2. e = Node l e1 e2 \<and> E x \<in> PdToSet (s e1) \<and> Err \<in> PdToSet (s e2)} 
@@ -1160,6 +1190,7 @@ next
      apply (case_tac e)
       apply simp
      apply clarsimp
+     apply (rename_tac x1 x2 x3)
      apply (rule set_eqI)
      apply clarsimp
      apply (rule iffI)
@@ -1169,7 +1200,8 @@ next
                   apply simp
                   apply (rule disjI2)
                   apply (rule disjI2)
-                  apply (rule_tac x="Node x21 xb x23" in exI)
+                  apply (rename_tac xb)
+                  apply (rule_tac x="Node x1 xb x3" in exI)
                   apply (rule conjI)
                    apply blast
     using defined_right_after_left apply simp
@@ -1222,7 +1254,6 @@ next
     by blast
 qed
 
-
 (* wp_sound_set rule for some (simplified wp rule) *)
 lemma some_wp_sound_set: "wp_sound_set (some s) loc P senv 
                       = wp_sound_set s (loc \<triangleright> Left) (wp_sound_set s (loc \<triangleright> Right) P senv) senv
@@ -1232,6 +1263,7 @@ lemma some_wp_sound_set: "wp_sound_set (some s) loc P senv
   apply (simp add: wp_sound_set_def wp_err_sound_set_def)
   apply (rule subset_antisym)
    apply (rule subsetI)
+   apply (rename_tac x)
    apply (simp add: lookup_exec_update_some)
    apply simp
    apply (case_tac "x \<in> defined (loc\<triangleright>pos.Right)")
@@ -1250,11 +1282,13 @@ lemma some_wp_sound_set: "wp_sound_set (some s) loc P senv
      apply (rule disjI2)
      apply (rule conjI)
       apply (rule subsetI)
+      apply (rename_tac xa)
       apply (case_tac xa)
         apply blast
        apply auto[1]
       apply blast
      apply (rule subsetI)
+     apply (rename_tac xa)
      apply (case_tac xa)
        apply blast
       apply clarsimp
@@ -1265,6 +1299,7 @@ lemma some_wp_sound_set: "wp_sound_set (some s) loc P senv
         apply simp
        apply simp
       apply (rule subsetI)
+      apply (rename_tac xa)
       apply (case_tac xa)
         apply blast
   using lookup_exec_update_left_right_swap apply fast
@@ -1277,12 +1312,14 @@ lemma some_wp_sound_set: "wp_sound_set (some s) loc P senv
      apply (rule conjI)
       apply simp
       apply (rule subsetI)
+      apply (rename_tac xa)
       apply(case_tac xa)
         apply blast
        apply blast
       apply blast
      apply simp
      apply (rule subsetI)
+     apply (rename_tac xa)
      apply(case_tac xa)
        apply blast
       apply simp
@@ -1293,6 +1330,7 @@ lemma some_wp_sound_set: "wp_sound_set (some s) loc P senv
         apply simp
        apply blast
       apply (rule subsetI)
+      apply (rename_tac xa)
       apply(case_tac xa)
         apply blast
        apply fast
@@ -1301,6 +1339,7 @@ lemma some_wp_sound_set: "wp_sound_set (some s) loc P senv
     apply (rule disjI1)
     apply simp
     apply (rule subsetI)
+    apply (rename_tac xa)
     apply(case_tac xa)
       apply blast
      apply clarsimp
@@ -1311,6 +1350,7 @@ lemma some_wp_sound_set: "wp_sound_set (some s) loc P senv
        apply simp
       apply simp
      apply (rule subsetI)
+     apply (rename_tac xa)
      apply(case_tac xa)
   using err_right_after_left apply simp
       apply blast
@@ -1321,6 +1361,7 @@ lemma some_wp_sound_set: "wp_sound_set (some s) loc P senv
    apply (simp add: lookup_exec_update_some)
    apply blast
   apply (rule subsetI)
+  apply (rename_tac x)
   apply (simp add: lookup_exec_update_some)
   apply (subgoal_tac "x \<in> defined loc")
    apply simp
@@ -1328,7 +1369,8 @@ lemma some_wp_sound_set: "wp_sound_set (some s) loc P senv
       apply (simp add: lookup_exec_update_some)
       apply (intro conjI)
            apply clarsimp
-           apply (drule_tac c="E xb" in subsetD)
+           apply (rename_tac xa)
+           apply (drule_tac c="E xa" in subsetD)
             apply blast
   using err_right_after_left  apply blast
           apply blast
@@ -1337,7 +1379,8 @@ lemma some_wp_sound_set: "wp_sound_set (some s) loc P senv
         apply (rotate_tac 1)
         apply (frule_tac s=s and senv=senv in lookup_exec_update_nonempty)
         apply(erule exE)
-        apply (case_tac r)
+        apply (rename_tac xb)
+        apply (case_tac xb)
           apply auto[1]
   using div_right_after_left apply blast
         apply blast
@@ -1353,7 +1396,8 @@ lemma some_wp_sound_set: "wp_sound_set (some s) loc P senv
          apply (rotate_tac 1)
          apply (frule_tac s=s and senv=senv in lookup_exec_update_nonempty)
          apply(erule exE)
-         apply (case_tac r)
+         apply (rename_tac xb)
+         apply (case_tac xb)
            apply blast
   using div_left_after_right apply blast
          apply blast
@@ -1373,7 +1417,8 @@ lemma some_wp_sound_set: "wp_sound_set (some s) loc P senv
       apply (rotate_tac 4)
       apply (frule_tac s=s and senv=senv in lookup_exec_update_nonempty)
       apply (erule exE)
-      apply (case_tac r)
+      apply (rename_tac xb)
+      apply (case_tac xb)
         apply blast
   using div_right_after_left apply blast
       apply blast
@@ -1387,7 +1432,8 @@ lemma some_wp_sound_set: "wp_sound_set (some s) loc P senv
        apply (rotate_tac 4)
        apply (frule_tac s=s and senv=senv in lookup_exec_update_nonempty)
        apply (erule exE)
-       apply (case_tac r)
+       apply (rename_tac xb)
+       apply (case_tac xb)
          apply blast
   using div_left_after_right apply blast
        apply blast
@@ -1409,6 +1455,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
   apply (simp add: wp_sound_set_def wp_err_sound_set_def)
   apply (rule subset_antisym)
    apply (rule subsetI)
+   apply (rename_tac x)
    apply simp
    apply (erule conjE)
    apply (simp add: lookup_exec_update_some)
@@ -1423,6 +1470,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
       apply simp
       apply (intro conjI)
          apply (rule subsetI)
+         apply (rename_tac xa)
          apply (case_tac xa)
            apply blast
           apply clarsimp
@@ -1431,12 +1479,14 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
           apply (rule conjI)
   using defined_right_after_left apply simp
           apply (rule subsetI)
+          apply (rename_tac xa)
           apply (case_tac xa)
             apply blast
            apply fast
   using div_right_after_left apply simp
          apply blast
         apply (rule subsetI)
+        apply (rename_tac xa)
         apply (case_tac xa)
           apply blast
          apply clarsimp
@@ -1445,6 +1495,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
          apply (rule conjI)
   using defined_left_after_right apply simp
          apply (rule subsetI)
+         apply (rename_tac xa)
          apply (case_tac xa)
            apply blast
   using lookup_exec_update_left_right_swap apply fast
@@ -1452,12 +1503,14 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
         apply auto[1]
        apply (rule disjI1)
        apply (rule subsetI)
+       apply (rename_tac xa)
        apply (case_tac xa)
          apply blast
         apply blast
        apply blast
       apply (rule disjI1)
       apply (rule subsetI)
+      apply (rename_tac xa)
       apply (case_tac xa)
         apply blast
        apply blast
@@ -1465,6 +1518,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
      apply simp
      apply (intro conjI)
         apply (rule subsetI)
+        apply (rename_tac xa)
         apply (case_tac xa)
           apply blast
          apply clarsimp
@@ -1473,12 +1527,14 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
          apply (rule conjI)
   using defined_right_after_left apply auto[1]
          apply (rule subsetI)
+         apply (rename_tac xa)
          apply (case_tac xa)
            apply blast
           apply fast
   using div_right_after_left apply simp
         apply blast
        apply (rule subsetI)
+       apply (rename_tac xa)
        apply (case_tac xa)
          apply blast
         apply clarsimp
@@ -1487,6 +1543,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
         apply (rule conjI)
   using defined_left_after_right apply simp
         apply (rule subsetI)
+        apply (rename_tac xa)
         apply (case_tac xa)
           apply blast
   using lookup_exec_update_left_right_swap apply fast
@@ -1494,6 +1551,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
        apply auto[1]
       apply (rule disjI2)
       apply (rule subsetI)
+      apply (rename_tac xa)
       apply (case_tac xa)
         apply blast
        apply clarsimp
@@ -1502,6 +1560,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
        apply (rule conjI)
   using defined_right_after_left apply auto[1]
        apply (rule subsetI)
+       apply (rename_tac xa)
        apply (case_tac xa)
   using err_right_after_left apply simp
         apply fast
@@ -1509,6 +1568,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
       apply blast
      apply (rule disjI1)
      apply (rule subsetI)
+     apply (rename_tac xa)
      apply (case_tac xa)
        apply blast
       apply auto[1]
@@ -1517,6 +1577,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
      apply simp
      apply (intro conjI)
         apply (rule subsetI)
+        apply (rename_tac xa)
         apply (case_tac xa)
           apply blast
          apply clarsimp
@@ -1525,12 +1586,14 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
          apply (rule conjI)
   using defined_right_after_left apply simp
          apply (rule subsetI)
+         apply (rename_tac xa)
          apply (case_tac xa)
            apply blast
           apply fast
   using div_right_after_left apply auto[1]
         apply blast
        apply (rule subsetI)
+       apply (rename_tac xa)
        apply (case_tac xa)
          apply blast
         apply clarsimp
@@ -1539,6 +1602,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
         apply (rule conjI)
   using defined_left_after_right apply auto[1]
         apply (rule subsetI)
+        apply (rename_tac xa)
         apply (case_tac xa)
           apply blast
   using lookup_exec_update_left_right_swap apply fast
@@ -1546,12 +1610,14 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
        apply auto[1]
       apply (rule disjI1)
       apply (rule subsetI)
+      apply (rename_tac xa)
       apply (case_tac xa)
         apply blast
        apply blast
       apply blast
      apply (rule disjI2)
      apply (rule subsetI)
+     apply (rename_tac xa)
      apply (case_tac xa)
        apply blast
       apply clarsimp
@@ -1560,6 +1626,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
       apply (rule conjI)
   using defined_left_after_right apply auto[1]
       apply (rule subsetI)
+      apply (rename_tac xa)
       apply (case_tac xa)
   using err_left_after_right apply simp
   using lookup_exec_update_left_right_swap apply fast
@@ -1568,6 +1635,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
     apply simp
     apply (intro conjI)
        apply (rule subsetI)
+       apply (rename_tac xa)
        apply (case_tac xa)
          apply blast
         apply clarsimp
@@ -1576,12 +1644,14 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
         apply (rule conjI)
   using defined_right_after_left apply auto[1]
         apply (rule subsetI)
+        apply (rename_tac xa)
         apply (case_tac xa)
           apply blast
          apply fast
   using div_right_after_left apply simp
        apply blast
       apply (rule subsetI)
+      apply (rename_tac xa)
       apply (case_tac xa)
         apply blast
        apply clarsimp
@@ -1590,6 +1660,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
        apply (rule conjI)
   using defined_left_after_right apply auto[1]
        apply (rule subsetI)
+       apply (rename_tac xa)
        apply (case_tac xa)
          apply blast
   using lookup_exec_update_left_right_swap apply fast
@@ -1597,6 +1668,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
       apply blast
      apply (rule disjI2)
      apply (rule subsetI)
+     apply (rename_tac xa)
      apply (case_tac xa)
        apply blast
       apply clarsimp
@@ -1605,6 +1677,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
       apply (rule conjI)
   using defined_right_after_left apply simp
       apply (rule subsetI)
+      apply (rename_tac xa)
       apply (case_tac xa)
   using err_right_after_left apply simp
        apply fast
@@ -1612,6 +1685,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
      apply blast
     apply (rule disjI2)
     apply (rule subsetI)
+    apply (rename_tac xa)
     apply (case_tac xa)
       apply blast
      apply clarsimp
@@ -1620,6 +1694,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
      apply (rule conjI)
   using defined_left_after_right apply simp
      apply (rule subsetI)
+     apply (rename_tac xa)
      apply (case_tac xa)
   using err_left_after_right apply simp
   using lookup_exec_update_left_right_swap apply fast
@@ -1630,6 +1705,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
     apply simp
    apply simp
   apply (rule subsetI)
+  apply (rename_tac x)
   apply simp
   apply (subgoal_tac "x \<in> defined loc")
    apply simp
@@ -1678,7 +1754,7 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
    apply blast
   using defined_append by blast
 
-subsection "Mu lemmas"
+subsection \<open>Mu lemmas\<close>
 
 lemma update_big_union_equals_big_union_update:
   assumes "x \<in> defined loc"
@@ -1707,6 +1783,7 @@ lemma wp_mu_admissible : "ccpo.admissible Sup (\<le>)
    apply (intro mono_intros)
   apply (rule set_eqI)
   apply simp
+  apply (rename_tac A x)
   apply (case_tac "\<forall> elem \<in> (\<lambda> xa. xa (lookup loc x)) ` (snd ` A). Div \<in> PdToSet elem")
    apply (frule div_Sup_ub[rotated 2])
      apply clarsimp
@@ -1720,7 +1797,8 @@ lemma wp_mu_admissible : "ccpo.admissible Sup (\<le>)
    apply (rule iffI)
     apply clarsimp
     apply (rotate_tac 3)
-    apply (drule_tac x = "((a, b), ba)" in bspec)
+    apply (rename_tac a b c)
+    apply (drule_tac x = "((a, b), c)" in bspec)
      apply simp
     apply simp
   using update_inter_err_div apply blast
@@ -1728,6 +1806,7 @@ lemma wp_mu_admissible : "ccpo.admissible Sup (\<le>)
    apply (simp add: update_big_union_equals_big_union_update)
    apply blast
   apply clarsimp
+  apply (rename_tac a b c)
   apply (frule_tac A="(\<lambda> xa. xa (lookup loc x)) ` (snd ` A)" in no_div_Sup_ub[rotated 2])
     apply clarsimp
     apply (frule chain_snd_exist)
@@ -1738,7 +1817,8 @@ lemma wp_mu_admissible : "ccpo.admissible Sup (\<le>)
   apply clarsimp
   apply (rule iffI)
    apply clarsimp
-   apply (subgoal_tac "ba (lookup loc x) = bc (lookup loc x)")
+   apply (rename_tac a1 b1 c1)
+   apply (subgoal_tac "c (lookup loc x) = c1 (lookup loc x)")
     apply simp
     apply blast
    apply (rule antisym)
@@ -1778,6 +1858,7 @@ lemma wp_err_mu_admissible : "ccpo.admissible Sup (\<le>)
    apply (intro mono_intros)
   apply (rule set_eqI)
   apply simp
+  apply (rename_tac A x)
   apply (case_tac "\<forall> elem \<in> (\<lambda> xa. xa (lookup loc x)) ` (snd ` A). Div \<in> PdToSet elem")
    apply (frule div_Sup_ub[rotated 2])
      apply clarsimp
@@ -1791,7 +1872,8 @@ lemma wp_err_mu_admissible : "ccpo.admissible Sup (\<le>)
    apply (rule iffI)
     apply clarsimp
     apply (rotate_tac 3)
-    apply (drule_tac x = "((a, b), ba)" in bspec)
+    apply (rename_tac a b c)
+    apply (drule_tac x = "((a, b), c)" in bspec)
      apply simp
     apply simp
   using update_inter_err_div apply blast
@@ -1807,9 +1889,11 @@ lemma wp_err_mu_admissible : "ccpo.admissible Sup (\<le>)
    apply (rule imageI)
   using image_iff apply fastforce
   apply clarsimp
+  apply (rename_tac a b c)
   apply (rule iffI)
    apply clarsimp
-   apply (subgoal_tac "ba (lookup loc x) = bc (lookup loc x)")
+   apply (rename_tac a1 b1 c1)
+   apply (subgoal_tac "c (lookup loc x) = c1 (lookup loc x)")
     apply simp
     apply blast
    apply (rule antisym)
@@ -1841,7 +1925,7 @@ lemma wp_err_mu_admissible : "ccpo.admissible Sup (\<le>)
   by fastforce
 
 
-section "Soundness theorem"
+subsection \<open>Soundness theorem\<close>
 
 theorem wp_wp_err_soundness: 
   assumes "\<forall> X l P. (Rep_pt (env (X, Tot) l) P) 

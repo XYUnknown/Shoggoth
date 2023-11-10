@@ -1,3 +1,5 @@
+section \<open>The Denotational Semantics and Big-Step Operational Semantics are Equivalent\<close>
+
 theory SemanticsEquivalence
   imports Denotational Operational WpSoundness
 begin
@@ -72,7 +74,7 @@ next
     by auto
 qed
 
-section \<open>Computational Soundness One\<close>
+subsection \<open>Computational soundness one\<close>
 lemma substitution: 
   assumes "fv s' = {}"
   shows "exec (s \<lbrace> X \<mapsto> s'\<rbrace>) \<xi> = exec s (\<xi>(X := (exec s' \<xi>)))"
@@ -182,8 +184,7 @@ next
     by blast
 qed
 
-
-(* Computational soundness one for non-diverging executions*)
+text \<open>Computational soundness one for non-diverging executions\<close>
 theorem soundness:
   assumes "(s , e) \<Down> e'"
     and "fv s = {}"
@@ -319,7 +320,7 @@ next
     by blast
 qed
 
-section \<open>Computational Adequacy One\<close>
+subsection \<open>Computational adequacy one\<close>
 definition approximate :: "strategy \<Rightarrow> D \<Rightarrow> bool"
   where
     "approximate s d \<longleftrightarrow> (fv s = {}) \<and> (\<forall> e e'. (e' \<in> PdToSet (d e)) \<and> (e' \<noteq> Div) \<longrightarrow> (s, e) \<Down> e')"
@@ -347,8 +348,10 @@ lemma approximate_seq:
   using assms
   unfolding approximate_def
   apply clarsimp
+  apply (rename_tac e e')
   apply (simp add: PdToSet_seq)
   apply (elim disjE conjE exE)
+   apply (rename_tac x xa)
    apply (case_tac e')
      apply simp
      apply (rule_tac ?e2.0=xa in big_step.SeqEr2)
@@ -370,6 +373,7 @@ lemma approximate_lc:
   using assms
   unfolding approximate_def
   apply clarsimp
+  apply (rename_tac e e')
   apply (simp add: PdToSet_lc)
   apply (elim disjE conjE exE)
    apply (case_tac e')
@@ -396,6 +400,7 @@ lemma approximate_choice:
   using assms
   unfolding approximate_def
   apply clarsimp
+  apply (rename_tac e e')
   apply (simp add: PdToSet_choice)
   apply (elim disjE conjE exE)
     apply (case_tac e')
@@ -574,7 +579,6 @@ next
     by simp
 qed
 
-
 lemma approximation_lemma : 
   assumes "\<forall> y \<in> (fv s). approximate (\<theta> y) (\<xi> y)"
     and "sc = map_strategy \<theta> s"
@@ -600,6 +604,7 @@ next
     unfolding approximate_def
     apply (simp split: option.split)
     apply clarsimp
+    apply (rename_tac e)
     apply (rule conjI)
      apply clarsimp
     using big_step.Atomic[where atomic=atomic]
@@ -688,6 +693,7 @@ next
      apply (simp add: fun_upd_def)
     apply (simp add: approximate_def)
     apply clarsimp
+    apply (rename_tac e e')
     apply (case_tac e' ; simp)
      apply (rule big_step.FixedPointEr)
      apply (subst map_strategy_subst[simplified fun_upd_def])
@@ -708,7 +714,8 @@ next
     apply (rotate_tac 5)
     apply (drule_tac x="e" in spec)
     apply (rotate_tac 7)
-    apply (drule_tac x="E x2" in spec)
+    apply (rename_tac y)
+    apply (drule_tac x="E y" in spec)
     apply (drule mp)
      apply (simp add: fun_upd_def)
     apply (subgoal_tac "(\<lambda>a. if a = x1 then mu x1. map_strategy (\<theta>(x1 := \<lparr>x1\<rparr>)) s else \<theta> a) = (\<lambda>x. if x = x1 then mu x1. map_strategy (\<lambda>a. if a = x1 then \<lparr>x1\<rparr> else \<theta> a) s else \<theta> x)")
@@ -724,7 +731,7 @@ lemma map_closed_strategy_unchanged:
 proof (induct s arbitrary: \<theta>)
 qed auto
 
-(* The computational adequacy theorem one for non-diverging executions *)
+text \<open> The computational adequacy theorem one for non-diverging executions \<close>
 theorem computational_adequacy:
   assumes "fv (s) = {}"
     and "e' \<in> PdToSet (exec s \<xi> e)"
@@ -740,7 +747,7 @@ theorem computational_adequacy:
   apply (simp add : map_closed_strategy_unchanged)
   by (simp add : approximate_def)
 
-section \<open>Computational Soundness Two\<close>
+subsection \<open>Computational soundness two\<close>
 definition rel :: "strategy \<Rightarrow> D \<Rightarrow> bool" where
   rel_def: "rel s d \<longleftrightarrow> (fv s = {}) \<and> (\<forall>e. (((s,e) \<Up>) \<longrightarrow> Div \<in> PdToSet (d e)) \<and> (d e \<le> exec s (\<lambda>x. undefined) e) )" 
 
@@ -765,8 +772,9 @@ lemma simul_substitution:
   assumes "\<forall>y \<in> fv s1. fv (\<theta> y) = {} \<or> fv (\<theta> y) = {y}"
   shows "exec (map_strategy \<theta> s1) \<xi> = exec s1 (semantics_subst \<theta> \<xi>)"
   using assms apply (induct s1 arbitrary: \<theta> \<xi>; simp)
-  apply (subgoal_tac "\<And> x. exec (map_strategy (\<theta>'(x1 := \<lparr>x1\<rparr>)) s1a) (\<xi>(x1 := x)) 
-                     =  exec s1a ((semantics_subst \<theta>' \<xi>)(x1 := x))")
+  apply (rename_tac x1 s1' \<theta>' \<xi>)
+  apply (subgoal_tac "\<And> x. exec (map_strategy (\<theta>'(x1 := \<lparr>x1\<rparr>)) s1') (\<xi>(x1 := x)) 
+                     =  exec s1' ((semantics_subst \<theta>' \<xi>)(x1 := x))")
    apply simp
   apply (drule_tac x = "(\<theta>'(x1 := \<lparr>x1\<rparr>))" in meta_spec)
   apply (drule_tac x = "(\<xi>(x1 := x))" in meta_spec)
@@ -807,6 +815,7 @@ lemma map_strategy_decomp:
   apply (subst double_substitution)
     apply auto[1]
    apply clarsimp
+   apply (rename_tac y x)
    apply (subgoal_tac "fv (map_strategy (\<theta>(x1 := \<lparr> x1 \<rparr>)) t) \<subseteq> fv t")
     apply (drule_tac x = y in bspec)
      apply simp
@@ -858,6 +867,7 @@ next
       apply fast
      apply (drule sym)
      apply (simp add: simul_substitution)
+     apply (rename_tac e s1' e1)
      apply (subgoal_tac "Div \<in> PdToSet (exec s1 \<xi> e) \<or> E e1 \<in> PdToSet (exec s1 \<xi> e)")
       apply (erule disjE)
        apply (simp add: PdToSet_seq)
@@ -897,6 +907,7 @@ next
       apply (drule meta_mp)
        apply auto[1]
       apply (clarsimp)
+      apply (rename_tac e)
       apply (drule_tac x = e in spec)
       apply simp
       apply (simp add: PdToSet_lc)
@@ -906,6 +917,7 @@ next
      apply (drule meta_mp)
       apply blast
      apply (erule conjE, simp)
+     apply (rename_tac e s1')
      apply (drule_tac x = e in spec)
      apply (erule conjE)
      apply (case_tac "Div \<in> PdToSet (exec s1 \<xi> e)")
@@ -1020,6 +1032,7 @@ next
         apply (rule map_strategy_closed)
         apply simp
        apply (rule allI)
+       apply (rename_tac A e)
        apply (rule conjI)
         apply (rule impI)
         apply (subgoal_tac "Complete_Partial_Order.chain (\<le>) ((\<lambda>x. x e) ` A)")
@@ -1047,6 +1060,7 @@ next
      apply (simp add: bottom_element)
      apply (rule map_strategy_closed)
      apply simp
+    apply (rename_tac x)
     apply (drule_tac x = "\<theta>(x1 := map_strategy \<theta> (mu x1. t))" in meta_spec)
     apply (drule_tac x = "\<xi>(x1 := x)" in meta_spec)
     apply (drule meta_mp)
@@ -1058,6 +1072,7 @@ next
      apply (simp add: fun_upd_def)
     apply (simp add: rel_def)
     apply clarsimp
+    apply (rename_tac x e)
     apply (rule conjI)
      apply clarsimp
      apply (drule_tac x = e in spec)
@@ -1077,6 +1092,7 @@ next
        apply simp
       apply (simp add: map_strategy_subst[simplified fun_upd_def])
      apply (simp add: fun_upd_def)
+    apply (rename_tac x e)
     apply (rule_tac y = "exec t (semantics_subst (\<theta>(x1 := map_strategy \<theta> (mu x1. t)))  (\<lambda>x. undefined)) e" in order_trans)
      apply (rule_tac f = "exec t (\<xi>(x1 := x))" and g = "exec t (semantics_subst (\<theta>(x1 := map_strategy \<theta> (mu x1. t))) (\<lambda>x. undefined))" in le_funD)
      apply (subgoal_tac "exec t (\<xi>(x1 := x)) = exec t (\<lambda>y. if y \<in> fv t then (\<xi>(x1 := x)) y else (\<lambda>x. SetToPd {Div}))")
@@ -1089,6 +1105,7 @@ next
         apply clarsimp
         apply (subst le_fun_def)
         apply (rule allI)
+        apply (rename_tac xa)
         apply (drule_tac x = xa in spec)
         apply (simp add: fun_upd_def)
        apply clarsimp
@@ -1096,6 +1113,7 @@ next
       apply (clarsimp)
       apply (rule conjI)
        apply clarsimp
+       apply (rename_tac xa)
        apply (erule_tac x = xa in ballE)
         apply (erule conjE)
         apply (simp add: le_fun_def)
@@ -1146,7 +1164,7 @@ qed
 lemma map_strategy_fixvar[simp]: "map_strategy (\<lambda>x. \<lparr> x \<rparr>) s = s" 
   by (induct s; simp)
 
-(* Computational soundness two for diverging executions *)
+text \<open>Computational soundness two for diverging executions\<close>
 theorem div_soundness:
   assumes "fv s = {}"
   shows "(s, e) \<Up> \<Longrightarrow> Div \<in> PdToSet (exec s \<xi> e)"
@@ -1156,7 +1174,7 @@ theorem div_soundness:
   apply (simp add: rel_def)
   done
 
-section \<open>Computational Adequacy Two\<close>
+subsection \<open>Computational adequacy two\<close>
 lemma fixp_unfoldE[rule_format, rotated]:
   assumes "mono f" 
   shows   "P (\<mu> X. f X) \<longrightarrow> (P (f (\<mu> X. f X)) \<longrightarrow> R) \<longrightarrow> R" 
@@ -1164,7 +1182,7 @@ lemma fixp_unfoldE[rule_format, rotated]:
   using assms apply simp
   by simp 
 
-(* Computational adequacy two for diverging executions *)
+text \<open>Computational adequacy two for diverging executions\<close>
 theorem div_adequacy:
   assumes "fv s = {}" 
     and "Div \<in> PdToSet (exec s (\<lambda>x. undefined) e)" 
@@ -1174,15 +1192,19 @@ theorem div_adequacy:
    apply (simp split: prod.split)
   using assms apply simp
   apply (simp split: prod.split)
+  apply (rename_tac x)
   apply (case_tac x)
   apply simp
+  apply (rename_tac a b)
   apply (erule conjE)
   apply (case_tac a)
             apply simp
            apply simp
           apply simp
          apply simp
-         apply (case_tac "x4 b"; simp)
+         apply (rename_tac x1)
+         apply (case_tac "x1 b"; simp)
+        apply (rename_tac x2 x3)
         apply simp
         apply (simp add: PdToSet_seq)
         apply (elim exE conjE disjE)
@@ -1190,6 +1212,7 @@ theorem div_adequacy:
          apply (rule disjI2)
          apply simp
          apply (frule computational_adequacy, simp, simp)
+         apply (rename_tac xa xb)
          apply (rule_tac x = xb in exI)
          apply simp
         apply simp
@@ -1211,7 +1234,8 @@ theorem div_adequacy:
    apply (simp add: PdToSet_all)
    apply blast
   apply simp
-  apply (erule_tac f = "\<lambda>x. exec x112 ((\<lambda>x. undefined)(x111 := x))" and P = "\<lambda>m. Div \<in> PdToSet (m b)" in fixp_unfoldE)
+  apply (rename_tac x1 x2)
+  apply (erule_tac f = "\<lambda>x. exec x2 ((\<lambda>x. undefined)(x1 := x))" and P = "\<lambda>m. Div \<in> PdToSet (m b)" in fixp_unfoldE)
    apply (rule disjI1)
    apply (subst substitution)
     apply simp
@@ -1221,13 +1245,14 @@ theorem div_adequacy:
   apply (rule exec_mono)
   by simp
 
-section \<open>The Denotational Semantics and Big-Step Operational Semantics are Equivalent\<close>
+subsection \<open>The semantic equivalence theorem\<close>
 theorem sem_equivalence: 
   assumes "fv s = {}" 
   shows "PdToSet (exec s (\<lambda>x. undefined) e) = { r |r. (s,e) \<Down> r } \<union> { r |r. r = Div \<and> ((s,e) \<Up>) }"
   using assms 
   apply -
   apply (rule set_eqI)
+  apply (rename_tac x)
   apply (rule iffI)
    apply simp
    apply (case_tac "x = Div")
