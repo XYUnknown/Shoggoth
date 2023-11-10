@@ -1174,7 +1174,7 @@ theorem div_soundness:
   apply (simp add: rel_def)
   done
 
-section \<open>Computational adequacy two\<close>
+subsection \<open>Computational adequacy two\<close>
 lemma fixp_unfoldE[rule_format, rotated]:
   assumes "mono f" 
   shows   "P (\<mu> X. f X) \<longrightarrow> (P (f (\<mu> X. f X)) \<longrightarrow> R) \<longrightarrow> R" 
