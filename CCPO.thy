@@ -86,7 +86,7 @@ theorem porcupine_eq: "porcupine_less_eq_paper a b = porcupine_less_eq a b"
 subsection \<open>The powerdomain for defining our denotational semantics\<close>
 instantiation powerdomain :: ord
 begin
-text \<open>This is the Egli-Milner ordering cite\<open>"plotkin:powerdomain"\<close>\<close>
+text \<open>This is the Egli-Milner ordering  \cite{plotkin:powerdomain}\<close>
 definition pd_less_eq : "a \<le> b \<longleftrightarrow> (\<forall> x \<in> (Rep_powerdomain a) . \<exists> y \<in> (Rep_powerdomain b) . x \<le> y) 
                         \<and> (\<forall> y \<in> (Rep_powerdomain b) . \<exists> x \<in> (Rep_powerdomain a) . x \<le> y)" (* Egli-Milner ordering *)
 definition pd_less : "(a:: powerdomain) < b \<longleftrightarrow> a \<le> b \<and> a \<noteq> b "
@@ -173,10 +173,10 @@ shows "pd2 \<le> pd1"
 theorem helper : "\<exists>x. x \<in> P \<Longrightarrow> P \<noteq> {} "
   by force
 
-text \<open> If any element of the chain has no Div, that is the upper bound 
-       no_div_Sup_ub: 
+text \<open>If any element of the chain has no Div, that is the upper bound 
+       @{text "no_div_Sup_ub"}: 
        If there is a point in the Chain with no Div, it is the upper bound:
-       p \<in> A \<Longrightarrow> Div \<notin> Rep_powerdomain p \<Longrightarrow> Sup A = p \<close>
+       @{term "p \<in> A \<Longrightarrow> Div \<notin> Rep_powerdomain p \<Longrightarrow> Sup A = p"} \<close>
 theorem no_div_Sup_ub : "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow>
            p \<in> A \<Longrightarrow> Div \<notin> Rep_powerdomain p \<Longrightarrow> Sup A = p"
   apply (clarsimp simp: pd_Sup)
@@ -196,9 +196,9 @@ theorem no_div_Sup_ub : "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow
 
 declare Abs_powerdomain_inverse[simp]
 
-text \<open> div_Sup_ub:
+text \<open> @{text "div_Sup_ub"}:
        If Div is in all points on the chain, then the upper bound is the union:
-       (\<forall>p \<in> A. Div \<in> Rep_powerdomain p) \<Longrightarrow> Sup A = Abs_powerdomain (\<Union> (Rep_powerdomain ` A)) \<close>
+       @{term "(\<forall>p \<in> A. Div \<in> Rep_powerdomain p) \<Longrightarrow> Sup A = Abs_powerdomain (\<Union> (Rep_powerdomain ` A))"}\<close>
 theorem div_Sup_ub : 
   assumes "A \<noteq> {}" 
   shows "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow>
@@ -214,9 +214,9 @@ theorem bottom_element: "Abs_powerdomain {Div} \<le> x"
 theorem bottom_element': "(\<forall> y. x \<le> y) \<Longrightarrow> Abs_powerdomain {Div} = x"
   using bottom_element pd_ord_anti_sym by blast
 
-text \<open> Sup_empty: 
+text \<open> @{text "Sup_empty"}: 
        If the chain A contains no elements at all, the LUB is just the bottom element {Div}
-       Sup {} = Abs_powerdomain {Div} \<close>
+       @{term "Sup {} = Abs_powerdomain {Div}"}\<close>
 theorem Sup_empty: "Sup {} = Abs_powerdomain {Div}"
   by (simp add: pd_Sup)
 

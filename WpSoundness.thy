@@ -80,14 +80,15 @@ next
   then show ?case by (case_tac pos, fastforce+)+
 qed
 
-subsection \<open>The lookup_exec_update function\<close>
+subsection \<open>The @{text "lookup_exec_update"} function\<close>
 definition lookup_exec_update :: "strategy \<Rightarrow> location \<Rightarrow> exp \<Rightarrow> env \<Rightarrow> exp_err_div set"
   where "lookup_exec_update s loc e senv = (update loc e (PdToSet (exec s senv (lookup loc e))))"
 
 text
  \<open> The following simp rules mean that (for defined locations), you shouldn't usually need to use 
-   lookup_exec_update_def. Instead, these rules give an alternative defn. for lookup_exec_update
-   that doesn't refer to other functions like update, lookup etc. at all \<close>
+   @{text "lookup_exec_update_def"}. Instead, these rules give an alternative definitionn. For 
+   @{text "lookup_exec_update"} that doesn't refer to other functions like update, lookup etc. at 
+   all \<close>
 lemma lookup_exec_update_simp1[simp] : 
   "lookup_exec_update s \<epsilon> e senv = PdToSet (exec s senv e)" 
   by (simp add: lookup_exec_update_def)
@@ -103,8 +104,8 @@ lemma lookup_exec_update_simp3[simp] :
   using assms by (force simp add: lookup_exec_update_def update_inter_err_div)
 
 text
- \<open> If l is defined in an expression, updating that expression with lookup_exec_update will maintain
-   the definedness of l. \<close>
+ \<open> If @{text "l"} is defined in an expression, updating that expression with 
+   @{text "lookup_exec_update"} will maintain the definedness of @{text "l"}. \<close>
 theorem lookup_exec_update_defined:
   assumes "e \<in> defined l"
   shows "\<forall> x. E x \<in> lookup_exec_update s l e senv \<longrightarrow> x \<in> defined l"
@@ -154,8 +155,8 @@ next
 qed
 
 subsection \<open>Order independence lemmas\<close>
-text \<open> A collection of lemmas about defined and lookup_exec_update that are useful for reordering 
-   executions, in e.g. the soundness proofs of all \<close>
+text \<open> A collection of lemmas about defined and @{text "lookup_exec_update"} that are useful for 
+   reordering  executions, in e.g. the soundness proofs of all \<close>
 lemma defined_left_right : "x \<in> defined (loc \<triangleright> Left) \<Longrightarrow> x \<in> defined (loc \<triangleright> Right)"
 proof (induct loc arbitrary: x)
   case empty
@@ -354,7 +355,7 @@ next
     using defined_right_left by auto[1]
 qed
 
-subsection \<open>wp_sound_set and wp_err_sound_set\<close> 
+subsection \<open>@{text "wp_sound_set"} and @{text "wp_err_sound_set"}\<close> 
 
 text 
  \<open> These definitions are an aid to help us to formulate our inductive hypotheses.

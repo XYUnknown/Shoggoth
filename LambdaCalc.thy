@@ -8,7 +8,7 @@ abbreviation "Abs \<equiv> Node ABS (Leaf EMPTY)"
 abbreviation "App l r \<equiv> Node APP l r"
 abbreviation "Idd n \<equiv> Leaf (Var n)" (* Isabelle does not like Id to be used here *)
 
-(* upshift 't \<upharpoonleft> k' moves all indices \<ge> k up by one, for when we go under a binder *)
+(* upshift @{text "t \<upharpoonleft> k"} moves all indices @{text "\<ge> k"} up by one, for when we go under a binder *)
 fun deBruijn_upshift :: "exp \<Rightarrow> nat \<Rightarrow> exp" (infix "\<upharpoonleft>" 50) where
   "Idd n \<upharpoonleft> k = (if n \<ge> k then Idd (Suc n) else Idd n)" 
 | "Abs t      \<upharpoonleft> k = Abs (t \<upharpoonleft> Suc k)"   
@@ -16,8 +16,8 @@ fun deBruijn_upshift :: "exp \<Rightarrow> nat \<Rightarrow> exp" (infix "\<upha
 (* Ignore invalid leaf expressions *)
 | "Leaf b       \<upharpoonleft> k = Leaf b" 
 
-(* substitution 't [\<downharpoonright> k := e ]' replaces variable at index k with e, 
-   and moves all indices greater than k down by one, as the index k is now gone. *)
+(* substitution @{term "t [\<downharpoonright> k := e ]"} replaces variable at index @{text "k"} with @{text "e"}, 
+   and moves all indices greater than @{text "k"} down by one, as the index @{text "k"} is now gone. *)
 fun deBruijn_subst :: "exp \<Rightarrow> exp \<Rightarrow> nat \<Rightarrow> exp" ("_[ _ \<setminus> _ ]" [50,0,0] 50 ) where 
   "Idd n [ e \<setminus> k ] = (if n = k then e else 
                              if n > k then Idd (n - 1) 
@@ -27,8 +27,8 @@ fun deBruijn_subst :: "exp \<Rightarrow> exp \<Rightarrow> nat \<Rightarrow> exp
 (* Ignore invalid leaf expressions *)
 | "Leaf b     [ e \<setminus> k ] = Leaf b"
 
-(* downshift 't \<downharpoonright> k' is a partial operation that requires that the term t does not 
-   mention the variable at index k. It moves all indices > k down by one. *)
+(* downshift @{text "t \<downharpoonright> k"} is a partial operation that requires that the term @{text "t"} does not 
+   mention the variable at index @{text "k"}. It moves all indices @{text "> k"} down by one. *)
 fun deBruijn_downshift :: "exp \<Rightarrow> nat \<Rightarrow> exp option" (infix "\<downharpoonright>" 50) where
   "Idd n \<downharpoonright> k = (if n = k then None 
                               else Some (Idd (if n > k then n - 1 else n)))"

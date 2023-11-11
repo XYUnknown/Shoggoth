@@ -21,8 +21,8 @@ typedef pt = "{pt::exp set \<Rightarrow> exp set. mono pt}"
   by (simp add: mono_def, rule_tac x = "\<lambda>x. x" in exI, simp)
 
 text
- \<open> For predicate transformers a and b, a \<le> b not only requires that they are equal pointwise, but 
-   also that a and b are both monotonic \<close> 
+ \<open> For predicate transformers @{term "a"} and @{term "b"}, @{term "a \<le> b"} not only requires that 
+   they are equal pointwise, but also that a and b are both monotonic \<close> 
 instantiation pt :: ccpo begin
 definition less_eq_pt : 
   "(a :: pt) \<le> b \<longleftrightarrow> mono (Rep_pt a) \<and>  mono (Rep_pt b) \<and> (\<forall>x. Rep_pt a x \<subseteq> Rep_pt b x)"
@@ -145,7 +145,7 @@ fun wp_err :: "strategy \<Rightarrow> location \<Rightarrow> exp set \<Rightarro
                     )) loc) P" 
 
 
-subsection \<open> Monotonicity proofs for wp and wp_err \<close>
+subsection \<open> Monotonicity proofs for @{text "wp"} and @{text "wp_err"} \<close>
 
 definition ap :: "('a \<Rightarrow> 'b) \<times> ('a \<Rightarrow> 'b) \<Rightarrow> 'a \<Rightarrow> ('b \<times>'b)"
   where "ap \<equiv> \<lambda>fg a. (fst fg a, snd fg a)" 

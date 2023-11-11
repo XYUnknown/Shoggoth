@@ -7,13 +7,10 @@ begin
 subsection \<open>Preliminary Lemmas\<close>
 
 text \<open> 
-   This section consists of ported proofs from HOLCF cite\<open>"holcf"\<close> that allow us to define a parallel 
-   fixp induction principle over two mus at once.
-
-   HOLCF does this by transforming induction over two mus into induction over one mu for a product
-   type.
-
-   To do the same here, we must prove some theorems about `iterates`, from Complete_Partial_Order. 
+   This section consists of ported proofs from HOLCF \cite{holcf} that allow us to define a 
+   parallel fixp induction principle over two mus at once. HOLCF does this by transforming induction 
+   over two mus into induction over one mu for a product type. To do the same here, we must prove 
+   some theorems about `iterates`, from @{text "Complete_Partial_Order"}. 
 
    `iterates f` is the set of all repeated iterations of a function f. Starting from a bottom 
    element, we can imagine it as the results of applying `f` any number of times, including 
@@ -25,8 +22,8 @@ text \<open>
    We have four tedious lemmas that allow us to prove some theorems about `iterates`
    for a function on products and relating it to `iterates` for each side of the product.
 
-   These first two lemmas show each direction of the equivalence iterates_fst:
-   (iterates f) = fst ` (iterates (\<lambda>(x,y). (f x, g y)))
+   These first two lemmas show each direction of the equivalence @{text "iterates_fst"}:
+   @{text "(iterates f) = fst ` (iterates (\<lambda>(x,y). (f x, g y)))"}
 \<close>
 
 lemma iterates_fst1: "x \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y)) \<Longrightarrow> fst x \<in> ccpo_class.iterates f"
@@ -62,13 +59,13 @@ lemma iterates_fst2:
   apply force+
   done
 
-text \<open> The next two lemmas show each direction of the equivalence iterates_snd, much the same way:
-       (iterates g) = snd ` (iterates (\<lambda>(x,y). (f x, g y))) \<close>
+text \<open>The next two lemmas show each direction of the equivalence @{text "iterates_snd"}, much the 
+      same way: @{text "(iterates g) = snd ` (iterates (\<lambda>(x,y). (f x, g y)))"} \<close>
 lemma iterates_snd1: "x \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y)) \<Longrightarrow> snd x \<in> ccpo_class.iterates g"
   apply (induct rule: ccpo_class.iterates.induct)
   by (auto simp add: chain_snd_exist prod_Sup iterates.step iterates.Sup)
 
-text \<open> And the other direction, which is structurally the same as for iterates_fst2. \<close>
+text \<open> And the other direction, which is structurally the same as for @{text "iterates_fst2"}. \<close>
 lemma iterates_snd2:
   assumes mono: "mono (\<lambda>(x,y). (f x, g y))"
   shows "x \<in> ccpo_class.iterates g \<Longrightarrow> x \<in> snd ` ccpo_class.iterates (\<lambda>(x, y). (f x, g y))"
@@ -126,9 +123,9 @@ text
    a product type. This is more convenient to prove but not easy to use because the 
    product types interfere with Isabelle's unifier sometimes.
 
-   The parallel_fix_ind theorem below, which is derived from this, should be used instead.
+   The @{text "parallel_fix_ind"} theorem below, which is derived from this, should be used instead.
 
-   Most of this proof code was copied from the fixp_induct proof in Complete_Partial_Order,
+   Most of this proof code was copied from the @{text "fixp_induct proof in Complete_Partial_Order"},
    with modifications inspired by HOLCF. \<close>
 lemma parallel_fixp_induct_prod:
   assumes adm: "ccpo.admissible Sup (\<le>) (\<lambda>x. P x)"
@@ -177,15 +174,14 @@ theorem parallel_fixp_induct:
 subsection \<open>A missing theorem about parallel chains\<close>
 
 text 
- \<open> This theorem, Sup_mono, is proven in HOLCF (as lub_mono) but not Complete_Partial_Order.
-
-   It says that if one chain A is always less than another chain B, the Sup of A will also be 
-   less than the Sup of B.
+ \<open> This theorem, @{text "Sup_mono"}, is proven in HOLCF (as @{text "lub_mono"}) but not 
+   @{text "Complete_Partial_Order"}. It says that if one chain A is always less than another 
+   chain B, the Sup of A will also be less than the Sup of B.
 
    By "always less than", we mean that the chains are arranged in parallel ordering. In countable 
-   chains like HOLCF, this means \<forall>i. A i \<le> B i, for all indices i. But for our uncountable chains,
-   we must use a chain of pairs, and the individual chains A and B are retrieved by using 
-   fst and snd. \<close>
+   chains like HOLCF, this means @{term "\<forall>i. A i \<le> B i"}, for all indices @{text "i"}. But for our 
+   uncountable chains, we must use a chain of pairs, and the individual chains A and B are retrieved 
+   by using @{text "fst"} and @{text "snd"}. \<close>
 
 lemma below_Sup: "Complete_Partial_Order.chain (\<le>) (S :: ('a::ccpo) set) \<Longrightarrow>
                   x \<in> S \<Longrightarrow> i \<le> x \<Longrightarrow> i \<le> Sup S"

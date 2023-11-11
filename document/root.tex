@@ -4,6 +4,7 @@
 
 % this should be the last package used
 \usepackage{pdfsetup}
+\usepackage{mathabx}
 
 % urls in roman style, theory text in math-similar italics
 \urlstyle{rm}
@@ -23,7 +24,9 @@
 \tableofcontents
 
 % include generated text of all theories
+\begin{flushleft}
 \input{session}
+\end{flushleft}
 
 \bibliographystyle{abbrv}
 \bibliography{root}
