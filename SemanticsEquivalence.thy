@@ -155,7 +155,7 @@ next
     by auto
 next
   case (Seq s1 s2)
-  then show ?case try
+  then show ?case
     by auto
 next
   case (Left_Choice s1 s2)
