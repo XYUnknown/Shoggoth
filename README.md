@@ -68,17 +68,25 @@ Here are some general information about this artifact:
 - File structure:
 ```
 .
+.
 ├── CCPO.thy
-├── Syntax.thy
 ├── Denotational.thy
 ├── LambdaCalc.thy
 ├── MonoDenotational.thy
 ├── Operational.thy
 ├── README.md
+├── ROOT
 ├── SemanticsEquivalence.thy
+├── Syntax.thy
 ├── Wp.thy
 ├── WpExamples.thy
-└── WpSoundness.thy
+├── WpSoundness.thy
+└── document
+    ├── root.bib
+    └── root.tex
 ``````
 - All important theorems are highlighted in the list of claims.
 - Using a machine with <=8 GB memory to run these proofs is not recommended since it will be very slow.
+- To build the proof document, use the command: `isabelle build -D . -v -c -o document=pdf -o document_output=output`
+## Misc
+- All powerdomain constructions are currently specific to `exp_err_div`, since we are working with flat domains and we take advantage of such a construction for defining the partial order on the powerdomain. A future improvement can be done to make the powerdomain construction more modular by parameterising the construction by an arbitrary set.
