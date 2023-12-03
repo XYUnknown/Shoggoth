@@ -3,7 +3,7 @@ section \<open>Chain Complete Partial Order\<close>
 text \<open>The Chain-Complete Partial Order for defining the denotational semantics of extended System S\<close>
 
 theory CCPO
-  imports Main HOL.Complete_Partial_Order
+  imports Main "HOL.Complete_Partial_Order" "HOL-Library.Product_Order"
 begin
 
 datatype label = PLUS | MULT | Nat nat | APP | ABS | Var nat | EMPTY
@@ -13,51 +13,13 @@ datatype exp_err_div = Err | E exp  | Div
 typedef powerdomain = "{x | x :: exp_err_div set .  x \<noteq> {}}"
   by auto
 
-instantiation prod :: (Sup, Sup) Sup
-begin
-definition prod_Sup : "Sup (a::('a \<times> 'b) set) = (Sup (fst ` a) , Sup (snd ` a))"
-instance ..
-end
-
-instantiation prod :: (ord, ord) ord
-begin
-definition prod_less_eq : "a \<le> b \<longleftrightarrow> (fst a) \<le> (fst b) \<and> (snd a) \<le> (snd b)"
-definition prod_less : "(a::'a \<times> 'b) < b \<longleftrightarrow> a \<le> b \<and> \<not> b \<le> a"
-instance ..
-end
-
-instantiation prod :: (preorder, preorder) preorder
-begin
-instance 
-  apply intro_classes
-    apply (simp add: prod_less)
-   apply (simp add: prod_less_eq)
-  by (meson order_trans prod_less_eq)
-end
-
-instantiation prod :: (order, order) order
-begin
-instance 
-  apply intro_classes
-  by (force simp: prod_less_eq)
-end
-
 lemma chain_fst_exist : 
   "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow> Complete_Partial_Order.chain (\<le>) (fst ` A)"
-  using chain_imageI prod_less_eq by blast
+  using chain_imageI fst_mono by blast
 
 lemma chain_snd_exist : 
   "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow> Complete_Partial_Order.chain (\<le>) (snd ` A)"
-  using chain_imageI prod_less_eq by blast
-
-instantiation prod :: (ccpo, ccpo) ccpo
-begin
-instance
-  apply intro_classes
-   apply (simp add: ccpo_Sup_upper chain_fst_exist chain_snd_exist prod_Sup prod_less_eq)
-  apply (simp add: prod_less_eq prod_Sup)
-  by (metis ccpo_Sup_least imageE chain_fst_exist chain_snd_exist)
-end
+  using chain_imageI snd_mono by blast
 
 instantiation exp_err_div :: ord
 begin
@@ -84,11 +46,13 @@ theorem porcupine_eq: "porcupine_less_eq_paper a b = porcupine_less_eq a b"
   using porcupine_less_eq_paper_def porcupine_less_eq_def by auto
 
 subsection \<open>The powerdomain for defining our denotational semantics\<close>
+
 instantiation powerdomain :: ord
 begin
 text \<open>This is the Egli-Milner ordering  \cite{plotkin:powerdomain}\<close>
 definition pd_less_eq : "a \<le> b \<longleftrightarrow> (\<forall> x \<in> (Rep_powerdomain a) . \<exists> y \<in> (Rep_powerdomain b) . x \<le> y) 
-                        \<and> (\<forall> y \<in> (Rep_powerdomain b) . \<exists> x \<in> (Rep_powerdomain a) . x \<le> y)" (* Egli-Milner ordering *)
+                        \<and> (\<forall> y \<in> (Rep_powerdomain b) . \<exists> x \<in> (Rep_powerdomain a) . x \<le> y)" 
+                          (* Egli-Milner ordering *)
 definition pd_less : "(a:: powerdomain) < b \<longleftrightarrow> a \<le> b \<and> a \<noteq> b "
 instance ..
 end
@@ -98,6 +62,7 @@ lemma porcupine_eglimilner : "a \<le> b \<longleftrightarrow> porcupine_less_eq 
    apply (simp_all add: porcupine_less_eq_def pd_less_eq)
   using Rep_powerdomain_inject exp_err_div_less_eq apply fastforce
   using Rep_powerdomain exp_err_div_less_eq by auto[1]
+
 declare porcupine_less_eq_def[simp]
 
 lemma pd_ord_anti_sym : "(a :: powerdomain) \<le> b \<Longrightarrow> b \<le> a \<Longrightarrow> a = b "
@@ -180,25 +145,26 @@ text \<open>If any element of the chain has no Div, that is the upper bound
 theorem no_div_Sup_ub : "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow>
            p \<in> A \<Longrightarrow> Div \<notin> Rep_powerdomain p \<Longrightarrow> Sup A = p"
   apply (clarsimp simp: pd_Sup)
-  apply (rule,force,rule)
+  apply (rule conjI, clarsimp)
+  apply (rule impI)
   apply (rule Rep_powerdomain_inject[THEN iffD1])
   apply (subgoal_tac "(\<Inter>a\<in>A. upclose (Rep_powerdomain a)) = Rep_powerdomain p")
    apply (subst Abs_powerdomain_inverse)  
   using Rep_powerdomain apply fastforce
   using Rep_powerdomain apply fastforce
   apply (subst upclose_eq)
-  apply (rule)
-  using  dual_order.refl le_INF_iff no_div_collapses no_div_means_eq top_greatest apply fastforce
+  apply(rule equalityI)
+   apply force
   apply clarsimp
   apply (erule disjE)
-   apply clarsimp
+   apply blast
   by (metis (no_types, lifting) Int_Collect image_iff no_div_collapses no_div_means_eq)
 
 declare Abs_powerdomain_inverse[simp]
 
 text \<open> @{text "div_Sup_ub"}:
-       If Div is in all points on the chain, then the upper bound is the union:
-       @{term "(\<forall>p \<in> A. Div \<in> Rep_powerdomain p) \<Longrightarrow> Sup A = Abs_powerdomain (\<Union> (Rep_powerdomain ` A))"}\<close>
+  If Div is in all points on the chain, then the upper bound is the union:
+  @{term "(\<forall>p \<in> A. Div \<in> Rep_powerdomain p) \<Longrightarrow> Sup A = Abs_powerdomain (\<Union> (Rep_powerdomain ` A))"}\<close>
 theorem div_Sup_ub : 
   assumes "A \<noteq> {}" 
   shows "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow>
@@ -220,30 +186,58 @@ text \<open> @{text "Sup_empty"}:
 theorem Sup_empty: "Sup {} = Abs_powerdomain {Div}"
   by (simp add: pd_Sup)
 
+lemma powerdomain_supA:
+  assumes "Complete_Partial_Order.chain (\<le>) A"
+  and "x1 \<in> A"
+  and "\<exists>x\<in>A. Div \<notin> Rep_powerdomain x \<or> \<not>(\<exists>x\<in>A. Div \<notin> Rep_powerdomain x)"
+shows "x1 \<le> Sup A"
+ apply(cases "\<exists>x\<in>A. Div \<notin> Rep_powerdomain x")
+  using assms  no_div_Sup_ub no_div_collapses apply blast
+ using assms apply (auto simp: porcupine_eglimilner)[1]
+  by (metis (mono_tags, lifting) Abs_powerdomain_inverse UN_I div_Sup_ub empty_not_insert 
+                                 mem_Collect_eq mk_disjoint_insert)
+
+lemma powerdomain_supA':
+  assumes "Complete_Partial_Order.chain (\<le>) A"
+  and "\<And>x. x \<in> A \<Longrightarrow> x \<le> z"
+  and "\<exists>x\<in>A. Div \<notin> Rep_powerdomain x \<or> \<not>(\<exists>x\<in>A. Div \<notin> Rep_powerdomain x)"
+shows "Sup A \<le> z"
+proof - 
+  have "(\<exists>x\<in>A. Div \<notin> Rep_powerdomain x) \<or> (A={}) \<or> (A\<noteq>{} \<and> \<not>(\<exists>x\<in>A. Div \<notin> Rep_powerdomain x))"
+    by blast
+  moreover 
+  { assume "\<exists>x\<in>A. Div \<notin> Rep_powerdomain x"
+    hence ?thesis
+      using assms no_div_Sup_ub by blast
+  } 
+  moreover
+  { assume "A={}"
+    hence ?thesis
+      using assms(3) by blast
+  }
+  moreover 
+  { assume "A\<noteq>{} \<and> \<not>(\<exists>x\<in>A. Div \<notin> Rep_powerdomain x)"
+    hence ?thesis
+      using assms apply simp
+      apply (subst div_Sup_ub)
+         apply (simp_all  add : porcupine_eglimilner)
+      apply (subst Abs_powerdomain_inverse)
+       apply fastforce
+      apply (subst Abs_powerdomain_inverse)
+      using Rep_powerdomain apply (force)
+      by blast
+  }
+  ultimately show ?thesis
+    by blast
+qed
+
 instantiation powerdomain :: ccpo
 begin
 instance
-  apply intro_classes
-   apply (rename_tac A x1)
-   apply (case_tac "\<exists>x\<in>A. Div \<notin> Rep_powerdomain x",clarsimp)
-    (* If Div is not in one of the PD elements, that element is the LUB *) 
-    apply (simp add: no_div_Sup_ub no_div_collapses)
-    (* If Div is in all of the PD elements, the LUB is the union *)
-   apply (auto simp: porcupine_eglimilner)[1]
-  apply (metis (mono_tags, lifting) Abs_powerdomain_inverse UN_I div_Sup_ub empty_not_insert mem_Collect_eq mk_disjoint_insert)
-  apply (rename_tac A z)
-  apply (case_tac "\<exists>x\<in>A. Div \<notin> Rep_powerdomain x")
-   apply (clarsimp simp: no_div_Sup_ub)
-  apply simp
-  apply (case_tac "A = {}")
-   apply (simp add: Sup_empty bottom_element)
-  apply (subst div_Sup_ub)
-     apply (simp_all  add : porcupine_eglimilner)
-  apply (subst Abs_powerdomain_inverse)
-   apply fastforce
-  apply (subst Abs_powerdomain_inverse)
-  using Rep_powerdomain apply (force)
-  by blast
+  apply(intro_classes)   
+  using powerdomain_supA apply blast
+  using powerdomain_supA' 
+  by (metis CCPO.Sup_empty bottom_element ex_in_conv)
 end
 
 text \<open> point-wise lifting to the domain D \<close>

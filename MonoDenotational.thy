@@ -26,82 +26,97 @@ text \<open>
    @{text "(iterates f) = fst ` (iterates (\<lambda>(x,y). (f x, g y)))"}
 \<close>
 
-lemma iterates_fst1: "x \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y)) \<Longrightarrow> fst x \<in> ccpo_class.iterates f"
+lemma iterates_fst1: 
+  "x \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y)) \<Longrightarrow> fst x \<in> ccpo_class.iterates f"
   apply (induct rule: ccpo_class.iterates.induct)
-  by (auto simp add: chain_fst_exist prod_Sup iterates.step iterates.Sup)
-
+  using iterates.step apply force
+  by (simp add: chain_fst_exist fst_Sup iterates.Sup)
+  
 (* Now the other direction of the equivalence, which is extremely hard.. *)
 lemma iterates_fst2: 
   assumes mono: "mono (\<lambda>(x,y). (f x, g y))"
   shows "x \<in> ccpo_class.iterates f \<Longrightarrow> x \<in> fst ` ccpo_class.iterates (\<lambda>(x, y). (f x, g y))"
-  apply (induct rule: iterates.induct)
-    (* Case: If x is in iterates f from just one iteration step, we make the same step on the product side *)
-   apply clarsimp
-   apply (metis (mono_tags, lifting) case_prod_conv fst_conv image_iff iterates.step)
-    (* Case: If x is the Sup of some chain Msubset of `iterates f`, we must construct a new chain 
-     of products, whose left side is M. First, we postulate its existence, and prove it later. *)
-  apply (rename_tac M)
-  apply (subgoal_tac "\<exists>M'. M' \<subseteq> ccpo_class.iterates  (\<lambda>(x, y). (f x, g y)) 
-                         \<and> Complete_Partial_Order.chain (\<le>) M' \<and> fst ` M' = M")
-   apply (clarsimp)
-   apply (frule iterates.Sup [where f = "(\<lambda>(x, y). (f x, g y))"], force)
-   apply (force simp: prod_Sup)
-    (* Now we prove that the chain exists *)
-    (* We use Isabelle's SOME operator to non-constructively pick the element of the right side of the product
-     that matches the left side one from the chain M *)
-  apply (rule_tac x = "{ (x, SOME y. (x, y) \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y))) | x. x \<in> M } " in exI)
-  apply (intro conjI)
+proof (induct rule: iterates.induct)
+  case (step x)
+  then show ?case 
     apply clarsimp
-    apply (rule someI_ex, fastforce)
-   apply (rule chain_subset[OF chain_iterates[OF mono]])
-   apply (clarsimp)
-   apply (rule someI_ex, fastforce)
-  apply force+
-  done
+    by (metis (mono_tags, lifting) case_prod_conv fst_conv image_iff iterates.step)
+next
+  case (Sup M)
+  then show ?case 
+  proof -
+    (* We first prove that the chain exists *)
+    (* We use Isabelle's SOME operator to non-constructively pick the element of the right side of 
+       the product that matches the left side one from the chain M *)
+    have "\<exists>M'\<subseteq>ccpo_class.iterates (\<lambda>(x, y). (f x, g y)). Complete_Partial_Order.chain (\<le>) M' \<and> fst ` M' = M
+             \<and> M' = {(x, SOME y. (x, y) \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y))) |x. x \<in> M}"
+      using Sup.hyps apply clarsimp
+      apply (intro conjI)
+        apply clarsimp
+        apply (rule someI_ex, fastforce)
+       apply (rule chain_subset[OF chain_iterates[OF mono]])
+       apply (clarsimp)
+       apply (rule someI_ex, fastforce)
+      by force
+    thus ?case
+      apply clarsimp
+      apply (frule iterates.Sup [where f = "(\<lambda>(x, y). (f x, g y))"], force)
+      by (metis (mono_tags, lifting) fst_Sup imageI)
+  qed
+qed
 
 text \<open>The next two lemmas show each direction of the equivalence @{text "iterates_snd"}, much the 
       same way: @{text "(iterates g) = snd ` (iterates (\<lambda>(x,y). (f x, g y)))"} \<close>
-lemma iterates_snd1: "x \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y)) \<Longrightarrow> snd x \<in> ccpo_class.iterates g"
+lemma iterates_snd1: 
+  "x \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y)) \<Longrightarrow> snd x \<in> ccpo_class.iterates g"
   apply (induct rule: ccpo_class.iterates.induct)
-  by (auto simp add: chain_snd_exist prod_Sup iterates.step iterates.Sup)
+  using iterates.step apply force
+  by (simp add: chain_snd_exist iterates.Sup snd_Sup)
 
 text \<open> And the other direction, which is structurally the same as for @{text "iterates_fst2"}. \<close>
 lemma iterates_snd2:
   assumes mono: "mono (\<lambda>(x,y). (f x, g y))"
   shows "x \<in> ccpo_class.iterates g \<Longrightarrow> x \<in> snd ` ccpo_class.iterates (\<lambda>(x, y). (f x, g y))"
-  apply (induct rule: iterates.induct)
-   apply clarsimp
-   apply (metis (mono_tags, lifting) case_prod_conv snd_conv image_iff iterates.step)
-  apply (rename_tac M)
-  apply (subgoal_tac "\<exists>M'. M' \<subseteq> ccpo_class.iterates  (\<lambda>(x, y). (f x, g y)) 
-                         \<and> Complete_Partial_Order.chain (\<le>) M' \<and> snd ` M' = M")
-   apply (clarsimp)
-   apply (frule iterates.Sup [where f = "(\<lambda>(x, y). (f x, g y))"], force)
-   apply (force simp: prod_Sup)
-  apply (rename_tac M)
-  apply (rule_tac x = "{ ((SOME x. (x, y) \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y)), y)) | y. y \<in> M } " in exI)
-  apply (intro conjI)
+proof(induct rule: iterates.induct)
+  case (step x)
+  then show ?case
     apply clarsimp
-    apply (rule someI_ex, fastforce)
-   apply (rule chain_subset[OF chain_iterates[OF mono]])
-   apply (clarsimp)
-   apply (rule someI_ex, fastforce)
-  apply force+
-  done
+    by (metis (mono_tags, lifting) case_prod_conv snd_conv image_iff iterates.step)
+next
+  case (Sup M)
+  then show ?case
+  proof-
+    have "\<exists>M'. M' \<subseteq> ccpo_class.iterates  (\<lambda>(x, y). (f x, g y)) 
+                         \<and> Complete_Partial_Order.chain (\<le>) M' \<and> snd ` M' = M
+            \<and> M' = { ((SOME x. (x, y) \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y)), y)) | y. y \<in> M }"
+      using Sup.hyps apply clarsimp
+      apply (intro conjI)
+        apply clarsimp
+        apply (rule someI_ex, fastforce)
+       apply (rule chain_subset[OF chain_iterates[OF mono]])
+       apply (clarsimp)
+       apply (rule someI_ex, fastforce)
+      by force
+    thus ?case
+      using Sup.hyps apply clarsimp
+      apply (frule iterates.Sup [where f = "(\<lambda>(x, y). (f x, g y))"], force)
+      by (metis (no_types, lifting) image_iff snd_Sup)
+  qed
+qed
 
 (* and here are the two equivalences described above *)
 lemma iterates_fst:
   assumes mono: "mono (\<lambda>(x,y). (f x, g y))"
   shows "(ccpo_class.iterates f) = fst ` (ccpo_class.iterates (\<lambda>(x,y). (f x, g y)))" 
-  apply rule
-  using iterates_fst2 mono apply auto[1]
+  apply standard
+  using iterates_fst2 mono  apply blast
   by (simp add: image_subset_iff iterates_fst1)
 
 lemma iterates_snd:
   assumes mono: "mono (\<lambda>(x,y). (f x, g y))"
   shows "(ccpo_class.iterates g) = snd ` (ccpo_class.iterates (\<lambda>(x,y). (f x, g y)))" 
-  apply rule
-  using iterates_snd2 mono apply auto[1]
+  apply standard
+  using iterates_snd2 mono apply blast
   by (simp add: image_subset_iff iterates_snd1)
 
 subsection \<open>Parallel fixed point induction principle\<close>
@@ -116,7 +131,7 @@ lemma admissibleD2:
   shows "P (Sup (fst ` A)) (Sup (snd ` A))"
   using assms 
   apply (simp add: ccpo.admissible_def)
-  by (simp add: prod_Sup)
+  by (simp add: fst_Sup snd_Sup)
 
 text 
  \<open> First, we define parallel fixpoint induction using a unary predicate that takes in 
@@ -127,6 +142,7 @@ text
 
    Most of this proof code was copied from the @{text "fixp_induct proof in Complete_Partial_Order"},
    with modifications inspired by HOLCF. \<close>
+
 lemma parallel_fixp_induct_prod:
   assumes adm: "ccpo.admissible Sup (\<le>) (\<lambda>x. P x)"
   assumes base: "P (Sup {}, Sup {})"
@@ -394,13 +410,13 @@ theorem fun_fst_mono:
   assumes "p1 \<le> p2"
   shows "(fst p1) x \<subseteq> (fst p2) x "
   using assms
-  by (simp add: le_fun_def prod_less_eq)
+  by (metis le_fun_def fst_mono)
 
 theorem fun_snd_mono:
   assumes "p1 \<le> p2"
   shows "(snd p1) x \<subseteq> (snd p2) x"
   using assms
-  by (simp add: le_fun_def prod_less_eq)
+  by (metis le_fun_def snd_mono)
 
 theorem funs_mono:
   assumes "mono f1"

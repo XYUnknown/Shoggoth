@@ -1,4 +1,7 @@
 chapter AFP
+
+sessions "HOL-Library"
+
 session Shoggoth = HOL +
   options [timeout = 600]
   theories
