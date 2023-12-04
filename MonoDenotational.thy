@@ -48,7 +48,8 @@ next
     (* We first prove that the chain exists *)
     (* We use Isabelle's SOME operator to non-constructively pick the element of the right side of 
        the product that matches the left side one from the chain M *)
-    have "\<exists>M'\<subseteq>ccpo_class.iterates (\<lambda>(x, y). (f x, g y)). Complete_Partial_Order.chain (\<le>) M' \<and> fst ` M' = M
+    have "\<exists>M'\<subseteq>ccpo_class.iterates (\<lambda>(x, y). (f x, g y)). Complete_Partial_Order.chain (\<le>) M' 
+             \<and> fst ` M' = M
              \<and> M' = {(x, SOME y. (x, y) \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y))) |x. x \<in> M}"
       using Sup.hyps apply clarsimp
       apply (intro conjI)
@@ -130,8 +131,7 @@ lemma admissibleD2:
   assumes "\<And>x y. (x, y) \<in> A \<Longrightarrow> P x y"
   shows "P (Sup (fst ` A)) (Sup (snd ` A))"
   using assms 
-  apply (simp add: ccpo.admissible_def)
-  by (simp add: fst_Sup snd_Sup)
+  by (simp add: ccpo.admissible_def fst_Sup snd_Sup)
 
 text 
  \<open> First, we define parallel fixpoint induction using a unary predicate that takes in 
@@ -142,36 +142,45 @@ text
 
    Most of this proof code was copied from the @{text "fixp_induct proof in Complete_Partial_Order"},
    with modifications inspired by HOLCF. \<close>
-
 lemma parallel_fixp_induct_prod:
   assumes adm: "ccpo.admissible Sup (\<le>) (\<lambda>x. P x)"
   assumes base: "P (Sup {}, Sup {})"
   assumes mono: "monotone (\<le>) (\<le>) (\<lambda>(x,y). (f x, g y))"
   assumes step: "\<And> x y. P (x, y) \<Longrightarrow> P (f x, g y) "
   shows "P ((\<mu> X. f X),( \<mu> X. g X))"
-  unfolding fixp_def
-  using adm chain_iterates[OF mono]
-  apply (subst iterates_fst[where f=f and g = g, OF mono])
-  apply (subst iterates_snd[where f = f and g = g, OF mono])
-proof (rule admissibleD2)
-  show "Complete_Partial_Order.iterates (\<lambda>(x, y). (f x, g y)) \<noteq> {}"
-    using bot_in_iterates by auto
-next
-  fix x
-  assume "x \<in> Complete_Partial_Order.iterates (\<lambda>(x, y). (f x, g y))"
-  then show "P x"
-  proof (induct rule: iterates.induct)
-    case prems: (step xy)
-    from this(2) show ?case
-      by (metis case_prod_conv local.step old.prod.exhaust)
+proof- 
+  have "P (Sup (fst ` ccpo_class.iterates (\<lambda>(x, y). (f x, g y))), 
+           Sup (snd ` ccpo_class.iterates (\<lambda>(x, y). (f x, g y))))" 
+  proof (rule admissibleD2)
+    show "ccpo.admissible Sup (\<le>) (\<lambda>x. P (fst x, snd x))"
+      using adm by fastforce
   next
-    case (Sup M)
-    then show ?case
-      apply (case_tac "M = {}")
-       apply (simp add: prod_Sup base)
-      by (auto intro: step base ccpo.admissibleD adm)
+    show "Complete_Partial_Order.chain (\<le>) (ccpo_class.iterates (\<lambda>(x, y). (f x, g y)))"
+      by (simp add: chain_iterates mono)
+  next
+    show "Complete_Partial_Order.iterates (\<lambda>(x, y). (f x, g y)) \<noteq> {}"
+      using bot_in_iterates by auto
+  next
+    fix x
+    assume "x \<in> Complete_Partial_Order.iterates (\<lambda>(x, y). (f x, g y))"
+    then show "P x"
+    proof (induct rule: iterates.induct)
+      case prems: (step xy)
+      from this(2) show ?case
+        using step by (metis case_prod_conv old.prod.exhaust)
+    next
+      case (Sup M)
+      then show ?case
+        apply (cases "M = {}")
+        apply (simp add: Sup_prod_def base)
+        using adm ccpo.admissibleD by blast
+    qed
   qed
-qed (auto)
+  thus "P ((\<mu> X. f X),( \<mu> X. g X))"
+    unfolding fixp_def
+    using  assms iterates_fst iterates_snd 
+    by fastforce
+qed
 
 (* Fixed point induction for two mus *)
 theorem parallel_fixp_induct:
@@ -184,8 +193,7 @@ theorem parallel_fixp_induct:
   apply (rule parallel_fixp_induct_prod[where P = "\<lambda>p. P (fst p) (snd p)", simplified])
      apply (simp add: assms)+
   using assms apply (simp add: mono_def)
-   apply (simp add: prod_less_eq, force intro: assms)
-  done
+  by (simp add: local.step)
 
 subsection \<open>A missing theorem about parallel chains\<close>
 
@@ -205,32 +213,31 @@ lemma below_Sup: "Complete_Partial_Order.chain (\<le>) (S :: ('a::ccpo) set) \<L
 
 lemma Sup_below: "Complete_Partial_Order.chain (\<le>) (S :: ('a::ccpo) set) \<Longrightarrow> 
                   Sup S \<le> x \<longleftrightarrow> (\<forall>i \<in> S. i \<le> x)"
-  apply (rule)
-   apply clarsimp
-  using ccpo_Sup_upper order_trans apply blast
+  apply standard
+   using ccpo_Sup_upper order_trans apply blast
   using ccpo_Sup_least by blast
 
 theorem Sup_mono:
-  " Complete_Partial_Order.chain (\<le>) (fst ` A) \<Longrightarrow>
-         Complete_Partial_Order.chain (\<le>) (snd ` A) \<Longrightarrow>
-         \<forall>x\<in>(A :: (('a :: ccpo) \<times> ('a :: ccpo)) set). fst x \<le> snd x \<Longrightarrow> Sup (fst ` A) \<le> Sup (snd ` A)"
+  "Complete_Partial_Order.chain (\<le>) (fst ` A) \<Longrightarrow>
+      Complete_Partial_Order.chain (\<le>) (snd ` A) \<Longrightarrow>
+      \<forall>x\<in>(A :: (('a :: ccpo) \<times> ('a :: ccpo)) set). fst x \<le> snd x \<Longrightarrow> Sup (fst ` A) \<le> Sup (snd ` A)"
   apply (subst Sup_below, simp, clarsimp)
-  apply (rule below_Sup, simp, force, force)
-  done
+  by (rule below_Sup, force+)
 
 subsection \<open>Basic Semantic Operations are Monotonic\<close>
 
 theorem seq_s_mono [simp]:
-assumes "a1 \<le> a2"
-and     "b1 \<le> b2"
-shows "(a1 ;;s b1) \<le> (a2 ;;s b2)"
-  using assms apply (simp add: le_fun_def seq_s_def porcupine_eglimilner)
-  apply (subst Abs_powerdomain_inverse, clarsimp)
-   apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
-  apply (subst Abs_powerdomain_inverse,clarsimp)
-   apply (metis (mono_tags, lifting) Rep_powerdomain equals0I exp_err_div.exhaust mem_Collect_eq)
-  apply (subst Abs_powerdomain_inverse,clarsimp)
-   apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
+ "\<lbrakk>a1 \<le> a2 ; b1 \<le> b2\<rbrakk> \<Longrightarrow> (a1 ;;s b1) \<le> (a2 ;;s b2)"
+  unfolding le_fun_def seq_s_def porcupine_eglimilner porcupine_less_eq_def
+  apply(subst Abs_powerdomain_inverse)
+   using Rep_powerdomain apply clarsimp
+   apply (metis ex_in_conv exp_err_div.exhaust)
+  apply(subst Abs_powerdomain_inverse)
+   using Rep_powerdomain apply clarsimp
+   apply (metis ex_in_conv exp_err_div.exhaust)
+  apply(subst Abs_powerdomain_inverse)
+   using Rep_powerdomain apply clarsimp
+   apply (metis ex_in_conv exp_err_div.exhaust)
   apply clarsimp
   apply (rule conjI)
    apply fastforce
@@ -238,25 +245,23 @@ shows "(a1 ;;s b1) \<le> (a2 ;;s b2)"
   by metis
 
 theorem choice_s_mono [simp]:
-assumes "a1 \<le> a2"
-and     "b1 \<le> b2"
-shows "(a1 ><s b1) \<le> (a2 ><s b2)"
-  using assms apply (simp add: le_fun_def choice_s_def porcupine_eglimilner)
-  using assms apply (simp add: le_fun_def seq_s_def porcupine_eglimilner)
-  apply (subst Abs_powerdomain_inverse, clarsimp)
-   apply (metis (mono_tags, lifting) Rep_powerdomain all_not_in_conv exp_err_div.exhaust mem_Collect_eq)
-  apply (subst Abs_powerdomain_inverse, clarsimp)
-   apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
-  apply (subst Abs_powerdomain_inverse, clarsimp)
-   apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
+  "\<lbrakk>a1 \<le> a2 ; b1 \<le> b2\<rbrakk> \<Longrightarrow> (a1 ><s b1) \<le> (a2 ><s b2)"
+  unfolding le_fun_def choice_s_def porcupine_eglimilner porcupine_less_eq_def
+  apply (subst Abs_powerdomain_inverse)
+   using Rep_powerdomain apply clarsimp
+   apply (metis ex_in_conv exp_err_div.exhaust)
+  apply (subst Abs_powerdomain_inverse)
+   using Rep_powerdomain apply clarsimp
+   apply (metis ex_in_conv exp_err_div.exhaust)
+  apply (subst Abs_powerdomain_inverse)
+   using Rep_powerdomain apply clarsimp
+   apply (metis ex_in_conv exp_err_div.exhaust)
   apply clarsimp
   by blast
 
 theorem lchoice_s_mono [simp]:
-assumes "a1 \<le> a2"
-and     "b1 \<le> b2"
-shows "(a1 <+s b1) \<le> (a2 <+s b2)"
-  using assms apply (simp add: le_fun_def lchoice_s_def  porcupine_eglimilner)
+  "\<lbrakk>a1 \<le> a2 ; b1 \<le> b2\<rbrakk> \<Longrightarrow> (a1 <+s b1) \<le> (a2 <+s b2)"
+  unfolding le_fun_def lchoice_s_def porcupine_eglimilner porcupine_less_eq_def
   apply (subst Abs_powerdomain_inverse, clarsimp)
    using Rep_powerdomain mem_Collect_eq apply fastforce
   apply (subst Abs_powerdomain_inverse, clarsimp)
@@ -266,106 +271,80 @@ shows "(a1 <+s b1) \<le> (a2 <+s b2)"
  using Rep_powerdomain by fastforce
 
 theorem one_s_mono [simp]:
-  assumes "a \<le> b"
-  shows "one_s a \<le> one_s b"
-  using assms apply (simp add: le_fun_def one_s_def porcupine_eglimilner)
-  apply (subst Abs_powerdomain_inverse, clarsimp)
-   apply (rename_tac x)
-   apply (case_tac "x", clarsimp)
-   apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
-  apply (subst Abs_powerdomain_inverse,clarsimp)
-   apply (rename_tac x)
-   apply (case_tac "x", clarsimp)
-   apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
-  apply (subst Abs_powerdomain_inverse, clarsimp)
-   apply (rename_tac x)
-   apply (case_tac "x", clarsimp)
-   apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
+  "a \<le> b \<Longrightarrow> one_s a \<le> one_s b"
+  unfolding le_fun_def one_s_def porcupine_eglimilner porcupine_less_eq_def
+  apply(subst Abs_powerdomain_inverse)
+   using  Rep_powerdomain apply clarsimp 
+   apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
+  apply(subst Abs_powerdomain_inverse)
+   using  Rep_powerdomain apply clarsimp 
+   apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
+  apply(subst Abs_powerdomain_inverse)
+   using Rep_powerdomain apply clarsimp 
+   apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
   apply clarsimp
   apply (rule conjI, clarsimp)
-   apply(elim disjE, clarsimp)
+   apply(elim disjE)
        apply force
       apply force
      apply force
     apply force
    apply force  
-  apply clarsimp
-  apply (rule powerdomain.Abs_powerdomain_inject[THEN iffD2], clarsimp)
-    apply (rename_tac x)
-    apply (case_tac "x", clarsimp)
-    apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
    apply clarsimp
-   apply (rename_tac x)
-   apply (case_tac "x", clarsimp)
-   apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
-  apply (rule set_eqI)
-  by fastforce
+   apply (rule powerdomain.Abs_powerdomain_inject[THEN iffD2], clarsimp)
+     apply (metis (mono_tags,lifting) exp.exhaust Rep_powerdomain ex_in_conv exp_err_div.exhaust 
+                                      mem_Collect_eq)
+   apply clarsimp
+    apply (metis (mono_tags, lifting) exp.exhaust Rep_powerdomain ex_in_conv exp_err_div.exhaust 
+                                      mem_Collect_eq)
+   apply (rule set_eqI)
+   by fastforce
 
 theorem some_s_mono [simp]:
-  assumes "a \<le> b"
-  shows "some_s a \<le> some_s b"  
-  using assms apply (simp add: le_fun_def some_s_def porcupine_eglimilner)
-  apply (subst Abs_powerdomain_inverse, clarsimp)
-   apply (rename_tac x)
-   apply (case_tac "x", simp)
+  "a \<le> b \<Longrightarrow> some_s a \<le> some_s b"  
+  unfolding le_fun_def some_s_def porcupine_eglimilner porcupine_less_eq_def
+  apply(subst Abs_powerdomain_inverse)
+   using  Rep_powerdomain apply clarsimp 
+    apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
+  apply(subst Abs_powerdomain_inverse)
+   using  Rep_powerdomain apply clarsimp 
+   apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
+  apply(subst Abs_powerdomain_inverse)
+   using  Rep_powerdomain apply clarsimp 
+    apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
    apply clarsimp
-   apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
-  apply (subst Abs_powerdomain_inverse, clarsimp)
-   apply (rename_tac x)
-   apply (case_tac "x", simp)
-   apply clarsimp
-   apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
-  apply (subst Abs_powerdomain_inverse)
-   apply (rename_tac x)
-   apply (case_tac "x", simp)
-   apply clarsimp
-   apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
-  apply clarsimp
-  apply (rule conjI)
+   apply (rule conjI)
    apply fastforce
-  apply clarsimp
- apply (rename_tac x)
-  apply (rule powerdomain.Abs_powerdomain_inject[THEN iffD2])
-    apply (case_tac "x", simp)
-    apply clarsimp
-    apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
-   apply (case_tac "x", simp)
    apply clarsimp
-   apply (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
+   apply (rule powerdomain.Abs_powerdomain_inject[THEN iffD2])
+   using  Rep_powerdomain apply clarsimp 
+    apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
+   using  Rep_powerdomain apply clarsimp 
+    apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
   apply (rule set_eqI, clarsimp)
   by fastforce
 
 theorem all_s_mono [simp]:
-  assumes "a \<le> b"
-  shows "all_s a \<le> all_s b"
-  using assms apply (simp add: le_fun_def all_s_def porcupine_eglimilner)
-  apply (subst Abs_powerdomain_inverse, clarsimp)
-   apply (rename_tac x)
-   apply (case_tac "x", simp)
+  "a \<le> b \<Longrightarrow> all_s a \<le> all_s b"
+  unfolding le_fun_def all_s_def porcupine_eglimilner porcupine_less_eq_def
+  apply(subst Abs_powerdomain_inverse)
+   using  Rep_powerdomain apply clarsimp 
+    apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
+  apply(subst Abs_powerdomain_inverse)
+   using  Rep_powerdomain apply clarsimp 
+    apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
+  apply(subst Abs_powerdomain_inverse)
+   using  Rep_powerdomain apply clarsimp 
+    apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
    apply clarsimp
-   apply (metis (mono_tags, lifting) Rep_powerdomain equals0I exp_err_div.exhaust mem_Collect_eq)
-  apply (subst Abs_powerdomain_inverse, clarsimp)
-   apply (rename_tac x)
-   apply (case_tac "x", simp)
-   apply clarsimp
-   apply (metis (mono_tags, lifting) Rep_powerdomain equals0I exp_err_div.exhaust mem_Collect_eq)
-  apply (subst Abs_powerdomain_inverse, clarsimp)
-   apply (rename_tac x)
-   apply (case_tac "x", simp)
-   apply clarsimp
-   apply (metis (mono_tags, lifting) Rep_powerdomain equals0I exp_err_div.exhaust mem_Collect_eq)
-  apply clarsimp
   apply (rule conjI)
    apply fastforce
   apply clarsimp
-  apply (rename_tac x)
-  apply (rule powerdomain.Abs_powerdomain_inject[THEN iffD2], clarsimp)
-    apply (case_tac "x", simp)
-    apply clarsimp
-   apply (metis (mono_tags, lifting) Rep_powerdomain equals0I exp_err_div.exhaust mem_Collect_eq)
-   apply (case_tac "x", simp)
-   apply clarsimp
-   apply (metis (mono_tags, lifting) Rep_powerdomain equals0I exp_err_div.exhaust mem_Collect_eq)
+   apply (rule powerdomain.Abs_powerdomain_inject[THEN iffD2], clarsimp)
+   using  Rep_powerdomain apply clarsimp 
+    apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
+   using  Rep_powerdomain apply clarsimp 
+    apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
   apply (rule set_eqI, clarsimp)
   by fastforce
 
@@ -387,11 +366,8 @@ assumes input_ordered: "\<forall>x. env1 x \<le> env2 x"
 assumes f_mono: "(\<And>env1 env2. (\<forall>x. env1 x \<le> env2 x) \<Longrightarrow> f env1 \<le> f env2)"
 shows "(\<mu> x. f (env1(x1 := x))) \<le> (\<mu> x. f (env2(x1 := x)))"
   apply (rule parallel_fixp_induct)
-      apply (force simp: ccpo.admissible_def prod_Sup dest: chain_fst_exist chain_snd_exist intro: Sup_mono)
-     apply simp
-    apply (fastforce simp: mono_def intro: f_mono)[1]
-  apply (fastforce simp: mono_def intro: f_mono)[1]
-  using input_ordered by (auto intro: f_mono)
+  apply (simp add: Sup_mono ccpo.admissible_def chain_fst_exist chain_snd_exist fst_Sup snd_Sup)
+     by (fastforce simp: mono_def input_ordered intro: f_mono)+
 
 subsection \<open>Exec is monotonic\<close>
 
@@ -407,16 +383,12 @@ theorem exec_mono [simp]:
 
 (* fst snd are mono *)
 theorem fun_fst_mono:
-  assumes "p1 \<le> p2"
-  shows "(fst p1) x \<subseteq> (fst p2) x "
-  using assms
+  "p1 \<le> p2 \<Longrightarrow> (fst p1) x \<subseteq> (fst p2) x"
   by (metis le_fun_def fst_mono)
 
 theorem fun_snd_mono:
-  assumes "p1 \<le> p2"
-  shows "(snd p1) x \<subseteq> (snd p2) x"
-  using assms
-  by (metis le_fun_def snd_mono)
+  "p1 \<le> p2 \<Longrightarrow> (snd p1) x \<subseteq> (snd p2) x"
+  by (meson le_fun_def snd_mono)
 
 theorem funs_mono:
   assumes "mono f1"

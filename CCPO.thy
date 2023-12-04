@@ -21,6 +21,12 @@ lemma chain_snd_exist :
   "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow> Complete_Partial_Order.chain (\<le>) (snd ` A)"
   using chain_imageI snd_mono by blast
 
+instance prod :: (ccpo, ccpo) ccpo
+  apply intro_classes
+   apply (simp add: ccpo_Sup_upper chain_fst_exist chain_snd_exist fst_Sup snd_Sup less_eq_prod_def)
+  apply (simp add: less_eq_prod_def fst_Sup snd_Sup)
+  by (metis ccpo_Sup_least imageE chain_fst_exist chain_snd_exist)
+
 instantiation exp_err_div :: ord
 begin
 definition exp_err_div_less_eq : "a \<le> b \<longleftrightarrow> a = Div \<or> a = b"
