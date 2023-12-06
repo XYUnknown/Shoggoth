@@ -8,6 +8,7 @@ begin
 
 datatype label = PLUS | MULT | Nat nat | APP | ABS | Var nat | EMPTY
 datatype exp = Leaf label | Node label exp exp 
+print_theorems
 datatype exp_err_div = Err | E exp  | Div 
 
 typedef powerdomain = "{x | x :: exp_err_div set .  x \<noteq> {}}"

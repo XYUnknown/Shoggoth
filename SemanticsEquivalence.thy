@@ -348,6 +348,8 @@ lemma approximate_seq:
   using assms
   unfolding approximate_def
   apply clarsimp
+  sledgehammer
+
   apply (rename_tac e e')
   apply (simp add: PdToSet_seq)
   apply (elim disjE conjE exE)
@@ -1175,7 +1177,7 @@ theorem div_soundness:
   done
 
 subsection \<open>Computational adequacy two\<close>
-lemma fixp_unfoldE[rule_format, rotated]:
+lemma fixp_unfoldE: (*[rule_format, rotated]:*)
   assumes "mono f" 
   shows   "P (\<mu> X. f X) \<longrightarrow> (P (f (\<mu> X. f X)) \<longrightarrow> R) \<longrightarrow> R" 
   apply (subst fixp_unfold)
@@ -1235,7 +1237,7 @@ theorem div_adequacy:
    apply blast
   apply simp
   apply (rename_tac x1 x2)
-  apply (erule_tac f = "\<lambda>x. exec x2 ((\<lambda>x. undefined)(x1 := x))" and P = "\<lambda>m. Div \<in> PdToSet (m b)" in fixp_unfoldE)
+  apply (erule_tac f = "\<lambda>x. exec x2 ((\<lambda>x. undefined)(x1 := x))" and P = "\<lambda>m. Div \<in> PdToSet (m b)" in fixp_unfoldE[rule_format, rotated])
    apply (rule disjI1)
    apply (subst substitution)
     apply simp

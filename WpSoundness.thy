@@ -11,12 +11,16 @@ theorem UpdateWithLookupUnchanged:
   shows "update l e {E (lookup l e)} = {E e}"
   using assms
 proof (induct l arbitrary: e )
-  case empty then show ?case
+  case empty 
+  thus ?case
     by simp
 next
-  case (Lcons pos location) then show ?case
-    apply (case_tac e)
-    by (case_tac pos, fastforce+)+
+  case (Lcons pos location) 
+  thus ?case
+    apply (cases e)
+    using Lcons.prems defined.elims apply blast
+    apply(cases pos)
+    using Lcons by force+
 qed
 
 theorem UpdateErrGivesErr: 
@@ -24,60 +28,81 @@ theorem UpdateErrGivesErr:
   shows "update l e {Err} = {Err}"
   using assms
 proof (induct l arbitrary: e)
-  case empty then show ?case
+  case empty 
+  thus ?case
     by simp
 next
-  case (Lcons pos location) then show ?case
-    apply (case_tac e)
-    by (case_tac pos, fastforce+)+  
+  case (Lcons pos location) 
+  thus ?case
+    apply (cases e)
+      using Lcons.prems defined.elims apply blast
+      apply(cases pos)
+      using Lcons by force+
 qed
 
 lemma update_inter_err_div: 
   assumes "e \<in> defined l"
   shows "update l e es \<inter> {Err, Div} = es \<inter> {Err, Div}" 
-  using assms proof (induction l arbitrary: e es)
+  using assms 
+proof (induction l arbitrary: e es)
   case empty
-  then show ?case by simp
+  thus ?case 
+    by simp
 next
   case (Lcons pos l)
-  then show ?case by (case_tac pos, fastforce+)+
+  thus ?case 
+    apply(cases pos)
+    using Lcons by force+
 qed
 
-lemma defined_append : "x \<in> defined (loc \<triangleright> pos) \<Longrightarrow> x \<in> defined loc"
+lemma defined_append : 
+  "x \<in> defined (loc \<triangleright> pos) \<Longrightarrow> x \<in> defined loc"
 proof (induct loc arbitrary: x)
   case empty
-  then show ?case by simp
+  thus ?case 
+    by simp
 next
-  case (Lcons x1 loc)
-  then show ?case apply (case_tac x1)
-    by fastforce+
+  case (Lcons x loc)
+  thus ?case 
+  proof(cases x)
+    case (Leaf x1)
+    thus ?thesis 
+      using Lcons UpdateErrGivesErr UpdateWithLookupUnchanged by force
+  next
+    case (Node x21 x22 x23)
+    thus ?thesis 
+      using Lcons apply clarsimp
+      sledgehammer
+      by (smt (verit, ccfv_SIG) defined.simps(2,3) mem_Collect_eq pos.exhaust)
+  qed
 qed
 
-lemma lookup_id_append_undefined: "x \<in> defined loc \<Longrightarrow>
-       lookup loc x = exp.Leaf xa \<Longrightarrow>
-       x \<notin> defined (loc\<triangleright>p)"
+lemma lookup_id_append_undefined: 
+  "\<lbrakk>x \<in> defined loc ; lookup loc x = exp.Leaf xa\<rbrakk> \<Longrightarrow> x \<notin> defined (loc\<triangleright>p)"
 proof (induct loc arbitrary: x)
   case empty
-  then show ?case by (case_tac p; simp)
+  thus ?case 
+    apply(cases p)
+      using empty.prems(2) by fastforce+
 next
   case (Lcons pos loc)
-  then show ?case
-    by (case_tac pos, fastforce+)+
+  thus ?case
+    apply(cases pos)
+    using Lcons by force+
 qed
 
-lemma append_undefined_lookup_id: "x \<in> defined loc \<Longrightarrow>
-         x \<notin> defined (loc\<triangleright>p) \<Longrightarrow> \<exists>n. lookup loc x = Leaf n"
+lemma append_undefined_lookup_id: 
+  "\<lbrakk>x \<in> defined loc ; x \<notin> defined (loc\<triangleright>p)\<rbrakk> \<Longrightarrow> \<exists>n. lookup loc x = Leaf n"
 proof (induct loc arbitrary: x)
   case empty
-  then show ?case 
-    apply simp
-    apply (case_tac p)
-     apply (case_tac x; simp)
-    apply (case_tac x; simp)
-    done
+  thus ?case 
+    apply (cases x,simp)
+    by(cases p, simp_all)
 next
   case (Lcons pos loc)
-  then show ?case by (case_tac pos, fastforce+)+
+  thus ?case 
+    apply(cases pos)
+     by fastforce+
 qed
 
 subsection \<open>The @{text "lookup_exec_update"} function\<close>
@@ -89,14 +114,17 @@ text
    @{text "lookup_exec_update_def"}. Instead, these rules give an alternative definitionn. For 
    @{text "lookup_exec_update"} that doesn't refer to other functions like update, lookup etc. at 
    all \<close>
+
 lemma lookup_exec_update_simp1[simp] : 
   "lookup_exec_update s \<epsilon> e senv = PdToSet (exec s senv e)" 
   by (simp add: lookup_exec_update_def)
+
 lemma lookup_exec_update_simp2[simp] : 
   assumes "e1 \<in> defined loc"
   shows "lookup_exec_update s (Left\<triangleleft>loc) (Node l e1 e2) senv 
        = {E (Node l x e2) | x. E x \<in> lookup_exec_update s loc e1 senv} \<union> (lookup_exec_update s loc e1 senv \<inter> {Err, Div})" 
   using assms by (force simp add: lookup_exec_update_def update_inter_err_div)
+
 lemma lookup_exec_update_simp3[simp] : 
   assumes "e2 \<in> defined loc"
   shows "lookup_exec_update s (Right\<triangleleft>loc) (Node l e1 e2) senv 
@@ -109,49 +137,42 @@ text
 theorem lookup_exec_update_defined:
   assumes "e \<in> defined l"
   shows "\<forall> x. E x \<in> lookup_exec_update s l e senv \<longrightarrow> x \<in> defined l"
-  using assms proof (induction l arbitrary: e)
+  using assms 
+proof (induction l arbitrary: e)
   case empty
-  then show ?case 
-    by auto
+  thus ?case 
+    by simp
 next
   case (Lcons pos l)
-  then show ?case 
-    apply clarsimp
-    apply (case_tac e) by (case_tac pos, fastforce+)+
+  thus ?case 
+    apply (cases e)
+    by (cases pos, fastforce+)+
 qed
 
 lemma lookup_exec_update_nonempty:
   assumes "x \<in> defined loc"
   shows   "\<exists>r. r \<in> lookup_exec_update s loc x senv" 
-  using assms proof (induct loc arbitrary: x)
+  using assms 
+proof (induct loc arbitrary: x)
   case empty
-  then show ?case using Rep_powerdomain[simplified] by auto
+  thus ?case 
+    using Rep_powerdomain[simplified] by fastforce
 next
   case (Lcons pos loc)
-  then show ?case
-    apply (case_tac pos)
-     apply simp
-     apply (elim disjE conjE exE)
-     apply clarsimp
-     apply (rename_tac l e1 e2)
-     apply (drule_tac x = e1 in meta_spec, drule meta_mp, simp)
-     apply clarsimp
-     apply (rename_tac r)
-     apply (case_tac r)
-       apply blast
-      apply auto[1]
-     apply blast
-    apply simp
-    apply (elim disjE conjE exE)
-    apply (rename_tac l e1 e2)
-    apply clarsimp
-    apply (drule_tac x = e2 in meta_spec, drule meta_mp, simp)
-    apply clarsimp
-    apply (rename_tac r)
-    apply (case_tac r)
-      apply blast
-     apply auto[1]
-    by blast
+  thus ?case
+  proof(cases x)
+    case (Leaf x1)
+    thus ?thesis 
+      using Lcons.prems UpdateErrGivesErr lookup_exec_update_def by fastforce
+  next
+    case (Node x21 x22 x23)
+    thus ?thesis 
+      apply (cases pos)
+        using Lcons apply clarsimp
+       apply (metis exp_err_div.exhaust)
+       using Lcons apply clarsimp
+       by (metis exp_err_div.exhaust)
+    qed
 qed
 
 subsection \<open>Order independence lemmas\<close>
@@ -160,26 +181,27 @@ text \<open> A collection of lemmas about defined and @{text "lookup_exec_update
 lemma defined_left_right : "x \<in> defined (loc \<triangleright> Left) \<Longrightarrow> x \<in> defined (loc \<triangleright> Right)"
 proof (induct loc arbitrary: x)
   case empty
-  then show ?case by simp
+  thus ?case by simp
 next
   case (Lcons pos loc)
-  then show ?case by (case_tac pos; auto)
+  thus ?case 
+    by(cases pos, fastforce+)
 qed
 
 lemma defined_right_left : "x \<in> defined (loc \<triangleright> Right) \<Longrightarrow> x \<in> defined (loc \<triangleright> Left)"
 proof (induct loc arbitrary: x)
   case empty
-  then show ?case by simp
+  thus ?case by simp
 next
   case (Lcons pos loc)
-  then show ?case by (case_tac pos; auto)
+  thus ?case 
+    by (cases pos; fastforce+)
 qed
 
 lemma defined_right_after_left: 
   assumes "E x2 \<in> lookup_exec_update s (loc\<triangleright>Left) x1 senv"
   shows   "x1 \<in> defined (loc \<triangleright> Right) \<Longrightarrow> x2 \<in> defined (loc\<triangleright>Right)"
-  using assms 
-  apply -
+  using assms apply -
   apply (drule defined_right_left)
   apply (frule lookup_exec_update_defined[rule_format], simp)
   by (rule defined_left_right, simp)
@@ -187,172 +209,159 @@ lemma defined_right_after_left:
 lemma defined_left_after_right:
   assumes "E x2 \<in> lookup_exec_update s (loc\<triangleright>Right) x1 senv"
   shows   "x1 \<in> defined (loc \<triangleright> Left) \<Longrightarrow> x2 \<in> defined (loc\<triangleright>Left)"
-  using assms 
-  apply - 
+  using assms apply - 
   apply (drule defined_left_right)
   apply (frule lookup_exec_update_defined[rule_format], simp)
   by (rule defined_right_left, simp)
 
+
 lemma lookup_exec_update_left_right_swap : 
   assumes "x1 \<in> defined (loc \<triangleright> Left)"
-    and     "x1 \<in> defined (loc \<triangleright> Right)"
+    and   "x1 \<in> defined (loc \<triangleright> Right)"
   shows   "(\<exists>i. E i \<in> lookup_exec_update s1 (loc \<triangleright> Left) x1 senv \<and> E x2 \<in> lookup_exec_update s2 (loc \<triangleright> Right) i senv)
-       \<longleftrightarrow> (\<exists>i. E i \<in> lookup_exec_update s2 (loc \<triangleright> Right) x1 senv \<and> E x2 \<in> lookup_exec_update s1 (loc \<triangleright> Left) i senv)"
-  using assms proof (induct loc arbitrary: x1 x2)
+       \<longleftrightarrow> (\<exists>j. E j \<in> lookup_exec_update s2 (loc \<triangleright> Right) x1 senv \<and> E x2 \<in> lookup_exec_update s1 (loc \<triangleright> Left) j senv)"
+  (is "?lhs \<longleftrightarrow> ?rhs")
+  using assms
+proof (induct loc arbitrary: x1 x2)
   case empty
-  then show ?case by (case_tac x1; fastforce)
+  thus ?case 
+    by (cases x1; fastforce)
 next
+(* up to here *)
   case (Lcons pos loc)
-  then show ?case
-    apply simp
-    apply (case_tac pos)
-     apply simp
-     apply (elim exE conjE disjE)
-     apply clarsimp
-     apply (rename_tac l e1 e2)
-     apply (rule iffI)
-      apply clarsimp
-      apply (frule defined_right_after_left, simp)
-      apply clarsimp
-      apply (rename_tac x xa)
-      apply (drule_tac x = e1 in meta_spec)
-      apply (drule_tac x = xa in meta_spec)
-      apply (drule meta_mp, simp)
-      apply (drule meta_mp, simp)
-      apply (drule iffD1)
-       apply auto[1]
-      apply clarsimp
-      apply (rename_tac i)
-      apply (rule_tac x = "Node l i e2" in exI)
-      apply (rule)
+  thus ?case
+  proof(cases pos)
+    (* Left/Right cases are identical *)
+    case Left
+    then show ?thesis
+      using Lcons apply clarsimp
+      apply (rule iffI) 
+      (* Left to Right *)
+       apply (rename_tac l e1 e2)
        apply clarsimp
-      apply (frule defined_left_after_right, simp, simp)
-     apply clarsimp
-     apply (frule defined_left_after_right, simp)
-     apply clarsimp
-     apply (rename_tac x xa)
-     apply (drule_tac x = e1 in meta_spec)
-     apply (drule_tac x = xa in meta_spec)
-     apply (drule meta_mp, simp)
-     apply (drule meta_mp, simp)
-     apply (drule iffD2)
-      apply auto[1]
-     apply clarsimp
-     apply (rename_tac i)
-     apply (rule_tac x = "Node l i e2" in exI)
-     apply (rule)
-      apply clarsimp
-     apply (frule defined_right_after_left, simp, simp)
-    apply simp
-    apply (elim exE conjE disjE)
-    apply clarsimp
-    apply (rename_tac l e1 e2)
-    apply (rule iffI)
-     apply clarsimp
-     apply (frule defined_right_after_left, simp)
-     apply clarsimp
-     apply (rename_tac x xa)
-     apply (drule_tac x = e2 in meta_spec)
-     apply (drule_tac x = xa in meta_spec)
-     apply (drule meta_mp, simp)
-     apply (drule meta_mp, simp)
-     apply (drule iffD1)
-      apply auto[1]
-     apply clarsimp
-     apply (rename_tac i)
-     apply (rule_tac x = "Node l e1 i" in exI)
-     apply (rule)
-      apply clarsimp
-     apply (frule defined_left_after_right, simp, simp)
-    apply clarsimp
-    apply (frule defined_left_after_right, simp)
-    apply clarsimp
-    apply (rename_tac x xa)
-    apply (drule_tac x = e2 in meta_spec)
-    apply (drule_tac x = xa in meta_spec)
-    apply (drule meta_mp, simp)
-    apply (drule meta_mp, simp)
-    apply (drule iffD2)
-     apply auto[1]
-    apply clarsimp
-    apply (rename_tac i)
-    apply (rule_tac x = "Node l e1 i" in exI)
-    apply (rule)
-     apply clarsimp
-    apply (frule defined_right_after_left, simp, simp)
-    done
+       apply (frule defined_right_after_left;auto)
+       apply (rename_tac x xa)
+       apply (drule_tac x = e1 in meta_spec)
+       apply (drule_tac x = xa in meta_spec)
+       apply (drule meta_mp; simp)
+       apply (drule iffD1)
+        apply fastforce
+       apply clarsimp
+       apply(frule defined_left_after_right;auto)
+      (* Right to Left *)
+       apply (rename_tac l e1 e2)
+       apply clarsimp
+       apply (frule defined_left_after_right;auto)
+       apply (rename_tac x xa)
+       apply (drule_tac x = e1 in meta_spec)
+       apply (drule_tac x = xa in meta_spec)
+      apply (drule meta_mp; simp)
+      apply (drule iffD2)
+        apply fastforce
+       apply clarsimp
+       by(frule defined_right_after_left;auto)
+  next
+    case Right
+    then show ?thesis
+      using Lcons apply clarsimp
+      apply (rule iffI) 
+      (* Left to Right *)
+       apply (rename_tac l e1 e2)
+       apply clarsimp
+       apply (frule defined_right_after_left;auto)
+       apply (rename_tac x xa)
+       apply (drule_tac x = e2 in meta_spec)
+       apply (drule_tac x = xa in meta_spec)
+       apply (drule meta_mp; simp)
+       apply (drule iffD1)
+        apply fastforce
+       apply clarsimp
+       apply(frule defined_left_after_right;auto)
+      (* Right to Left *)
+       apply (rename_tac l e1 e2)
+       apply clarsimp
+       apply (frule defined_left_after_right;auto)
+       apply (rename_tac x xa)
+       apply (drule_tac x = e2 in meta_spec)
+       apply (drule_tac x = xa in meta_spec)
+      apply (drule meta_mp; simp)
+      apply (drule iffD2)
+        apply fastforce
+       apply clarsimp
+       by(frule defined_right_after_left;auto)
+  qed
 qed
 
 lemma err_right_after_left: 
   assumes "E x2 \<in> lookup_exec_update s (loc\<triangleright>Left) x1 senv"
-    and     "x1 \<in> defined (loc \<triangleright> Left)" 
+    and   "x1 \<in> defined (loc \<triangleright> Left)" 
   shows   "Err \<in> lookup_exec_update s (loc\<triangleright>Right) x1 senv \<longleftrightarrow> Err \<in> lookup_exec_update s (loc\<triangleright>Right) x2 senv"
-  using assms proof (induct loc arbitrary: x1 x2)
+  using assms 
+proof (induct loc arbitrary: x1 x2)
   case empty
-  then show ?case by (case_tac x1; clarsimp)
+  thus ?case 
+    by (cases x1; clarsimp)
 next
   case (Lcons pos loc)
-  then show ?case 
+  thus ?case 
     apply simp
     apply (frule lookup_exec_update_defined[rule_format], simp)
-    apply (case_tac pos)
-     apply clarsimp
-    using defined_left_right apply auto[1]
-    using defined_left_right by auto[1]
+    apply (cases pos)
+    using defined_left_right by fastforce+
 qed
 
 lemma err_left_after_right: 
   assumes "E x2 \<in> lookup_exec_update s (loc\<triangleright>Right) x1 senv" 
-    and     "x1 \<in> defined (loc \<triangleright> Right)" 
+    and   "x1 \<in> defined (loc \<triangleright> Right)" 
   shows   "Err \<in> lookup_exec_update s (loc\<triangleright>Left) x1 senv \<longleftrightarrow> Err \<in> lookup_exec_update s (loc\<triangleright>Left) x2 senv"
-  using assms proof (induct loc arbitrary: x1 x2)
+  using assms 
+proof (induct loc arbitrary: x1 x2)
   case empty
-  then show ?case by (case_tac x1; clarsimp)
+  thus ?case 
+    by (cases x1; clarsimp)
 next
   case (Lcons pos loc)
-  then show ?case 
+  thus ?case 
     apply simp
     apply (frule lookup_exec_update_defined[rule_format], simp)
-    apply (case_tac pos)
-     apply clarsimp
-    using defined_right_left apply auto[1]
-    using defined_right_left by auto[1]
+    apply (cases pos)
+     using defined_right_left by fastforce+
 qed
 
 lemma div_right_after_left: 
   assumes "E x2 \<in> lookup_exec_update s (loc\<triangleright>Left) x1 senv"
-    and     "x1 \<in> defined (loc \<triangleright> Left)"
+    and   "x1 \<in> defined (loc \<triangleright> Left)"
   shows   "Div \<in> lookup_exec_update s (loc\<triangleright>Right) x1 senv \<longleftrightarrow> Div \<in> lookup_exec_update s (loc\<triangleright>Right) x2 senv"
-  using assms proof (induct loc arbitrary: x1 x2)
+  using assms 
+proof (induct loc arbitrary: x1 x2)
   case empty
-  then show ?case by (case_tac x1; clarsimp)
+  thus ?case 
+    by (cases x1; clarsimp)
 next
   case (Lcons pos loc)
-  then show ?case 
+  thus ?case 
     apply simp
     apply (frule lookup_exec_update_defined[rule_format], simp)
-    apply (case_tac pos)
-     apply clarsimp
-    using defined_left_right apply auto[1]
-    using defined_left_right by auto[1]
+    apply (cases pos)
+     using defined_left_right by fastforce+
 qed
 
 lemma div_left_after_right: 
   assumes "E x2 \<in> lookup_exec_update s (loc\<triangleright>Right) x1 senv" 
-    and     "x1 \<in> defined (loc \<triangleright> Right)" 
+    and   "x1 \<in> defined (loc \<triangleright> Right)" 
   shows   "Div \<in> lookup_exec_update s (loc\<triangleright>Left) x1 senv \<longleftrightarrow> Div \<in> lookup_exec_update s (loc\<triangleright>Left) x2 senv"
-  using assms proof (induct loc arbitrary: x1 x2)
+  using assms 
+proof (induct loc arbitrary: x1 x2)
   case empty
-  then show ?case by (case_tac x1; clarsimp)
+  thus ?case 
+    by (cases x1; clarsimp)
 next
   case (Lcons pos loc)
-  then show ?case 
+  thus ?case 
     apply simp
     apply (frule lookup_exec_update_defined[rule_format], simp)
-    apply (case_tac pos)
-     apply clarsimp
-    using defined_right_left apply auto[1]
-    using defined_right_left by auto[1]
+    apply (cases pos)
+     using defined_right_left by fastforce+
 qed
 
 subsection \<open>@{text "wp_sound_set"} and @{text "wp_err_sound_set"}\<close> 
@@ -369,23 +378,14 @@ definition wp_err_sound_set :: "strategy \<Rightarrow> location \<Rightarrow> ex
           {e | e. e \<in> defined loc \<and>  lookup_exec_update s loc e senv \<subseteq> E ` P \<union> {Err}}"
 
 subsection \<open>Sequential Composition Lemmas\<close>
-  (* Helper to avoid having to do lots of SetToPd (PdToSet ..) reasoning *)
+
+(* Helper to avoid having to do lots of SetToPd (PdToSet ..) reasoning *)
 lemma PdToSet_seq : "PdToSet ((s1 ;;s s2) e)
                    =  (\<Union>{PdToSet (s2 x) | x. E x \<in> PdToSet (s1 e)}
                             \<union> {x | x. x \<in> PdToSet (s1 e) \<inter> {Div, Err}})"
   apply (simp add: seq_s_def)
   apply (subst Abs_powerdomain_inverse; simp)
-  apply clarsimp
-  apply (case_tac "\<exists>x. x \<in> PdToSet (s1 e)")
-   apply clarsimp
-   apply (case_tac x, simp)
-     apply auto[1]
-    apply simp
-    apply (rule, rule, rule, rule, simp, simp)
-    apply (rule Rep_powerdomain[simplified])
-   apply auto[1]
-  apply clarsimp
-  using Rep_powerdomain by blast
+  by (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
 
 (* lookup_exec_update of sequential composition is sequential composition of lookup_exec_update *)
 lemma lookup_exec_update_seq: 
@@ -393,70 +393,84 @@ lemma lookup_exec_update_seq:
   shows "lookup_exec_update (s1;; s2) loc e senv
        = (\<Union> {lookup_exec_update s2 loc x senv | x. E x \<in> lookup_exec_update s1 loc e senv} 
            \<union> {x | x. x \<in> lookup_exec_update s1 loc e senv \<inter> {Div, Err}})"
-  using assms proof (induction loc arbitrary: e)
+  using assms 
+proof (induction loc arbitrary: e)
   case empty
-  then show ?case unfolding lookup_exec_update_def
+  thus ?case 
+    unfolding lookup_exec_update_def
     by (simp add: PdToSet_seq)
 next
   case (Lcons pos loc)
-  then show ?case using lookup_exec_update_defined
-    apply simp
-    apply (case_tac pos; simp)
-     apply (elim exE disjE conjE)
-     apply fastforce (* more like slowforce *)
-    by fastforce
+  thus ?case
+  proof(cases pos)
+    (* Left/Right cases are identical *)
+    case Left
+    then show ?thesis 
+      using Lcons lookup_exec_update_defined apply simp
+      apply (elim exE disjE conjE)
+      by fastforce (* takes some time *)
+  next
+    case Right
+    then show ?thesis 
+      using Lcons lookup_exec_update_defined apply simp
+      apply (elim exE disjE conjE)
+      by fastforce (* takes some time *)
+  qed
 qed
 
 (* wp_sound_set rule for sequential_composition  (mirrors the wp rule) *)
-lemma seq_wp_sound_set: "wp_sound_set (s1 ;; s2) loc P senv = wp_sound_set s1 loc (wp_sound_set s2 loc P senv) senv"
-  apply (simp add: wp_sound_set_def)
-  apply (rule subset_antisym)
-   apply clarsimp
-   apply (rename_tac xa)
-   apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 in lookup_exec_update_seq, simp)
-   apply (case_tac xa)
-     apply blast
+lemma seq_wp_sound_set: 
+  "wp_sound_set (s1 ;; s2) loc P senv = wp_sound_set s1 loc (wp_sound_set s2 loc P senv) senv"
+  (is "?lhs = ?rhs")
+proof 
+  show "?lhs \<subseteq> ?rhs"
+    unfolding wp_sound_set_def
     apply clarsimp
-    apply (rule imageI)
-    apply clarsimp
-    apply (rule conjI)
-     apply (frule_tac s = s1 in lookup_exec_update_defined)
-     apply auto[1]
-    apply blast
-   apply blast
-  apply clarsimp
-  apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 in lookup_exec_update_seq, simp)
-  by blast
+    apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 in lookup_exec_update_seq; simp)
+    apply (case_tac xa)
+      apply blast
+     apply clarsimp
+    using lookup_exec_update_defined apply fastforce
+    by blast
+next
+  show "?rhs \<subseteq> ?lhs"
+    unfolding wp_sound_set_def apply clarsimp
+    by (frule_tac ?s1.0 = s1 and ?s2.0 = s2 in lookup_exec_update_seq, blast)
+qed
 
 (* wp_err_sound_set rule for sequential_composition  (mirrors the wp_err rule) *)
-lemma seq_wp_err_sound_set: "wp_err_sound_set (s1 ;; s2) loc P senv = wp_err_sound_set s1 loc (wp_err_sound_set s2 loc P senv) senv"
-  apply (simp add: wp_err_sound_set_def)
-  apply (rule subset_antisym)
-   apply clarsimp
-   apply (rename_tac xa)
-   apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_seq, simp)
-   apply (case_tac xa)
-     apply blast
-    apply clarsimp
-    apply (erule notE)
+lemma seq_wp_err_sound_set: 
+  "wp_err_sound_set (s1 ;; s2) loc P senv = wp_err_sound_set s1 loc (wp_err_sound_set s2 loc P senv) senv"
+  (is "?lhs = ?rhs")
+proof 
+  show "?lhs \<subseteq> ?rhs"
+    unfolding wp_err_sound_set_def apply clarsimp
+    apply (rename_tac xa)
+    apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_seq, simp)
+    apply(rule exp_err_div.exhaust)
+      apply blast
+     apply clarsimp
+     apply (erule notE)
     apply (rule imageI)
     apply clarsimp
     apply (rule conjI)
-     apply (frule_tac s = s1 in lookup_exec_update_defined)
-     apply auto[1]
+     apply (frule_tac s = s1 in lookup_exec_update_defined;auto)
     apply blast
-   apply blast
-  apply clarsimp
-  apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv=senv in lookup_exec_update_seq, simp)
-  by blast
+    by blast
+next
+  show "?rhs \<subseteq> ?lhs"
+    unfolding wp_err_sound_set_def apply clarsimp
+    by (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv=senv in lookup_exec_update_seq; blast)
+qed
 
 subsection \<open>Left Choice Lemmas\<close>
 (* Helper for PdToSet of left choice *)
-lemma PdToSet_lc : "PdToSet ((s <+s t) e) = (PdToSet (s e) - {Err})  \<union> {x | x. x \<in> PdToSet (t e) \<and> Err \<in> PdToSet (s e)}"
+lemma PdToSet_lc: 
+  "PdToSet ((s <+s t) e) = (PdToSet (s e) - {Err})  \<union> {x | x. x \<in> PdToSet (t e) \<and> Err \<in> PdToSet (s e)}"
   unfolding lchoice_s_def
   apply (subst Abs_powerdomain_inverse[simplified])
    apply clarsimp
-   apply (rule)
+   apply(rule conjI)
   using Rep_powerdomain[simplified] apply blast
    apply (simp add: \<open>\<And>x. PdToSet x \<noteq> {}\<close> subset_singleton_iff)
   by blast
@@ -464,23 +478,28 @@ lemma PdToSet_lc : "PdToSet ((s <+s t) e) = (PdToSet (s e) - {Err})  \<union> {x
 (* lookup_exec_update of left choice is the left choice of lookup_exec_update *)
 lemma lookup_exec_update_lc: 
   assumes "e \<in> defined loc" 
-  shows "lookup_exec_update (s1 <+ s2) loc e senv = (lookup_exec_update s1 loc e senv - {Err}) 
-                                                    \<union> {x | x. x \<in> lookup_exec_update s2 loc e senv \<and> Err \<in> lookup_exec_update s1 loc e senv}"
-  using assms proof (induction loc arbitrary: e)
+  shows "lookup_exec_update (s1 <+ s2) loc e senv = 
+         (lookup_exec_update s1 loc e senv - {Err}) 
+           \<union> {x | x. x \<in> lookup_exec_update s2 loc e senv \<and> Err \<in> lookup_exec_update s1 loc e senv}"
+  using assms 
+proof (induction loc arbitrary: e)
   case empty
-  then show ?case by (simp add: PdToSet_lc)
+  thus ?case 
+    by (simp add: PdToSet_lc)
 next
   case (Lcons pos loc)
-  then show ?case 
+  thus ?case 
     apply clarsimp
-    apply (case_tac pos)
-    by auto
+    apply (cases pos)
+     by fastforce+
 qed
 
 (* wp_sound_set rule for left choice (simplified wp rule) *)
-lemma lc_wp_sound_set: "wp_sound_set (s1 <+ s2) loc P senv = wp_sound_set s1 loc P senv \<union> (wp_err_sound_set s1 loc P senv \<inter> wp_sound_set s2 loc P senv)"
+lemma lc_wp_sound_set: 
+  "wp_sound_set (s1 <+ s2) loc P senv = 
+      wp_sound_set s1 loc P senv \<union> (wp_err_sound_set s1 loc P senv \<inter> wp_sound_set s2 loc P senv)"
   apply (simp add: wp_sound_set_def wp_err_sound_set_def)
-  apply (rule subset_antisym)
+  apply (rule antisym)
    apply clarsimp
    apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_lc, simp)
    apply blast
@@ -494,9 +513,11 @@ lemma lc_wp_sound_set: "wp_sound_set (s1 <+ s2) loc P senv = wp_sound_set s1 loc
   by blast
 
 (* wp_err_sound_set rule for left choice (simplified wp_err rule) *)
-lemma lc_wp_err_sound_set: "wp_err_sound_set (s1 <+ s2) loc P senv = wp_sound_set s1 loc P senv \<union> (wp_err_sound_set s1 loc P senv \<inter> wp_err_sound_set s2 loc P senv)"
+lemma lc_wp_err_sound_set: 
+  "wp_err_sound_set (s1 <+ s2) loc P senv = 
+     wp_sound_set s1 loc P senv \<union> (wp_err_sound_set s1 loc P senv \<inter> wp_err_sound_set s2 loc P senv)"
   apply (simp add: wp_sound_set_def wp_err_sound_set_def)
-  apply (rule subset_antisym)
+  apply (rule antisym)
    apply clarsimp
    apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_lc, simp)
    apply blast
@@ -525,37 +546,43 @@ lemma PdToSet_choice : "PdToSet ((s1 ><s s2) e) = {E x | x. E x \<in> PdToSet (s
 (* lookup_exec_update of choice is the choice of lookup_exec_update, this is the simplified choice semantics *)
 lemma lookup_exec_update_choice: 
   assumes "e \<in> defined loc" 
-  shows "lookup_exec_update (s1 >< s2) loc e senv = {E x | x. E x \<in> lookup_exec_update s1 loc e senv}
-                                  \<union> {d. d = Div \<and> Div \<in> lookup_exec_update s1 loc e senv}
-                                  \<union> {E y | y. E y \<in> lookup_exec_update s2 loc e senv}
-                                  \<union> {d. d = Div \<and> Div \<in> lookup_exec_update s2 loc e senv}
-                                  \<union> {err. err = Err \<and> Err \<in> lookup_exec_update s1 loc e senv \<inter> lookup_exec_update s2 loc e senv}"
-  using assms proof (induction loc arbitrary: e)
+  shows "lookup_exec_update (s1 >< s2) loc e senv = 
+          {E x | x. E x \<in> lookup_exec_update s1 loc e senv}
+          \<union> {d. d = Div \<and> Div \<in> lookup_exec_update s1 loc e senv}
+          \<union> {E y | y. E y \<in> lookup_exec_update s2 loc e senv}
+          \<union> {d. d = Div \<and> Div \<in> lookup_exec_update s2 loc e senv}
+          \<union> {err. err = Err \<and> Err \<in> lookup_exec_update s1 loc e senv \<inter> lookup_exec_update s2 loc e senv}"
+  using assms 
+proof (induction loc arbitrary: e)
   case empty
-  then show ?case by (simp add: PdToSet_choice)
+  thus ?case 
+    by (simp add: PdToSet_choice)
 next
   case (Lcons pos loc)
-  then show ?case (* Rather slow*)
+  thus ?case (* Rather slow*)
     apply clarsimp
-    apply (case_tac pos)
+    apply (cases pos)
      apply simp
-     apply (elim exE disjE conjE)
-     apply auto[1]
-    by auto[1]
+    apply (elim exE disjE conjE)
+    by fastforce +
 qed
 
 (* wp_sound_set rule for choice (simplified wp rule) *)
-lemma choice_wp_sound_set: "wp_sound_set (s1 >< s2) loc P senv = (wp_sound_set s1 loc P senv \<inter> wp_err_sound_set s2 loc P senv) \<union> (wp_err_sound_set s1 loc P senv \<inter> wp_sound_set s2 loc P senv)"
-  apply (simp add: wp_sound_set_def wp_err_sound_set_def)
-  apply (rule subset_antisym)
-   apply clarsimp
+lemma choice_wp_sound_set: 
+  "wp_sound_set (s1 >< s2) loc P senv = 
+        (wp_sound_set s1 loc P senv \<inter> wp_err_sound_set s2 loc P senv) 
+      \<union> (wp_err_sound_set s1 loc P senv \<inter> wp_sound_set s2 loc P senv)"
+  (is "?lhs = ?rhs1 \<union> ?rhs2")
+proof(rule antisym)
+  show "?lhs \<subseteq> ?rhs1 \<union> ?rhs2"
+  unfolding wp_sound_set_def wp_err_sound_set_def apply clarsimp
    apply (rule conjI)
     apply clarsimp
     apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_choice, simp)
     apply clarsimp
     apply (erule impE)
-     apply clarsimp
-     apply (rename_tac xb)
+    apply clarsimp
+    apply (rename_tac xb)
      apply (case_tac "Err \<in> lookup_exec_update s1 loc x senv")
       apply (case_tac xb)
         apply blast
@@ -620,20 +647,28 @@ lemma choice_wp_sound_set: "wp_sound_set (s1 >< s2) loc P senv = (wp_sound_set s
    apply (case_tac xb)
      apply blast
     apply auto[1]
-   apply blast
-  apply clarsimp
-  apply (rule conjI)
-   apply clarsimp
-   apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_choice, simp)
-   apply blast
-  apply clarsimp
-  apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_choice, simp)
-  by blast
+    apply blast
+    done
+next
+  show "?rhs1 \<union> ?rhs2 \<subseteq> ?lhs"
+  proof (rule Un_least)
+    show "?rhs1 \<subseteq> ?lhs"
+      unfolding wp_sound_set_def wp_err_sound_set_def apply clarsimp
+      by (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_choice; blast)
+    show "?rhs2 \<subseteq> ?lhs"
+      unfolding wp_sound_set_def wp_err_sound_set_def apply clarsimp
+      by (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_choice; blast)
+  qed
+qed
 
 (* wp_err_sound_set rule for choice (simplified wp rule) *)
-lemma choice_wp_err_sound_set: "wp_err_sound_set (s1 >< s2) loc P senv = wp_err_sound_set s1 loc P senv \<inter> wp_err_sound_set s2 loc P senv"
-  apply (simp add: wp_sound_set_def wp_err_sound_set_def)
-  apply (rule subset_antisym)
+lemma choice_wp_err_sound_set: 
+  "wp_err_sound_set (s1 >< s2) loc P senv = 
+   wp_err_sound_set s1 loc P senv \<inter> wp_err_sound_set s2 loc P senv"
+  (is "?lhs = ?rhs1 \<inter> ?rhs2")
+proof (rule antisym)
+  show "?lhs \<subseteq> ?rhs1 \<inter> ?rhs2"
+  unfolding wp_sound_set_def wp_err_sound_set_def 
    apply clarsimp
    apply (rule conjI)
     apply clarsimp
@@ -661,36 +696,26 @@ lemma choice_wp_err_sound_set: "wp_err_sound_set (s1 >< s2) loc P senv = wp_err_
    apply (case_tac xa)
      apply blast
     apply fast
-   apply simp
-  apply clarsimp
-  apply (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_choice, simp)
-  by blast
+  apply simp
+  done
+next
+  show "?rhs1 \<inter> ?rhs2 \<subseteq> ?lhs"
+  unfolding wp_sound_set_def wp_err_sound_set_def apply clarsimp
+  by (frule_tac ?s1.0 = s1 and ?s2.0 = s2 and senv = senv in lookup_exec_update_choice; auto)
+qed
 
 subsection \<open>One Lemmas\<close>
 lemma PdToSet_one: 
-  "PdToSet ((one_s s) e) = {E (Node l x e2) | l x e1 e2. e = Node l e1 e2 \<and> E x \<in> PdToSet (s e1)}
-                   \<union> {d | l e1 e2 d. e = Node l e1 e2 \<and> d = Div \<and> Div \<in> PdToSet (s e1)}
-                   \<union> {E (Node l e1 x) | l x e1 e2. e = Node l e1 e2 \<and> E x \<in> PdToSet (s e2)}
-                   \<union> {d | l e1 e2 d. e = Node l e1 e2 \<and> d = Div \<and> Div \<in> PdToSet (s e2)}
+  "PdToSet ((one_s s) e) = 
+        {E (Node l x e2) | l x e1 e2. e = Node l e1 e2 \<and> E x \<in> PdToSet (s e1)}
+      \<union> {d | l e1 e2 d. e = Node l e1 e2 \<and> d = Div \<and> Div \<in> PdToSet (s e1)}
+      \<union> {E (Node l e1 x) | l x e1 e2. e = Node l e1 e2 \<and> E x \<in> PdToSet (s e2)}
+      \<union> {d | l e1 e2 d. e = Node l e1 e2 \<and> d = Div \<and> Div \<in> PdToSet (s e2)}
                    \<union> {err | e1 e2 l err. err = Err \<and> (e = Leaf l \<or> (e = Node l e1 e2 \<and> Err \<in> PdToSet (s e1) \<inter> PdToSet (s e2)))}"
   unfolding one_s_def
   apply (subst Abs_powerdomain_inverse; simp)
-  apply (case_tac e)
-   apply simp
-  apply simp
-  apply (subgoal_tac "\<exists>r1. r1 \<in> PdToSet (s x22)")
-   apply (erule exE)
-   apply (case_tac r1)
-     apply (subgoal_tac "\<exists>r2. r2 \<in> PdToSet (s x23)")
-      apply (erule exE)
-      apply (case_tac r2)
-        apply blast
-       apply blast
-      apply blast
-  using Rep_powerdomain apply fastforce
-    apply blast
-   apply blast
-  using Rep_powerdomain by fastforce
+  apply (cases e; simp)
+  by (metis (mono_tags, lifting) Rep_powerdomain ex_in_conv exp_err_div.exhaust mem_Collect_eq)
 
 lemma lookup_exec_update_one:
   assumes "e \<in> defined loc" 
@@ -702,35 +727,41 @@ lemma lookup_exec_update_one:
                                   \<union> {err. err = Err \<and> (e \<in> defined (loc \<triangleright> Left) 
                                                   \<longrightarrow>  e \<in> defined (loc \<triangleright> Right) 
                                                   \<longrightarrow> Err \<in> lookup_exec_update s (loc \<triangleright> Left) e senv \<inter> lookup_exec_update s (loc \<triangleright> Right) e senv)}"
-  using assms proof (induct loc arbitrary: e)
+  using assms 
+proof (induct loc arbitrary: e)
   case empty
-  then show ?case 
+  thus ?case 
     apply (simp add: PdToSet_one)
-    apply (case_tac e)
-     apply auto[1]
-    by auto
+    apply (cases e)
+     by (force)+
 next
   case (Lcons pos loc)
-  then show ?case 
-    apply (case_tac e)
-     apply clarsimp
-     apply (case_tac pos)
-      apply auto[1]
-     apply auto[1]
-    apply clarsimp
-    apply (case_tac pos)
-     apply clarsimp
-     apply auto[1]
-    apply clarsimp
-    by auto[1]
+  thus ?case 
+  proof(cases e)
+    case (Leaf x1)
+    thus ?thesis
+      apply clarsimp
+      apply (cases pos)
+      using Lcons.prems by force+
+  next
+    case (Node x21 x22 x23)
+    thus ?thesis
+      apply (cases pos, clarsimp)
+      using Lcons.hyps Lcons.prems apply clarsimp 
+       apply force (* takes some time *)
+      using Lcons.hyps Lcons.prems apply clarsimp 
+      by force  (* takes some time *)
+  qed
 qed
 
 (* wp_sound_set rule for one (simplified wp rule) *)
 lemma one_wp_sound_set: "wp_sound_set (one s) loc P senv 
                       = (wp_err_sound_set s (loc \<triangleright> Left) P senv \<inter> wp_sound_set s (loc \<triangleright> Right) P senv)
                       \<union> (wp_sound_set s (loc \<triangleright> Left) P senv \<inter> wp_err_sound_set s (loc \<triangleright> Right) P senv)"
-  apply (simp add: wp_sound_set_def wp_err_sound_set_def)
-  apply (rule subset_antisym)
+  (is "?lhs = ?rhs1 \<union> ?rhs2")
+proof (rule subset_antisym)
+  show "?lhs \<subseteq> ?rhs1 \<union> ?rhs2"
+  unfolding wp_sound_set_def wp_err_sound_set_def 
    apply (rule subsetI)
    apply clarsimp
    apply (rename_tac x)
@@ -773,31 +804,35 @@ lemma one_wp_sound_set: "wp_sound_set (one s) loc P senv
       apply blast
      apply blast
     apply simp
-   apply (clarsimp)
+  apply (clarsimp)
    apply (rename_tac xa)
    apply (case_tac xa)
      apply blast
     apply blast
-   apply simp
-  apply clarsimp
-  apply (rule)
-   apply (clarsimp)
-   apply (frule defined_append)
-   apply (simp add: lookup_exec_update_one)
-   apply blast
-  apply (clarsimp)
-  apply (frule defined_append)
-  apply (simp add: lookup_exec_update_one)
-  by blast
+  apply simp
+  done
+  show "?rhs1 \<union> ?rhs2 \<subseteq> ?lhs"
+  proof(rule Un_least)
+    show "?rhs1 \<subseteq> ?lhs"
+      unfolding wp_sound_set_def wp_err_sound_set_def apply clarsimp
+      apply (frule defined_append)
+      by (auto simp: lookup_exec_update_one)[1]
+    show "?rhs2 \<subseteq> ?lhs"
+      unfolding wp_sound_set_def wp_err_sound_set_def apply (clarsimp)
+      apply (frule defined_append)
+      by (auto simp: lookup_exec_update_one)[1]
+  qed
+qed
 
 (* wp_err_sound_set rule for one (simplified wp rule) *)
-lemma one_wp_err_sound_set: "wp_err_sound_set (one s) loc P senv
-                                = {e | e x. e \<in> defined loc \<and> lookup loc e = Leaf x}
-                                \<union> wp_err_sound_set s (loc \<triangleright> Left) P senv \<inter> wp_err_sound_set s (loc \<triangleright> Right) P senv"
-  apply (simp add: wp_sound_set_def wp_err_sound_set_def)
-  apply (rule subset_antisym)
-   apply (rule subsetI)
-   apply (clarsimp)
+lemma one_wp_err_sound_set: 
+  "wp_err_sound_set (one s) loc P senv = 
+        {e | e x. e \<in> defined loc \<and> lookup loc e = Leaf x}
+      \<union> wp_err_sound_set s (loc \<triangleright> Left) P senv \<inter> wp_err_sound_set s (loc \<triangleright> Right) P senv"
+  (is "?lhs = ?rhs1 \<union> ?rhs2")
+proof (rule antisym)
+  show "?lhs \<subseteq> ?rhs1 \<union> ?rhs2" 
+    unfolding wp_sound_set_def wp_err_sound_set_def apply clarsimp
    apply (rename_tac x)
    apply (simp add: lookup_exec_update_one)
    apply (elim conjE)
@@ -811,28 +846,24 @@ lemma one_wp_err_sound_set: "wp_err_sound_set (one s) loc P senv
       apply blast
      apply blast
     apply (erule notE)
-    apply clarsimp
-    apply (rename_tac xa)
-    apply (case_tac xa)
-      apply simp
+     apply clarsimp
+     apply(rule exp_err_div.exhaust)
+       apply blast
+      apply blast
      apply blast
-    apply blast
-   apply clarsimp
-   apply (case_tac "x \<in> defined (loc\<triangleright>pos.Right)")
-    apply simp
-    apply (rule append_undefined_lookup_id, simp, simp)
-   apply (rule append_undefined_lookup_id, simp, simp)
-  apply clarsimp
-  apply (rule conjI)
-   apply (rule subsetI)
-   apply (clarsimp simp add: lookup_exec_update_one)
-   apply (frule_tac p = Left in lookup_id_append_undefined, simp)
-   apply (frule_tac p = Right in lookup_id_append_undefined, simp)
-   apply simp
-  apply clarsimp
-  apply (frule defined_append)
-  apply (clarsimp simp add: lookup_exec_update_one)
-  by blast
+    by (metis append_undefined_lookup_id)
+next
+  show "?rhs1 \<union> ?rhs2 \<subseteq> ?lhs" 
+  proof (rule Un_least)
+    show "?rhs1 \<subseteq> ?lhs" 
+      unfolding wp_sound_set_def wp_err_sound_set_def apply clarsimp
+      by (simp add: lookup_exec_update_one lookup_id_append_undefined)
+    show "?rhs2 \<subseteq> ?lhs" 
+      unfolding wp_sound_set_def wp_err_sound_set_def apply clarsimp
+      apply (frule defined_append)
+      by (auto simp: lookup_exec_update_one)[1]
+  qed
+qed
 
 subsection \<open>All Lemmas\<close>
 lemma PdToSet_all:
@@ -843,7 +874,8 @@ lemma PdToSet_all:
   apply (simp add: all_s_def)
   apply (subst Abs_powerdomain_inverse)
    apply clarsimp
-   apply (case_tac e)
+   apply (cases e)
+  sledgehammer
     apply (rotate_tac 2)  
     apply blast
    apply clarsimp
@@ -864,7 +896,7 @@ lemma lookup_exec_update_all:
                                       \<union> {err. err = Err \<and> e \<in> defined (loc \<triangleright> Right) \<and> Err \<in> lookup_exec_update s (loc \<triangleright> Right) e senv}"
   using assms proof (induct loc arbitrary: e)
   case empty
-  then show ?case 
+  thus ?case 
     apply (simp add: PdToSet_all)
     apply (rule subset_antisym)
      apply (rule subsetI)
@@ -885,7 +917,7 @@ lemma lookup_exec_update_all:
     by fastforce
 next
   case (Lcons pos loc)
-  then show ?case
+  thus ?case
     apply (case_tac pos)
      apply (case_tac e)
       apply simp
@@ -1167,7 +1199,7 @@ lemma lookup_exec_update_some:
                                                   \<longrightarrow> Err \<in> lookup_exec_update s (loc \<triangleright> Left) e senv \<inter> lookup_exec_update s (loc \<triangleright> Right) e senv)}"
   using assms proof (induct loc arbitrary: e)
   case empty
-  then show ?case
+  thus ?case
     apply (simp add: PdToSet_some)
     apply (rule subset_antisym)
      apply (rule subsetI)
@@ -1186,7 +1218,7 @@ lemma lookup_exec_update_some:
     by fastforce
 next
   case (Lcons pos loc)
-  then show ?case
+  thus ?case
     apply (case_tac pos)
      apply (case_tac e)
       apply simp
@@ -1763,11 +1795,11 @@ lemma update_big_union_equals_big_union_update:
     "update loc x (\<Union>xa\<in>A. PdToSet (snd xa (lookup loc x))) = (\<Union>xa\<in>A. update loc x (PdToSet (snd xa (lookup loc x))))"
   using assms proof (induct loc arbitrary: x)
   case empty
-  then show ?case 
+  thus ?case 
     by simp
 next
   case (Lcons pos loc)
-  then show ?case
+  thus ?case
     apply (case_tac pos)
      apply (case_tac x)
       apply auto[1]
@@ -1778,7 +1810,7 @@ qed
 lemma wp_mu_admissible : "ccpo.admissible Sup (\<le>)
         (\<lambda>x. Rep_pt (fst (fst x) loc) P = {e \<in> defined loc. update loc e (PdToSet (snd x (lookup loc e))) \<subseteq> E ` P})"
   apply (rule ccpo.admissibleI)
-  apply (simp add : prod_Sup Sup_pt)
+  apply (simp add : fst_Sup snd_Sup Sup_pt)
   apply (subst Abs_pt_inverse)
    apply simp
    apply (intro mono_intros)
@@ -1853,7 +1885,7 @@ lemma wp_mu_admissible : "ccpo.admissible Sup (\<le>)
 lemma wp_err_mu_admissible : "ccpo.admissible Sup (\<le>)
         (\<lambda>x. Rep_pt (snd (fst x) loc) P = {e \<in> defined loc. update loc e (PdToSet (snd x (lookup loc e))) \<subseteq> E ` P \<union> {Err}})"
   apply (rule ccpo.admissibleI)
-  apply (simp add : prod_Sup Sup_pt)
+  apply (simp add : fst_Sup snd_Sup Sup_pt)
   apply (subst Abs_pt_inverse)
    apply simp
    apply (intro mono_intros)
@@ -1939,30 +1971,30 @@ theorem wp_wp_err_soundness:
           = {e | e. e \<in> (defined loc) \<and> (update loc e (PdToSet (exec s senv (lookup loc e)))) \<subseteq> E ` P \<union> {Err}}"
   using assms
 proof (induct s arbitrary: P loc env senv)
-  case SKIP case 1 then show ?case
+  case SKIP case 1 thus ?case
     using UpdateWithLookupUnchanged
     by auto
 next
-  case SKIP case 2 then show ?case
+  case SKIP case 2 thus ?case
     using UpdateWithLookupUnchanged
     by auto
 next
-  case ABORT case 1 then show ?case
+  case ABORT case 1 thus ?case
     using UpdateErrGivesErr
     by auto
 next
-  case ABORT case 2 then show ?case
+  case ABORT case 2 thus ?case
     using UpdateErrGivesErr
     by auto
 next
-  case Atomic case 1 then show ?case
+  case Atomic case 1 thus ?case
     by simp
 next 
-  case Atomic case 2 then show ?case
+  case Atomic case 2 thus ?case
     by simp
 next
   case (Seq s1 s2) note hyps=this {
-    case 1 then show ?case
+    case 1 thus ?case
       apply (clarsimp)
       apply (subst hyps(1)[where senv=senv])
        apply simp
@@ -1972,7 +2004,7 @@ next
             where loc=loc and ?s1.0=s1 and senv=senv and ?s2.0=s2 and P=P])
       by simp
   next 
-    case 2 then show ?case
+    case 2 thus ?case
       apply (clarsimp)
       apply (subst hyps(2)[where senv=senv])
        apply simp
@@ -1984,7 +2016,7 @@ next
   }
 next
   case (Left_Choice s1 s2) note hyps=this {
-    case 1 then show ?case 
+    case 1 thus ?case 
       apply clarsimp
       apply (subst hyps(1)[where senv=senv], simp)
       apply (subst hyps(2)[where senv=senv], simp)
@@ -1993,7 +2025,7 @@ next
             where loc=loc and ?s1.0=s1 and senv=senv and ?s2.0=s2 and P=P])
       by simp
   next
-    case 2 then show ?case 
+    case 2 thus ?case 
       apply clarsimp
       apply (subst hyps(1)[where senv=senv], simp)
       apply (subst hyps(2)[where senv=senv], simp)
@@ -2004,7 +2036,7 @@ next
   }
 next
   case (Choice s1 s2) note hyps=this {
-    case 1 then show ?case
+    case 1 thus ?case
       apply clarsimp
       apply (subst hyps(1)[where senv=senv], simp)
       apply (subst hyps(2)[where senv=senv], simp)
@@ -2013,7 +2045,7 @@ next
       apply (subst choice_wp_sound_set[simplified wp_sound_set_def wp_err_sound_set_def lookup_exec_update_def, simplified, 
             where loc=loc and ?s1.0=s1 and senv=senv and ?s2.0=s2 and P=P])
       by auto
-    case 2 then show ?case
+    case 2 thus ?case
       apply clarsimp
       apply (subst hyps(2)[where senv=senv], simp)
       apply (subst hyps(4)[where senv=senv], simp)
@@ -2023,7 +2055,7 @@ next
   }
 next 
   case (One s) note hyps=this {
-    case 1 then show ?case
+    case 1 thus ?case
       apply clarsimp
       apply (subst hyps(1)[where senv=senv], simp)
       apply (subst hyps(2)[where senv=senv], simp)
@@ -2033,7 +2065,7 @@ next
             where loc=loc and ?s=s and senv=senv  and P=P])
       by auto
   next
-    case 2 then show ?case
+    case 2 thus ?case
       apply clarsimp
       apply (subst hyps(2)[where senv=senv], simp)
       apply (subst hyps(2)[where senv=senv], simp)
@@ -2043,7 +2075,7 @@ next
   }
 next
   case (All s) note hyps=this {
-    case 1 then show ?case
+    case 1 thus ?case
       apply clarsimp
       apply (subst hyps(1)[where senv=senv], simp)
       apply (subst hyps(1)[where senv=senv], simp)
@@ -2053,7 +2085,7 @@ next
             where loc=loc and ?s=s and senv=senv  and P=P])
       by auto
   next
-    case 2 then show ?case
+    case 2 thus ?case
       apply clarsimp
       apply (subst hyps(2)[where senv=senv], simp)
       apply (subst hyps(2)[where senv=senv], simp)
@@ -2066,7 +2098,7 @@ next
 
 next
   case (CSome s) note hyps=this {
-    case 1 then show ?case
+    case 1 thus ?case
       apply clarsimp
       apply (subst hyps(2)[where senv=senv], simp)
       apply (subst hyps(1)[where senv=senv], simp)
@@ -2082,7 +2114,7 @@ next
             where loc=loc and ?s=s and senv=senv  and P=P])
       by simp
   next
-    case 2 then show ?case
+    case 2 thus ?case
       apply clarsimp
       apply (subst hyps(2)[where senv=senv], simp)
       apply (subst hyps(2)[where senv=senv], simp)
@@ -2100,14 +2132,14 @@ next
   }
 
 next
-  case FixVar case 1 then show ?case
+  case FixVar case 1 thus ?case
     by simp
 next
-  case FixVar case 2 then show ?case
+  case FixVar case 2 thus ?case
     by simp
 next 
   case (Mu v s) note hyps=this {
-    case 1 then show ?case
+    case 1 thus ?case
       apply (subgoal_tac 
           "\<forall> P loc. 
                 (wp (mu v. s) loc P env = {e |e. e \<in> defined loc \<and> update loc e (PdToSet (exec (mu v. s) senv (lookup loc e))) \<subseteq> E ` P})
@@ -2121,7 +2153,7 @@ next
           apply (rule admissible_conj)
            apply (rule wp_mu_admissible)
           apply (rule wp_err_mu_admissible[simplified])
-         apply (simp add: prod_Sup Sup_pt pd_Sup)
+         apply (simp add: fst_Sup snd_Sup Sup_pt pd_Sup)
          apply (subst Abs_pt_inverse)
           apply simp
           apply (intro mono_intros)
@@ -2145,7 +2177,7 @@ next
       using hyps(1) apply simp
       using hyps(2) by simp
   next
-    case 2 then show ?case
+    case 2 thus ?case
       apply (subgoal_tac 
           "\<forall> P loc. 
                 (wp (mu v. s) loc P env = {e |e. e \<in> defined loc \<and> update loc e (PdToSet (exec (mu v. s) senv (lookup loc e))) \<subseteq> E ` P})
@@ -2159,7 +2191,7 @@ next
           apply (rule admissible_conj)
            apply (rule wp_mu_admissible)
           apply (rule wp_err_mu_admissible[simplified])
-         apply (simp add: prod_Sup Sup_pt pd_Sup)
+         apply (simp add: fst_Sup snd_Sup Sup_pt pd_Sup)
          apply (subst Abs_pt_inverse)
           apply simp
           apply (intro mono_intros)
@@ -2186,3 +2218,5 @@ next
 qed
 
 end
+(*    using [[rule_trace]] apply rule
+ *)
