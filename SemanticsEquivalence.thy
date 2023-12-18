@@ -23,56 +23,31 @@ lemma env_irrelevant:
   shows "exec s \<xi>1 = exec s \<xi>2"
   using assms
 proof (induct s arbitrary: \<xi>1 \<xi>2)
-  case SKIP
-  then show ?case
-    by simp
-next
-  case ABORT
-  then show ?case
-    by simp
-next
-  case (FixVar x)
-  then show ?case
-    by simp
-next
-  case (Atomic x)
-  then show ?case
-    by simp
-next
   case (Seq s1 s2)
-  then show ?case
-    apply simp
-    by (metis UnI1 UnI2)
+  thus ?case
+    apply clarsimp
+    by (metis Un_iff)
 next
   case (Left_Choice s1 s2)
-  then show ?case
-    apply simp
-    by (metis UnI1 UnI2)
+  thus ?case
+    apply clarsimp
+    by (metis Un_iff)
 next
   case (Choice s1 s2)
-  then show ?case
-    apply simp
-    by (metis UnI1 UnI2)
-next
-  case (One s)
-  then show ?case
-    by fastforce
-next
-  case (CSome s)
-  then show ?case
-    by fastforce
-next
-  case (All s)
-  then show ?case
-    by fastforce
+  thus ?case
+    apply clarsimp
+    by (metis Un_iff)
 next
   case (Mu x1 s)
-  then show ?case
-    apply simp
-    apply (subgoal_tac "\<forall> x. exec s (\<xi>1(x1 := x)) =  exec s (\<xi>2(x1 := x))")
-     apply presburger
-    by auto
-qed
+  thus ?case
+  proof - 
+    have "\<forall> x. exec s (\<xi>1(x1 := x)) =  exec s (\<xi>2(x1 := x))"
+      by (simp add: Mu.hyps Mu.prems)
+    thus ?thesis
+      by simp
+  qed
+qed (fastforce+)
+
 
 subsection \<open>Computational soundness one\<close>
 lemma substitution: 
@@ -80,48 +55,8 @@ lemma substitution:
   shows "exec (s \<lbrace> X \<mapsto> s'\<rbrace>) \<xi> = exec s (\<xi>(X := (exec s' \<xi>)))"
   using assms
 proof (induct s arbitrary: \<xi>)
-  case SKIP
-  then show ?case
-    by simp
-next
-  case ABORT
-  then show ?case
-    by simp
-next
-  case (FixVar x)
-  then show ?case
-    by simp
-next
-  case (Atomic x)
-  then show ?case
-    by simp
-next
-  case (Seq s1 s2)
-  then show ?case
-    by simp
-next
-  case (Left_Choice s1 s2)
-  then show ?case
-    by auto
-next
-  case (Choice s1 s2)
-  then show ?case
-    by simp
-next
-  case (One s)
-  then show ?case
-    by simp
-next
-  case (CSome s)
-  then show ?case
-    by simp
-next
-  case (All s)
-  then show ?case 
-    by auto
-next
   case (Mu x1 s)
-  then show ?case
+  thus ?case
     apply simp
     apply (intro impI conjI)
      apply (subgoal_tac "\<forall> x. ((\<lambda>a. if a = X then exec s' \<xi> else \<xi> a)(X := x)) = (\<xi>(X := x))")
@@ -134,55 +69,11 @@ next
     apply clarsimp
     apply (rule env_irrelevant)
     by simp
-qed
+qed ((fastforce|simp)+)
 
 lemma subst_var_empty: "fv Y = {} \<Longrightarrow> fv (s\<lbrace>X\<mapsto>Y\<rbrace>) = fv s - {X}"
-proof (induct s arbitrary: X Y)
-  case SKIP
-  then show ?case
-    by simp
-next
-  case ABORT
-  then show ?case
-    by simp
-next
-  case (FixVar x)
-  then show ?case
-    by simp
-next
-  case (Atomic x)
-  then show ?case
-    by auto
-next
-  case (Seq s1 s2)
-  then show ?case
-    by auto
-next
-  case (Left_Choice s1 s2)
-  then show ?case
-    by auto
-next
-  case (Choice s1 s2)
-  then show ?case
-    by auto
-next
-  case (One s)
-  then show ?case 
-    by auto
-next
-  case (CSome s)
-  then show ?case
-    by auto
-next
-  case (All s)
-  then show ?case 
-    by auto
-next
-  case (Mu x1 s)
-  then show ?case
-    apply simp
-    by blast
-qed
+  apply (induct s arbitrary: X Y)
+            by (simp|fastforce)+
 
 text \<open>Computational soundness one for non-diverging executions\<close>
 theorem soundness:
@@ -192,132 +83,120 @@ theorem soundness:
   using assms
 proof (induct "(s, e)" "e'" arbitrary: s \<xi> e rule: big_step.induct)
   case (Skip e)
-  then show ?case 
+  thus ?case 
     by simp
 next
   case (Abort e)
-  then show ?case
+  thus ?case
     by simp
 next
   case (Atomic atomic e)
-  then show ?case  
+  thus ?case  
     by (simp split: option.split)
 next
   case (Seq s1 e1 e2 s2 e3)
-  then show ?case
+  thus ?case
     apply (simp add: PdToSet_seq)
-    by auto
+    by fastforce
 next
   case (SeqEr1 s1 e1 s2)
-  then show ?case 
+  thus ?case 
     by (simp add: PdToSet_seq)
 next
   case (SeqEr2 s1 e1 e2 s2)
-  then show ?case 
+  thus ?case 
     apply (simp add: PdToSet_seq)
     by auto
 next
   case (LeftL s1 e e1 s2)
-  then show ?case 
+  thus ?case 
     by (simp add: PdToSet_lc)
 next
   case (LeftR s1 e s2 e1)
-  then show ?case 
+  thus ?case 
     by (simp add: PdToSet_lc)
 next
   case (LeftEr s1 e s2)
-  then show ?case  
+  thus ?case  
     by (simp add: PdToSet_lc)
 next
   case (ChoiceL s1 e e1 s2)
-  then show ?case 
+  thus ?case 
     by (simp add: PdToSet_choice)
 next
   case (ChoiceR s2 e e1 s1)
-  then show ?case 
+  thus ?case 
     by (simp add: PdToSet_choice)
 next
   case (ChoiceEr s1 e s2)
-  then show ?case 
+  thus ?case 
     by (simp add: PdToSet_choice)
 next
   case (OneLeaf s label)
-  then show ?case 
+  thus ?case 
     by (simp add: PdToSet_one)
 next
   case (OneNodeL s l l' r)
-  then show ?case
+  thus ?case
     by (simp add: PdToSet_one)
 next
   case (OneNodeR s r r' l)
-  then show ?case
+  thus ?case
     by (simp add: PdToSet_one)
 next
   case (OneNodeEr s l r)
-  then show ?case 
+  thus ?case 
     by (simp add: PdToSet_one)
 next
   case (SomeLeaf s label)
-  then show ?case
+  thus ?case
     by (simp add: PdToSet_some)
 next
   case (SomeNodeL s l l' r)
-  then show ?case 
+  thus ?case 
     by (simp add: PdToSet_some)
 next
   case (SomeNodeR s r r' l)
-  then show ?case
+  thus ?case
     by (simp add: PdToSet_some)
 next
   case (SomeNode s l l' r r')
-  then show ?case 
+  thus ?case 
     by (simp add: PdToSet_some)
 next
   case (SomeNodeEr s l r)
-  then show ?case
+  thus ?case
     by (simp add: PdToSet_some)
 next
   case (AllLeaf s label)
-  then show ?case
+  thus ?case
     by (simp add: PdToSet_all)
 next
   case (AllNode s l l' r r')
-  then show ?case
+  thus ?case
     by (simp add: PdToSet_all)
 next
   case (AllNodeErL s l r)
-  then show ?case
+  thus ?case
     by (simp add: PdToSet_all)
 next
   case (AllNodeErR s r l)
-  then show ?case
+  thus ?case
     by (simp add: PdToSet_all)
 next
   case (FixedPoint s X e e')
-  then show ?case
+  thus ?case
     apply (simp add: substitution)
     apply (subst fixp_unfold)
-     apply (rule monoI)
-     apply (rule exec_mono)
-     apply simp
-    apply (drule_tac x=\<xi> in meta_spec)
-    apply (drule meta_mp)
-     apply (subst subst_var_empty)
-      apply simp
-    by blast
+     apply (simp add: ord.mono_on_def)
+    using subst_var_empty by force
 next
   case (FixedPointEr s X e)
-  then show ?case
+  thus ?case
     apply (simp add: substitution)
     apply (subst fixp_unfold)
-     apply (rule monoI)
-     apply (rule exec_mono)
-     apply simp
-    apply (drule_tac x=\<xi> in meta_spec)
-    apply (drule meta_mp)
-     apply (subst subst_var_empty)
-      apply simp
-    by blast
+    apply (simp add: ord.mono_on_def)
+    using subst_var_empty by force
 qed
 
 subsection \<open>Computational adequacy one\<close>
@@ -345,28 +224,11 @@ lemma approximate_seq:
   assumes "approximate s1 d1"
     and "approximate s2 d2"
   shows "approximate (s1 ;; s2) (d1 ;;s d2)"
-  using assms
+  using assms 
   unfolding approximate_def
-  apply clarsimp
-  sledgehammer
-
-  apply (rename_tac e e')
   apply (simp add: PdToSet_seq)
-  apply (elim disjE conjE exE)
-   apply (rename_tac x xa)
-   apply (case_tac e')
-     apply simp
-     apply (rule_tac ?e2.0=xa in big_step.SeqEr2)
-      apply blast
-     apply blast
-    apply simp
-    apply (rule_tac ?e2.0=xa in big_step.Seq)
-     apply blast
-    apply blast
-   apply blast
-  apply simp
-  apply (rule big_step.SeqEr1)
-  by blast
+  using Seq SeqEr1 SeqEr2
+  by (metis exp_err_div.distinct(5) exp_err_div.exhaust)
 
 lemma approximate_lc: 
   assumes "approximate s1 d1"
@@ -374,26 +236,9 @@ lemma approximate_lc:
   shows "approximate (s1 <+ s2) (d1 <+s d2)"
   using assms
   unfolding approximate_def
-  apply clarsimp
-  apply (rename_tac e e')
   apply (simp add: PdToSet_lc)
-  apply (elim disjE conjE exE)
-   apply (case_tac e')
-     apply simp
-    apply simp
-    apply (rule big_step.LeftL)
-    apply blast
-   apply blast
-  apply (case_tac e')
-    apply simp
-    apply (rule big_step.LeftEr)
-     apply blast
-    apply blast
-   apply simp
-   apply (rule big_step.LeftR)
-    apply blast
-   apply blast
-  by blast
+  using  LeftEr LeftL LeftR
+  by (metis exp_err_div.exhaust exp_err_div.simps(5))
 
 lemma approximate_choice: 
   assumes "approximate s1 d1"
@@ -401,111 +246,49 @@ lemma approximate_choice:
   shows "approximate (s1 >< s2) (d1 ><s d2)"
   using assms
   unfolding approximate_def
-  apply clarsimp
-  apply (rename_tac e e')
   apply (simp add: PdToSet_choice)
-  apply (elim disjE conjE exE)
-    apply (case_tac e')
-      apply blast
-     apply simp
-     apply (rule big_step.ChoiceL)
-     apply blast
-    apply blast
-   apply (case_tac e')
-     apply blast
-    apply simp
-    apply (rule big_step.ChoiceR)
-    apply blast
-   apply blast
-  apply simp
-  apply (rule big_step.ChoiceEr)
-   apply blast
-  by blast
+  using ChoiceEr ChoiceL ChoiceR by blast
 
 lemma approximate_one: 
   assumes "approximate s d"
   shows "approximate (one s) (one_s d)"
   using assms
   unfolding approximate_def
-  apply clarsimp
   apply (simp add: PdToSet_one)
-  apply (elim disjE conjE exE)
-  using big_step.OneNodeL apply blast
-  using big_step.OneNodeR apply blast
-  using big_step.OneLeaf apply blast
-  using big_step.OneNodeEr by metis
+  using OneLeaf OneNodeEr OneNodeL OneNodeR by fastforce
 
 lemma approximate_some: 
   assumes "approximate s d"
   shows "approximate (some s) (some_s d)"
   using assms
   unfolding approximate_def
-  apply clarsimp
   apply (simp add: PdToSet_some)
-  apply (elim disjE conjE exE)
-  using big_step.SomeNode apply blast
-  using big_step.SomeNodeL apply blast
-  using big_step.SomeNodeR apply blast
-  using big_step.SomeLeaf apply blast
-  using big_step.SomeNodeEr by metis
+  using SomeLeaf SomeNode SomeNodeEr SomeNodeL SomeNodeR by fastforce
 
-lemma approximate_all: 
+lemma approximate_all:
   assumes "approximate s d"
   shows "approximate (all s) (all_s d)"
   using assms
   unfolding approximate_def
-  apply clarsimp
   apply (simp add: PdToSet_all)
-  apply (elim disjE conjE exE)
-  using big_step.AllNode apply blast
-  using big_step.AllLeaf apply blast
-  using big_step.AllNodeErL apply blast
-  using big_step.AllNodeErR by blast
+  using AllLeaf AllNode AllNodeErL AllNodeErR
+  by fastforce
 
 lemma map_strategy_closed:
   assumes "\<forall>y\<in>fv s. fv (\<theta> y) \<subseteq> vs"
   shows " fv (map_strategy \<theta> s) \<subseteq> vs"
   using assms
 proof (induct s arbitrary: \<theta> vs)
-  case SKIP
-  then show ?case by simp
-next
-  case ABORT
-  then show ?case by simp
-next
-  case (FixVar x)
-  then show ?case by simp
-next
-  case (Atomic x)
-  then show ?case by simp
-next
-  case (Seq s1 s2)
-  then show ?case by simp
-next
-  case (Left_Choice s1 s2)
-  then show ?case by auto
-next
-  case (Choice s1 s2)
-  then show ?case by auto
-next
-  case (One s)
-  then show ?case by simp
-next
-  case (CSome s)
-  then show ?case by auto
-next
-  case (All s)
-  then show ?case by simp
-next
   case (Mu x1 s)
-  then show ?case
-    apply simp
-    apply (drule_tac x="\<theta>(x1 := \<lparr>x1\<rparr>)" in meta_spec)
-    apply (drule_tac x="vs \<union> {x1}" in meta_spec)
-    apply (drule meta_mp)
-     apply auto[1]
-    by blast
-qed
+  thus ?case
+  proof -
+    have "fv (map_strategy (\<theta>(x1 := \<lparr>x1\<rparr>)) s) \<subseteq> vs \<union> {x1}" 
+      using Mu.prems Mu.hyps 
+      by (simp add: subset_insertI2)
+    thus ?case
+      by fastforce
+  qed
+qed (simp+)
 
 lemma subst_does_nothing: "x \<notin> fv s \<Longrightarrow>  s \<lbrace>x\<mapsto>s'\<rbrace> = s"
   apply (induct s)
@@ -519,49 +302,18 @@ lemma map_strategy_subst:
   shows "map_strategy (\<theta>(x := \<lparr>x\<rparr>)) s\<lbrace>x \<mapsto> s'\<rbrace> = map_strategy (\<theta>(x := s')) s"
   using assms
 proof (induct s arbitrary: \<theta>)
-  case SKIP
-  then show ?case  by simp
-next
-  case ABORT
-  then show ?case by simp
-next
   case (FixVar x)
-  then show ?case
-    apply clarsimp
-    apply (rule subst_does_nothing)
-    by simp
-next
-  case (Atomic x)
-  then show ?case
-    by simp
-next
-  case (Seq s1 s2)
-  then show ?case
-    by simp
-next
-  case (Left_Choice s1 s2)
-  then show ?case
-    by simp
-next
-  case (Choice s1 s2)
-  then show ?case
-    by simp
-next
-  case (One s)
-  then show ?case
-    by simp
-next
-  case (CSome s)
-  then show ?case
-    by simp
-next
-  case (All s)
-  then show ?case
-    by simp
+  thus ?case
+    by (simp add: subst_does_nothing)
 next
   case (Mu x1 s)
-  then show ?case
-    apply clarsimp
+  thus ?case
+    using Mu.hyps Mu.prems
+    by (smt (verit, ccfv_SIG) DiffD2 Diff_empty Diff_insert0 fun_upd_other fun_upd_same 
+                              fun_upd_twist fun_upd_upd fv.simps(11) fv.simps(3) insert_Diff 
+                              insert_iff map_strategy.simps(11) substitute.simps(11))
+(* if smt needs to be avoided *)
+(*    apply clarsimp
     apply (rule conjI)
      apply clarsimp
      apply (subgoal_tac "((\<lambda>a. if a = x then \<lparr>x\<rparr> else \<theta> a)(x := \<lparr>x\<rparr>)) = ((\<lambda>a. if a = x then s' else \<theta> a)(x := \<lparr>x\<rparr>))")
@@ -579,7 +331,8 @@ next
      apply simp
     apply (rule ext)
     by simp
-qed
+*)
+qed (simp+)
 
 lemma approximation_lemma : 
   assumes "\<forall> y \<in> (fv s). approximate (\<theta> y) (\<xi> y)"
@@ -588,78 +341,53 @@ lemma approximation_lemma :
   using assms
 proof (induct s arbitrary: \<theta> sc \<xi>)
   case SKIP
-  then show ?case
+  thus ?case
     unfolding approximate_def
-    using big_step.Skip by auto
+    using big_step.Skip by fastforce
 next
   case ABORT
-  then show ?case
+  thus ?case
     unfolding approximate_def
-    using big_step.Abort by auto
+    using big_step.Abort by fastforce
 next
   case (FixVar X)
-  then show ?case
-    by simp
+  thus ?case
+    by fastforce
 next
   case (Atomic atomic)
-  then show ?case
+  thus ?case
     unfolding approximate_def
     apply (simp split: option.split)
-    apply clarsimp
-    apply (rename_tac e)
-    apply (rule conjI)
-     apply clarsimp
-    using big_step.Atomic[where atomic=atomic]
-     apply -
-     apply (drule_tac x=e in meta_spec)
-     apply simp
-    apply clarsimp
-    apply (drule_tac x=e in meta_spec)
-    by simp
+    by (metis big_step.Atomic option.sel option.split_sel)
 next
   case (Seq s1 s2)
-  then show ?case
-    apply simp
-    apply (rule approximate_seq)
-     apply blast
-    by blast
+  thus ?case
+    by (simp add: approximate_seq)
 next
   case (Left_Choice s1 s2)
-  then show ?case
-    apply simp
-    apply (rule approximate_lc)
-     apply simp
-    by blast
+  thus ?case
+    by (simp add: approximate_lc)
 next
   case (Choice s1 s2)
-  then show ?case
-    apply simp
-    apply (rule approximate_choice)
-     apply simp
-    by simp
+  thus ?case
+    by (simp add: approximate_choice)
 next
   case (One s)
-  then show ?case
-    apply simp
-    apply (rule approximate_one)
-    by blast
+  thus ?case
+    by (simp add: approximate_one)
 next
   case (CSome s)
-  then show ?case
-    apply simp
-    apply (rule approximate_some)
-    by blast
+  thus ?case
+    by (simp add: approximate_some)
 next
   case (All s)
-  then show ?case 
-    apply simp
-    apply (rule approximate_all)
-    by blast
+  thus ?case 
+    by (simp add: approximate_all)
 next
   case (Mu x1 s)
-  then show ?case
+  thus ?case
     apply simp
-    apply (rule_tac f="\<lambda> x. exec s (\<xi>(x1 := x))" in fixp_induct)
+    apply (rule fixp_induct[where f="\<lambda> x. exec s (\<xi>(x1 := x))"])
        apply (rule ccpo.admissibleI)
        apply (simp add: approximate_def)
        apply (rule conjI)
@@ -713,25 +441,16 @@ next
     apply (rule big_step.FixedPoint)
     apply (subst map_strategy_subst[simplified fun_upd_def])
      apply simp
-    apply (rotate_tac 5)
-    apply (drule_tac x="e" in spec)
-    apply (rotate_tac 7)
-    apply (rename_tac y)
-    apply (drule_tac x="E y" in spec)
-    apply (drule mp)
-     apply (simp add: fun_upd_def)
-    apply (subgoal_tac "(\<lambda>a. if a = x1 then mu x1. map_strategy (\<theta>(x1 := \<lparr>x1\<rparr>)) s else \<theta> a) = (\<lambda>x. if x = x1 then mu x1. map_strategy (\<lambda>a. if a = x1 then \<lparr>x1\<rparr> else \<theta> a) s else \<theta> x)")
-     apply simp
-    apply (rule ext)
-    by (simp add: fun_upd_def)
+    apply (auto simp add: fun_upd_def)[1]
+    using Mu.prems(2) exp_err_div.distinct(5) map_strategy.simps(11) by presburger
 qed
 
 lemma map_closed_strategy_unchanged:
   assumes "\<forall> y \<in> fv s. \<theta> y = \<lparr> y \<rparr>"
   shows "map_strategy \<theta> s = s"
   using assms
-proof (induct s arbitrary: \<theta>)
-qed auto
+apply(induct s arbitrary: \<theta>)
+  by simp+
 
 text \<open> The computational adequacy theorem one for non-diverging executions \<close>
 theorem computational_adequacy:
@@ -740,14 +459,7 @@ theorem computational_adequacy:
     and "e' \<noteq> Div"
   shows "(s, e) \<Down> e'"
   using assms
-  using approximation_lemma[where s=s and \<theta>="\<lambda> x. \<lparr> x \<rparr>" and \<xi>=\<xi> and sc = "map_strategy (\<lambda> x. \<lparr> x \<rparr>) s"]
-  apply -
-  apply (drule meta_mp)
-   apply simp
-  apply (drule meta_mp)
-   apply simp
-  apply (simp add : map_closed_strategy_unchanged)
-  by (simp add : approximate_def)
+  by (metis approximate_def approximation_lemma empty_iff map_closed_strategy_unchanged)
 
 subsection \<open>Computational soundness two\<close>
 definition rel :: "strategy \<Rightarrow> D \<Rightarrow> bool" where
@@ -759,77 +471,69 @@ fun semantics_subst :: "(var \<Rightarrow> strategy) \<Rightarrow> env \<Rightar
 theorem exec_mono_fv:
   assumes "\<forall>x \<in> fv s. env1 x \<le> env2 x"  
   shows "exec s env1 \<le> exec s env2"
-  apply (subgoal_tac "exec s env1 = exec s (\<lambda>x. if x \<in> fv s then env1 x else (\<lambda>e. SetToPd {Div}))")
-   apply simp
-   apply (subgoal_tac "exec s env2 = exec s (\<lambda>x. if x \<in> fv s then env2 x else (\<lambda>e. SetToPd {Div}))")
-    apply simp
-    apply (rule exec_mono)
-    apply (clarsimp simp: assms)
-   apply (rule env_irrelevant)
-   apply simp
-  apply (rule env_irrelevant)
-  by simp
+proof -
+  have "exec s env1 = exec s (\<lambda>x. if x \<in> fv s then env1 x else (\<lambda>e. SetToPd {Div}))"
+   and "exec s env2 = exec s (\<lambda>x. if x \<in> fv s then env2 x else (\<lambda>e. SetToPd {Div}))"
+    by (simp add: env_irrelevant)+
+  with assms 
+  show ?thesis
+    by force
+qed
 
 lemma simul_substitution: 
   assumes "\<forall>y \<in> fv s1. fv (\<theta> y) = {} \<or> fv (\<theta> y) = {y}"
   shows "exec (map_strategy \<theta> s1) \<xi> = exec s1 (semantics_subst \<theta> \<xi>)"
-  using assms apply (induct s1 arbitrary: \<theta> \<xi>; simp)
-  apply (rename_tac x1 s1' \<theta>' \<xi>)
-  apply (subgoal_tac "\<And> x. exec (map_strategy (\<theta>'(x1 := \<lparr>x1\<rparr>)) s1') (\<xi>(x1 := x)) 
-                     =  exec s1' ((semantics_subst \<theta>' \<xi>)(x1 := x))")
-   apply simp
-  apply (drule_tac x = "(\<theta>'(x1 := \<lparr>x1\<rparr>))" in meta_spec)
-  apply (drule_tac x = "(\<xi>(x1 := x))" in meta_spec)
-  apply (drule meta_mp)
-   apply clarsimp
-  apply simp
-  apply (rule env_irrelevant)
-  apply clarsimp
-  apply (rule env_irrelevant)
-  by auto
+  using assms 
+proof (induct s1 arbitrary: \<theta> \<xi>)
+  case (Mu x1 s1)
+  thus ?case
+  proof -
+    have "\<And> x. exec (map_strategy (\<theta>(x1 := \<lparr>x1\<rparr>)) s1) (\<xi>(x1 := x)) 
+                     =  exec s1 ((semantics_subst \<theta> \<xi>)(x1 := x))"
+      using Mu.hyps Mu.prems
+      by (smt (verit) DiffI env_irrelevant exec.simps(3) fun_upd_other fun_upd_same fv.simps(3,11) 
+                     insertE insert_absorb insert_not_empty semantics_subst.elims)
+    thus ?case
+      using exec.simps(11) map_strategy.simps(11) by presburger
+  qed
+qed (simp+)
 
 lemma map_strategy_irrelevant:
   assumes "\<forall>y \<in> fv t. \<theta>1 y = \<theta>2 y" 
   shows "map_strategy \<theta>1 t = map_strategy \<theta>2 t" 
-  using assms by (induct t arbitrary: \<theta>1 \<theta>2; simp)
+  using assms 
+  by (induct t arbitrary: \<theta>1 \<theta>2; simp)
 
 lemma double_substitution: 
   assumes "\<forall>y \<in> fv t. fv (\<theta>1 y) \<subseteq> {y}"
     and     "\<forall>y \<in> fv (map_strategy \<theta>1 t). fv (\<theta>2 y) \<subseteq> {y}"
   shows "map_strategy \<theta>2 (map_strategy \<theta>1 t) = map_strategy (\<lambda>y. map_strategy \<theta>2 (\<theta>1 y)) t"
-  using assms proof (induct t arbitrary: \<theta>1 \<theta>2)
+  using assms 
+proof (induct t arbitrary: \<theta>1 \<theta>2)
   case (Mu x1 t)
-  then show ?case 
+  thus ?case 
     apply (simp add: fun_upd_def)
-    apply (rule map_strategy_irrelevant)
-    apply clarsimp
-    apply (rule map_strategy_irrelevant)
-    apply clarsimp
+    apply (rule map_strategy_irrelevant, clarsimp)
+    apply (rule map_strategy_irrelevant, clarsimp)
     by blast
-qed auto
+qed (simp+)
 
 lemma map_strategy_decomp:
   assumes "fv u = {}"
     and     "\<forall>y \<in> fv t - {x1}. fv (\<theta> y) = {}"
   shows "map_strategy (\<theta>(x1 := u)) t 
        = map_strategy (\<theta>(x1 := u)) (map_strategy (\<theta>(x1 := \<lparr> x1 \<rparr>)) t)"
-  using assms
-  apply (subst double_substitution)
-    apply auto[1]
-   apply clarsimp
-   apply (rename_tac y x)
-   apply (subgoal_tac "fv (map_strategy (\<theta>(x1 := \<lparr> x1 \<rparr>)) t) \<subseteq> fv t")
-    apply (drule_tac x = y in bspec)
-     apply simp
-     apply blast
-    apply clarsimp
-   apply (rule map_strategy_closed)
-   apply clarsimp
-  apply (rule map_strategy_irrelevant)
-  apply clarsimp
-  apply (rule sym)
-  apply (rule map_closed_strategy_unchanged)
-  by simp
+proof (subst double_substitution)
+  show "\<forall>y\<in>fv t. fv ((\<theta>(x1 := \<lparr>x1\<rparr>)) y) \<subseteq> {y}"
+    using assms by clarsimp
+  show "\<forall>y\<in>fv (map_strategy (\<theta>(x1 := \<lparr>x1\<rparr>)) t). fv ((\<theta>(x1 := u)) y) \<subseteq> {y}"
+    using assms apply clarsimp 
+    by (metis DiffI Diff_eq_empty_iff empty_iff fv.simps(11) insertE map_strategy.simps(11) 
+              map_strategy_closed)
+  show "map_strategy (\<theta>(x1 := u)) t = map_strategy (\<lambda>y. map_strategy (\<theta>(x1 := u)) ((\<theta>(x1 := \<lparr>x1\<rparr>)) y)) t"
+    using assms apply clarsimp
+    by (simp add: map_closed_strategy_unchanged map_strategy_irrelevant)
+qed
 
 lemma div_soundness_lemma: 
   assumes "\<forall> y \<in> fv s. rel (\<theta> y) (\<xi> y)"
@@ -837,55 +541,40 @@ lemma div_soundness_lemma:
   using assms 
 proof (induct s arbitrary: \<theta> \<xi>)
   case SKIP
-  then show ?case by (auto simp: rel_def elim: big_step_div.cases) 
+  thus ?case
+    by (auto simp: rel_def elim: big_step_div.cases) 
 next
   case ABORT
-  then show ?case by (auto simp: rel_def  elim: big_step_div.cases)
+  thus ?case 
+    by (auto simp: rel_def  elim: big_step_div.cases)
 next
   case (FixVar x)
-  then show ?case by (auto simp: rel_def  elim: big_step_div.cases)
+  thus ?case 
+    by (auto simp: rel_def  elim: big_step_div.cases)
 next
   case (Atomic x)
-  then show ?case by (auto simp: rel_def elim: big_step_div.cases)
+  thus ?case 
+    by (auto simp: rel_def elim: big_step_div.cases)
 next
   case (Seq s1 s2)
-  then show ?case 
-    apply simp
-    apply (simp add: rel_def)
-    apply (intro conjI)
-      apply fast
-     apply blast
+  thus ?case 
+(*  proof - 
+    have "(exec s1 \<xi>;;s exec s2 \<xi>)
+         \<le> (exec (map_strategy \<theta> s1) (\<lambda>x. undefined);;s exec (map_strategy \<theta> s2) (\<lambda>x. undefined))"
+      using Seq.prems Seq.hyps
+      apply (simp add: le_fun_def)
+      by (metis UnCI le_funD le_funI rel_def seq_s_mono)
+    thus ?thesis
+*)
+    unfolding rel_def apply (intro conjI)
+     apply (metis map_strategy_closed subset_empty)
     apply clarsimp
     apply (intro conjI)
      apply clarsimp
-     apply (erule big_step_div.cases; simp)
-      apply (drule_tac x = \<theta> in meta_spec)
-      apply (drule_tac x = \<xi> in meta_spec)
-      apply (drule meta_mp)
-       apply simp
-      apply clarsimp
-      apply (simp add: PdToSet_seq)
-     apply (frule_tac \<xi>=" (\<lambda>x. undefined)" in soundness)
-      apply fast
-     apply (drule sym)
-     apply (simp add: simul_substitution)
-     apply (rename_tac e s1' e1)
-     apply (subgoal_tac "Div \<in> PdToSet (exec s1 \<xi> e) \<or> E e1 \<in> PdToSet (exec s1 \<xi> e)")
-      apply (erule disjE)
-       apply (simp add: PdToSet_seq)
-      apply (rotate_tac)
-      apply (drule_tac  x = \<theta> in meta_spec)
-      apply (drule_tac x = "\<xi>" in meta_spec)
-      apply (drule meta_mp)
-       apply blast
-      apply clarsimp
-      apply (drule_tac x = e1 in spec)
-      apply clarsimp
-      apply (simp add: PdToSet_seq)
-      apply (rule disjI1)
-      apply blast
-     apply (simp add: porcupine_eglimilner)
-     apply fastforce
+     (* takes a few seconds *)
+     apply (erule big_step_div.cases; fastforce elim: big_step_div.cases
+                                                simp: PdToSet_seq porcupine_eglimilner simul_substitution
+                                                dest: soundness[where \<xi>="(\<lambda>x. undefined)"])
     apply (subgoal_tac "(exec s1 \<xi>;;s exec s2 \<xi>)
          \<le> (exec (map_strategy \<theta> s1) (\<lambda>x. undefined);;s exec (map_strategy \<theta> s2) (\<lambda>x. undefined))")
      apply (simp add: le_fun_def)
@@ -894,12 +583,12 @@ next
     by (simp add: le_fun_def)
 next
   case (Left_Choice s1 s2)
-  then show ?case 
+  thus ?case 
     apply simp
     apply (simp add: rel_def)
     apply (intro conjI)
       apply fast
-     apply fast
+      apply fast
     apply (clarsimp)
     apply (rule conjI)
      apply clarsimp
@@ -952,8 +641,8 @@ next
     by (simp add: le_fun_def)
 next
   case (Choice s1 s2)
-  then show ?case 
-    apply simp
+  thus ?case 
+   apply simp
     apply (simp add: rel_def)
     apply (intro conjI)
       apply fast
@@ -974,7 +663,7 @@ next
     using le_fun_def by fast
 next
   case (One s)
-  then show ?case 
+  thus ?case 
     apply simp
     apply (simp add: rel_def)
     apply (intro conjI)
@@ -991,7 +680,7 @@ next
     using le_fun_def by fast
 next
   case (CSome s)
-  then show ?case
+  thus ?case
     apply simp
     apply (simp add: rel_def)
     apply (intro conjI)
@@ -1008,7 +697,7 @@ next
     using le_fun_def by fast
 next
   case (All s)
-  then show ?case
+  thus ?case
     apply simp
     apply (simp add: rel_def)
     apply (intro conjI)
@@ -1025,9 +714,9 @@ next
     using le_fun_def by fast
 next
   case (Mu x1 t)
-  then show ?case
+  thus ?case
     apply simp 
-    apply (rule_tac f ="\<lambda> x. exec t (\<xi>(x1 := x))" in fixp_induct)
+    apply (rule fixp_induct[where f ="\<lambda> x. exec t (\<xi>(x1 := x))"])
        apply (rule ccpo.admissibleI)
        apply (simp add: rel_def)
        apply (rule conjI)
@@ -1170,19 +859,14 @@ text \<open>Computational soundness two for diverging executions\<close>
 theorem div_soundness:
   assumes "fv s = {}"
   shows "(s, e) \<Up> \<Longrightarrow> Div \<in> PdToSet (exec s \<xi> e)"
-  using div_soundness_lemma[where s = s and \<theta> = "\<lambda>x. \<lparr> x \<rparr>" and \<xi> = \<xi> ]
-  apply -
-  using assms apply simp
-  apply (simp add: rel_def)
-  done
+  using assms div_soundness_lemma map_closed_strategy_unchanged rel_def by force
 
 subsection \<open>Computational adequacy two\<close>
 lemma fixp_unfoldE: (*[rule_format, rotated]:*)
   assumes "mono f" 
   shows   "P (\<mu> X. f X) \<longrightarrow> (P (f (\<mu> X. f X)) \<longrightarrow> R) \<longrightarrow> R" 
   apply (subst fixp_unfold)
-  using assms apply simp
-  by simp 
+  using assms by simp_all
 
 text \<open>Computational adequacy two for diverging executions\<close>
 theorem div_adequacy:
@@ -1251,19 +935,15 @@ subsection \<open>The semantic equivalence theorem\<close>
 theorem sem_equivalence: 
   assumes "fv s = {}" 
   shows "PdToSet (exec s (\<lambda>x. undefined) e) = { r |r. (s,e) \<Down> r } \<union> { r |r. r = Div \<and> ((s,e) \<Up>) }"
-  using assms 
-  apply -
-  apply (rule set_eqI)
-  apply (rename_tac x)
-  apply (rule iffI)
-   apply simp
-   apply (case_tac "x = Div")
-    apply simp
-  using div_adequacy apply auto[1]
-  using computational_adequacy apply auto[1]
-  apply clarsimp
-  apply (erule disjE)
-  using soundness apply simp
-  apply clarsimp
-  using div_soundness by simp
+  (is "?lhs = ?rhs")
+proof
+  show "?lhs \<subseteq> ?rhs"
+    using assms apply -
+    apply(rule subsetI)
+    using computational_adequacy div_adequacy by blast
+  show "?rhs \<subseteq> ?lhs"
+    using assms apply -
+    apply(rule subsetI)
+    using div_soundness soundness by blast
+qed
 end

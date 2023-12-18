@@ -49,25 +49,29 @@ definition porcupine_less_eq :: "powerdomain \<Rightarrow> powerdomain \<Rightar
   "porcupine_less_eq a b \<longleftrightarrow> (Rep_powerdomain a - {Div} \<subseteq> Rep_powerdomain b - {Div})
                        \<and> (Div \<notin> Rep_powerdomain a \<longrightarrow> a = b)"
 
-theorem porcupine_eq: "porcupine_less_eq_paper a b = porcupine_less_eq a b"
-  using porcupine_less_eq_paper_def porcupine_less_eq_def by auto
+theorem porcupine_eq: 
+  "porcupine_less_eq_paper a b = porcupine_less_eq a b"
+  unfolding porcupine_less_eq_paper_def porcupine_less_eq_def 
+  by fastforce
 
 subsection \<open>The powerdomain for defining our denotational semantics\<close>
 
 instantiation powerdomain :: ord
 begin
 text \<open>This is the Egli-Milner ordering  \cite{plotkin:powerdomain}\<close>
-definition pd_less_eq : "a \<le> b \<longleftrightarrow> (\<forall> x \<in> (Rep_powerdomain a) . \<exists> y \<in> (Rep_powerdomain b) . x \<le> y) 
-                        \<and> (\<forall> y \<in> (Rep_powerdomain b) . \<exists> x \<in> (Rep_powerdomain a) . x \<le> y)" 
+definition pd_less_eq : 
+  "a \<le> b \<longleftrightarrow> (\<forall> x \<in> (Rep_powerdomain a) . \<exists> y \<in> (Rep_powerdomain b) . x \<le> y) 
+                     \<and> (\<forall> y \<in> (Rep_powerdomain b) . \<exists> x \<in> (Rep_powerdomain a) . x \<le> y)" 
                           (* Egli-Milner ordering *)
 definition pd_less : "(a:: powerdomain) < b \<longleftrightarrow> a \<le> b \<and> a \<noteq> b "
 instance ..
 end
 
-lemma porcupine_eglimilner : "a \<le> b \<longleftrightarrow> porcupine_less_eq a b "
+lemma porcupine_eglimilner : 
+  "a \<le> b \<longleftrightarrow> porcupine_less_eq a b "
+  apply (simp add: porcupine_less_eq_def pd_less_eq)
   apply (rule iffI)
-   apply (simp_all add: porcupine_less_eq_def pd_less_eq)
-  using Rep_powerdomain_inject exp_err_div_less_eq apply fastforce
+   using Rep_powerdomain_inject exp_err_div_less_eq apply fastforce
   using Rep_powerdomain exp_err_div_less_eq by auto[1]
 
 declare porcupine_less_eq_def[simp]
@@ -81,8 +85,7 @@ instantiation powerdomain :: preorder
 begin
 instance
   apply intro_classes
-  using pd_less pd_ord_anti_sym apply fastforce
-  using exp_err_div_less_eq pd_less_eq by fastforce+
+  by (fastforce simp: pd_less pd_less_eq exp_err_div_less_eq pd_ord_anti_sym)+
 end
 
 instantiation powerdomain :: order
@@ -140,32 +143,32 @@ lemma no_div_collapses:
   and "pd2 \<in> A"
   and "Div \<notin> Rep_powerdomain pd1"
 shows "pd2 \<le> pd1"
-  by (metis assms chain_def no_div_means_eq)
-
-theorem helper : "\<exists>x. x \<in> P \<Longrightarrow> P \<noteq> {} "
-  by force
+  using assms apply(simp add: chain_def no_div_means_eq)
+  using no_div_means_eq by blast
 
 text \<open>If any element of the chain has no Div, that is the upper bound 
        @{text "no_div_Sup_ub"}: 
        If there is a point in the Chain with no Div, it is the upper bound:
        @{term "p \<in> A \<Longrightarrow> Div \<notin> Rep_powerdomain p \<Longrightarrow> Sup A = p"} \<close>
-theorem no_div_Sup_ub : "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow>
-           p \<in> A \<Longrightarrow> Div \<notin> Rep_powerdomain p \<Longrightarrow> Sup A = p"
-  apply (clarsimp simp: pd_Sup)
-  apply (rule conjI, clarsimp)
-  apply (rule impI)
-  apply (rule Rep_powerdomain_inject[THEN iffD1])
-  apply (subgoal_tac "(\<Inter>a\<in>A. upclose (Rep_powerdomain a)) = Rep_powerdomain p")
-   apply (subst Abs_powerdomain_inverse)  
-  using Rep_powerdomain apply fastforce
-  using Rep_powerdomain apply fastforce
-  apply (subst upclose_eq)
-  apply(rule equalityI)
-   apply force
-  apply clarsimp
-  apply (erule disjE)
-   apply blast
-  by (metis (no_types, lifting) Int_Collect image_iff no_div_collapses no_div_means_eq)
+theorem no_div_Sup_ub : 
+  assumes "Complete_Partial_Order.chain (\<le>) A"
+  and     "p \<in> A"
+  and     "Div \<notin> Rep_powerdomain p"
+shows   "Sup A = p"
+proof - 
+  have "(\<Inter>a\<in>A. upclose (Rep_powerdomain a)) = Rep_powerdomain p"
+  proof
+    show "(\<Inter>a\<in>A. upclose (Rep_powerdomain a)) \<subseteq> Rep_powerdomain p"
+      by (fastforce simp: assms upclose_eq)
+    show "Rep_powerdomain p \<subseteq> (\<Inter>a\<in>A. upclose (Rep_powerdomain a))"
+      using assms apply clarsimp
+      by (metis UNIV_I no_div_collapses no_div_means_eq upclose_eq)
+  qed
+  thus ?thesis
+    using assms apply (clarsimp simp: pd_Sup)
+  by (metis (no_types, lifting) Rep_powerdomain_inverse Sup_upper downclose empty_iff empty_subsetI 
+                                image_iff inf.order_iff inf_commute insert_subset)
+qed
 
 declare Abs_powerdomain_inverse[simp]
 
@@ -194,20 +197,18 @@ theorem Sup_empty: "Sup {} = Abs_powerdomain {Div}"
   by (simp add: pd_Sup)
 
 lemma powerdomain_supA:
-  assumes "Complete_Partial_Order.chain (\<le>) A"
+  assumes "Complete_Partial_Order.chain (\<le>) (A:: powerdomain set)"
   and "x1 \<in> A"
-  and "\<exists>x\<in>A. Div \<notin> Rep_powerdomain x \<or> \<not>(\<exists>x\<in>A. Div \<notin> Rep_powerdomain x)"
 shows "x1 \<le> Sup A"
  apply(cases "\<exists>x\<in>A. Div \<notin> Rep_powerdomain x")
-  using assms  no_div_Sup_ub no_div_collapses apply blast
- using assms apply (auto simp: porcupine_eglimilner)[1]
-  by (metis (mono_tags, lifting) Abs_powerdomain_inverse UN_I div_Sup_ub empty_not_insert 
-                                 mem_Collect_eq mk_disjoint_insert)
+  using assms  no_div_Sup_ub no_div_collapses apply fastforce
+  using assms  apply (auto simp: porcupine_eglimilner)[1]
+ by (metis (mono_tags, lifting) Abs_powerdomain_inverse UN_I div_Sup_ub empty_not_insert 
+                                mem_Collect_eq mk_disjoint_insert)
 
 lemma powerdomain_supA':
-  assumes "Complete_Partial_Order.chain (\<le>) A"
+  assumes "Complete_Partial_Order.chain (\<le>) (A:: powerdomain set)"
   and "\<And>x. x \<in> A \<Longrightarrow> x \<le> z"
-  and "\<exists>x\<in>A. Div \<notin> Rep_powerdomain x \<or> \<not>(\<exists>x\<in>A. Div \<notin> Rep_powerdomain x)"
 shows "Sup A \<le> z"
 proof - 
   have "(\<exists>x\<in>A. Div \<notin> Rep_powerdomain x) \<or> (A={}) \<or> (A\<noteq>{} \<and> \<not>(\<exists>x\<in>A. Div \<notin> Rep_powerdomain x))"
@@ -220,12 +221,12 @@ proof -
   moreover
   { assume "A={}"
     hence ?thesis
-      using assms(3) by blast
+      by (simp add: CCPO.Sup_empty bottom_element)
   }
   moreover 
   { assume "A\<noteq>{} \<and> \<not>(\<exists>x\<in>A. Div \<notin> Rep_powerdomain x)"
     hence ?thesis
-      using assms apply simp
+      using assms apply clarsimp
       apply (subst div_Sup_ub)
          apply (simp_all  add : porcupine_eglimilner)
       apply (subst Abs_powerdomain_inverse)
@@ -242,9 +243,7 @@ instantiation powerdomain :: ccpo
 begin
 instance
   apply(intro_classes)   
-  using powerdomain_supA apply blast
-  using powerdomain_supA' 
-  by (metis CCPO.Sup_empty bottom_element ex_in_conv)
+  using powerdomain_supA powerdomain_supA' by blast+
 end
 
 text \<open> point-wise lifting to the domain D \<close>

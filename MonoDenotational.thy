@@ -29,8 +29,7 @@ text \<open>
 lemma iterates_fst1: 
   "x \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y)) \<Longrightarrow> fst x \<in> ccpo_class.iterates f"
   apply (induct rule: ccpo_class.iterates.induct)
-  using iterates.step apply force
-  by (simp add: chain_fst_exist fst_Sup iterates.Sup)
+   by (fastforce simp: iterates.step chain_fst_exist fst_Sup iterates.Sup)+
   
 (* Now the other direction of the equivalence, which is extremely hard.. *)
 lemma iterates_fst2: 
@@ -38,12 +37,13 @@ lemma iterates_fst2:
   shows "x \<in> ccpo_class.iterates f \<Longrightarrow> x \<in> fst ` ccpo_class.iterates (\<lambda>(x, y). (f x, g y))"
 proof (induct rule: iterates.induct)
   case (step x)
-  then show ?case 
+  thus ?case 
     apply clarsimp
+    using case_prod_conv fst_conv image_iff iterates.step
     by (metis (mono_tags, lifting) case_prod_conv fst_conv image_iff iterates.step)
 next
   case (Sup M)
-  then show ?case 
+  thus ?case 
   proof -
     (* We first prove that the chain exists *)
     (* We use Isabelle's SOME operator to non-constructively pick the element of the right side of 
@@ -51,17 +51,19 @@ next
     have "\<exists>M'\<subseteq>ccpo_class.iterates (\<lambda>(x, y). (f x, g y)). Complete_Partial_Order.chain (\<le>) M' 
              \<and> fst ` M' = M
              \<and> M' = {(x, SOME y. (x, y) \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y))) |x. x \<in> M}"
-      using Sup.hyps apply clarsimp
+      using Sup.hyps apply simp
       apply (intro conjI)
+      using  someI_ex chain_subset chain_iterates
         apply clarsimp
         apply (rule someI_ex, fastforce)
        apply (rule chain_subset[OF chain_iterates[OF mono]])
        apply (clarsimp)
-       apply (rule someI_ex, fastforce)
-      by force
+       apply (rule someI_ex)
+      by (force simp: someI_ex)+
     thus ?case
       apply clarsimp
-      apply (frule iterates.Sup [where f = "(\<lambda>(x, y). (f x, g y))"], force)
+      apply (frule iterates.Sup [where f = "(\<lambda>(x, y). (f x, g y))"])
+       apply force
       by (metis (mono_tags, lifting) fst_Sup imageI)
   qed
 qed
@@ -71,8 +73,7 @@ text \<open>The next two lemmas show each direction of the equivalence @{text "i
 lemma iterates_snd1: 
   "x \<in> ccpo_class.iterates (\<lambda>(x, y). (f x, g y)) \<Longrightarrow> snd x \<in> ccpo_class.iterates g"
   apply (induct rule: ccpo_class.iterates.induct)
-  using iterates.step apply force
-  by (simp add: chain_snd_exist iterates.Sup snd_Sup)
+   by (fastforce simp: iterates.step chain_snd_exist snd_Sup iterates.Sup)+
 
 text \<open> And the other direction, which is structurally the same as for @{text "iterates_fst2"}. \<close>
 lemma iterates_snd2:
@@ -80,12 +81,12 @@ lemma iterates_snd2:
   shows "x \<in> ccpo_class.iterates g \<Longrightarrow> x \<in> snd ` ccpo_class.iterates (\<lambda>(x, y). (f x, g y))"
 proof(induct rule: iterates.induct)
   case (step x)
-  then show ?case
+  thus ?case
     apply clarsimp
     by (metis (mono_tags, lifting) case_prod_conv snd_conv image_iff iterates.step)
 next
   case (Sup M)
-  then show ?case
+  thus ?case
   proof-
     have "\<exists>M'. M' \<subseteq> ccpo_class.iterates  (\<lambda>(x, y). (f x, g y)) 
                          \<and> Complete_Partial_Order.chain (\<le>) M' \<and> snd ` M' = M
@@ -109,16 +110,12 @@ qed
 lemma iterates_fst:
   assumes mono: "mono (\<lambda>(x,y). (f x, g y))"
   shows "(ccpo_class.iterates f) = fst ` (ccpo_class.iterates (\<lambda>(x,y). (f x, g y)))" 
-  apply standard
-  using iterates_fst2 mono  apply blast
-  by (simp add: image_subset_iff iterates_fst1)
+  using iterates_fst1 iterates_fst2 mono by fastforce+
 
 lemma iterates_snd:
   assumes mono: "mono (\<lambda>(x,y). (f x, g y))"
   shows "(ccpo_class.iterates g) = snd ` (ccpo_class.iterates (\<lambda>(x,y). (f x, g y)))" 
-  apply standard
-  using iterates_snd2 mono apply blast
-  by (simp add: image_subset_iff iterates_snd1)
+  using iterates_snd1 iterates_snd2 mono by fastforce+
 
 subsection \<open>Parallel fixed point induction principle\<close>
 
@@ -163,14 +160,14 @@ proof-
   next
     fix x
     assume "x \<in> Complete_Partial_Order.iterates (\<lambda>(x, y). (f x, g y))"
-    then show "P x"
+    thus "P x"
     proof (induct rule: iterates.induct)
       case prems: (step xy)
       from this(2) show ?case
         using step by (metis case_prod_conv old.prod.exhaust)
     next
       case (Sup M)
-      then show ?case
+      thus ?case
         apply (cases "M = {}")
         apply (simp add: Sup_prod_def base)
         using adm ccpo.admissibleD by blast
@@ -178,8 +175,7 @@ proof-
   qed
   thus "P ((\<mu> X. f X),( \<mu> X. g X))"
     unfolding fixp_def
-    using  assms iterates_fst iterates_snd 
-    by fastforce
+    using assms iterates_fst iterates_snd by fastforce
 qed
 
 (* Fixed point induction for two mus *)
@@ -191,9 +187,7 @@ theorem parallel_fixp_induct:
   assumes step: "\<And> x y. P x y \<Longrightarrow> P (f x) (g y) "
   shows "P (\<mu> X. f X) ( \<mu> X. g X)"
   apply (rule parallel_fixp_induct_prod[where P = "\<lambda>p. P (fst p) (snd p)", simplified])
-     apply (simp add: assms)+
-  using assms apply (simp add: mono_def)
-  by (simp add: local.step)
+     using assms by (simp add: mono_def)+
 
 subsection \<open>A missing theorem about parallel chains\<close>
 
@@ -213,16 +207,14 @@ lemma below_Sup: "Complete_Partial_Order.chain (\<le>) (S :: ('a::ccpo) set) \<L
 
 lemma Sup_below: "Complete_Partial_Order.chain (\<le>) (S :: ('a::ccpo) set) \<Longrightarrow> 
                   Sup S \<le> x \<longleftrightarrow> (\<forall>i \<in> S. i \<le> x)"
-  apply standard
-   using ccpo_Sup_upper order_trans apply blast
-  using ccpo_Sup_least by blast
+  using ccpo_Sup_upper order_trans ccpo_Sup_least by fastforce
 
 theorem Sup_mono:
   "Complete_Partial_Order.chain (\<le>) (fst ` A) \<Longrightarrow>
       Complete_Partial_Order.chain (\<le>) (snd ` A) \<Longrightarrow>
       \<forall>x\<in>(A :: (('a :: ccpo) \<times> ('a :: ccpo)) set). fst x \<le> snd x \<Longrightarrow> Sup (fst ` A) \<le> Sup (snd ` A)"
-  apply (subst Sup_below, simp, clarsimp)
-  by (rule below_Sup, force+)
+  apply (subst Sup_below)
+  using below_Sup by blast+
 
 subsection \<open>Basic Semantic Operations are Monotonic\<close>
 
@@ -230,7 +222,7 @@ theorem seq_s_mono [simp]:
  "\<lbrakk>a1 \<le> a2 ; b1 \<le> b2\<rbrakk> \<Longrightarrow> (a1 ;;s b1) \<le> (a2 ;;s b2)"
   unfolding le_fun_def seq_s_def porcupine_eglimilner porcupine_less_eq_def
   apply(subst Abs_powerdomain_inverse)
-   using Rep_powerdomain apply clarsimp
+  using Rep_powerdomain apply clarsimp
    apply (metis ex_in_conv exp_err_div.exhaust)
   apply(subst Abs_powerdomain_inverse)
    using Rep_powerdomain apply clarsimp
@@ -238,9 +230,9 @@ theorem seq_s_mono [simp]:
   apply(subst Abs_powerdomain_inverse)
    using Rep_powerdomain apply clarsimp
    apply (metis ex_in_conv exp_err_div.exhaust)
-  apply clarsimp
-  apply (rule conjI)
-   apply fastforce
+   apply (clarsimp)
+   apply (rule conjI)
+   apply (fastforce)
   apply clarsimp
   by metis
 
@@ -284,12 +276,7 @@ theorem one_s_mono [simp]:
    apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
   apply clarsimp
   apply (rule conjI, clarsimp)
-   apply(elim disjE)
-       apply force
-      apply force
-     apply force
-    apply force
-   apply force  
+   apply(elim disjE; force)
    apply clarsimp
    apply (rule powerdomain.Abs_powerdomain_inject[THEN iffD2], clarsimp)
      apply (metis (mono_tags,lifting) exp.exhaust Rep_powerdomain ex_in_conv exp_err_div.exhaust 
@@ -297,8 +284,7 @@ theorem one_s_mono [simp]:
    apply clarsimp
     apply (metis (mono_tags, lifting) exp.exhaust Rep_powerdomain ex_in_conv exp_err_div.exhaust 
                                       mem_Collect_eq)
-   apply (rule set_eqI)
-   by fastforce
+   by (rule set_eqI, fastforce)
 
 theorem some_s_mono [simp]:
   "a \<le> b \<Longrightarrow> some_s a \<le> some_s b"  
@@ -321,8 +307,7 @@ theorem some_s_mono [simp]:
     apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
    using  Rep_powerdomain apply clarsimp 
     apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
-  apply (rule set_eqI, clarsimp)
-  by fastforce
+  by (rule set_eqI;fastforce)
 
 theorem all_s_mono [simp]:
   "a \<le> b \<Longrightarrow> all_s a \<le> all_s b"
@@ -345,8 +330,7 @@ theorem all_s_mono [simp]:
     apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
    using  Rep_powerdomain apply clarsimp 
     apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
-  apply (rule set_eqI, clarsimp)
-  by fastforce
+  by (rule set_eqI; fastforce)
 
 subsection \<open>Mu is monotonic\<close>
 
@@ -378,8 +362,9 @@ text
 theorem exec_mono [simp]:
   assumes "\<forall>x. env1 x \<le> env2 x"  
   shows "exec s env1 \<le> exec s env2"
-  using assms apply (induct s arbitrary: env1 env2)
-  by simp_all
+  using assms 
+  apply (induct s arbitrary: env1 env2)
+             by simp_all
 
 (* fst snd are mono *)
 theorem fun_fst_mono:
@@ -388,7 +373,7 @@ theorem fun_fst_mono:
 
 theorem fun_snd_mono:
   "p1 \<le> p2 \<Longrightarrow> (snd p1) x \<subseteq> (snd p2) x"
-  by (meson le_fun_def snd_mono)
+  by (metis le_fun_def snd_mono)
 
 theorem funs_mono:
   assumes "mono f1"
@@ -396,6 +381,6 @@ theorem funs_mono:
     and "p1 \<subseteq> p2"
   shows "f1 p1 \<subseteq> f2 p2"
   using assms
-  by (meson dual_order.trans le_funD monoE)
+  by (metis dual_order.trans le_funD monoE)
 
 end

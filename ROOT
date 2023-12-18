@@ -1,8 +1,6 @@
 chapter AFP
 
-sessions "HOL-Library"
-
-session Shoggoth = HOL +
+session Shoggoth = HOL + HOL-Library +
   options [timeout = 600]
   theories
     CCPO

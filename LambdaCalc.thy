@@ -47,8 +47,8 @@ qed (auto split: option.split_asm)
    and it only mentions variable indices that are in scope. The context number 'n' indicates how many 
    variables are in scope.*) 
 inductive wf_lambda :: "nat \<Rightarrow> exp \<Rightarrow> bool" ("_ \<turnstile> _ wf" [50,0] 50) where 
-  "\<lbrakk> k < n                \<rbrakk> \<Longrightarrow> n \<turnstile> Idd k wf" 
-| "\<lbrakk> Suc n \<turnstile> t wf        \<rbrakk> \<Longrightarrow> n \<turnstile> Abs t wf"
+  "\<lbrakk> k < n              \<rbrakk> \<Longrightarrow> n \<turnstile> Idd k wf" 
+| "\<lbrakk> Suc n \<turnstile> t wf       \<rbrakk> \<Longrightarrow> n \<turnstile> Abs t wf"
 | "\<lbrakk> n \<turnstile> t wf; n \<turnstile> u wf \<rbrakk> \<Longrightarrow> n \<turnstile> App t u wf" 
 
 

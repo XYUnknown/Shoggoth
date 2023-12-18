@@ -36,41 +36,33 @@ lemma bigU_mono [simp]:
   shows "mono (\<lambda>x. \<Union>t \<in> A. t x)"
   using assms
   unfolding mono_def
-  by fast
+  by fastforce
+
 
 instance 
-  apply (intro_classes)
-       apply simp_all
-      using Rep_pt less_eq_pt apply force
-     using less_eq_pt apply fastforce
-    apply (metis Rep_pt_inject le_fun_def less_eq_pt order_class.order_eq_iff)
-      apply (smt (verit, del_insts) Abs_pt_inverse Rep_pt SUP_mono' Sup_pt UN_iff less_eq_pt 
-                                    mem_Collect_eq monoD monoI subsetI)
-     apply (simp add: Sup_pt less_eq_pt)
-     apply (subst Abs_pt_inverse, simp)
-    apply (metis (mono_tags, lifting) Rep_pt SUP_mono' mem_Collect_eq monoI monotoneD)
-    by (smt (verit, ccfv_threshold) Abs_pt_inverse Rep_pt UN_iff mem_Collect_eq monoD monoI subsetD subsetI)
-
-(* if smt should be avoided, use the following. * )
-      apply (simp add: Sup_pt less_eq_pt)
-     apply (subst Abs_pt_inverse, simp)
-       apply (metis (no_types, lifting) Rep_pt SUP_mono' mem_Collect_eq monoD monoI)
-       apply (intro conjI)   
-        apply (rule Rep_pt[simplified])
-     apply (metis (mono_tags, lifting) Rep_pt SUP_mono' mem_Collect_eq monoI monotoneD)
-     apply (metis (no_types, lifting) Abs_pt_inverse Rep_pt SUP_mono' UN_I mem_Collect_eq monoD monoI subsetI) 
-     apply (simp add: less_eq_pt Sup_pt)
-       apply (subst Abs_pt_inverse, simp)
-      apply (metis (no_types, lifting) Rep_pt SUP_mono' mem_Collect_eq monoD monoI)
-     apply(intro conjI)
-     apply (metis (no_types, lifting) Rep_pt SUP_mono' mem_Collect_eq monoD monoI)
-     using Rep_pt apply blast
-     apply clarsimp
-     apply (rule, simp_all)
-     apply (subst Abs_pt_inverse, simp)
-     apply (metis (no_types, lifting) CollectD Rep_pt SUP_mono' monoD monoI)
-     by blast
-*)
+proof 
+  fix x::pt and y::pt and z::pt and A
+  show "(x < y) = (x \<le> y \<and> \<not> y \<le> x)"
+    by fastforce
+  show "x \<le> x"
+    using Rep_pt less_eq_pt by fastforce
+  show "x \<le> y \<Longrightarrow> y \<le> z \<Longrightarrow> x \<le> z"
+    using less_eq_pt by fastforce
+  show "x \<le> y \<Longrightarrow> y \<le> x \<Longrightarrow> x = y"
+    by (metis Rep_pt_inject le_fun_def less_eq_pt order_class.order_eq_iff)
+  show "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow> x \<in> A \<Longrightarrow> x \<le> Sup A"
+    apply (simp add: Sup_pt less_eq_pt)
+    apply (subst Abs_pt_inverse)
+     using  Abs_pt_inverse Rep_pt apply (simp add: SUP_mono' monoD monoI)
+    by (metis (no_types, lifting) Abs_pt_inverse Rep_pt SUP_mono' UN_I mem_Collect_eq monoD 
+                                  monoI subsetI)
+  show "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow> (\<And>x. x \<in> A \<Longrightarrow> x \<le> z) \<Longrightarrow> Sup A \<le> z"
+    apply (simp add: Sup_pt less_eq_pt)
+    apply (subst Abs_pt_inverse)
+     using  Abs_pt_inverse Rep_pt apply (simp add: SUP_mono' monoD monoI)
+    by (metis (no_types, lifting) Abs_pt_inverse Rep_pt SUP_le_iff SUP_mono' mem_Collect_eq 
+                                  monoD monoI)
+ qed
 end
 
 text
@@ -83,8 +75,10 @@ fun update:: "location \<Rightarrow> exp \<Rightarrow> exp_err_div set \<Rightar
   where
     "update \<epsilon> e xs = xs"
   | "update (i\<triangleleft>loc) (Leaf l) xs = undefined"
-  | "update (Left\<triangleleft>loc) (Node l e1 e2) xs = {E (Node l x e2) | x. E x \<in> (update loc e1 xs)} \<union> (xs \<inter> {Div, Err})"
-  | "update (Right\<triangleleft>loc) (Node l e1 e2) xs = {E (Node l e1 x) | x. E x \<in> (update loc e2 xs)} \<union> (xs \<inter> {Div, Err})"
+  | "update (Left\<triangleleft>loc) (Node l e1 e2) xs = 
+                        {E (Node l x e2) | x. E x \<in> (update loc e1 xs)} \<union> (xs \<inter> {Div, Err})"
+  | "update (Right\<triangleleft>loc) (Node l e1 e2) xs = 
+                        {E (Node l e1 x) | x. E x \<in> (update loc e2 xs)} \<union> (xs \<inter> {Div, Err})"
 
 fun lookup:: "location \<Rightarrow> exp \<Rightarrow> exp"
   where
@@ -100,40 +94,51 @@ fun defined:: "location \<Rightarrow> exp set"
   | "defined (Right\<triangleleft>loc) = {Node l e1 e2 | l e1 e2. e2 \<in> defined loc}"
 
 subsection \<open>Weakest must succeed and weakest may fail preconditions\<close>
-fun wp_err:: "strategy \<Rightarrow> location \<Rightarrow> exp set \<Rightarrow> lenv \<Rightarrow> exp set" and wp:: "strategy \<Rightarrow> location \<Rightarrow> exp set \<Rightarrow> lenv \<Rightarrow> exp set"
+fun wp_err:: "strategy \<Rightarrow> location \<Rightarrow> exp set \<Rightarrow> lenv \<Rightarrow> exp set" 
+and wp:: "strategy \<Rightarrow> location \<Rightarrow> exp set \<Rightarrow> lenv \<Rightarrow> exp set"
   where
     "wp_err SKIP loc P env = P \<inter> (defined loc)"
   | "wp SKIP loc P env = P \<inter> (defined loc)"
   | "wp_err ABORT loc P env = defined loc"
   | "wp ABORT loc P env = {}"
   | "wp_err \<llangle>atomic\<rrangle> loc P env = {e | e. e \<in> (defined loc) 
-                        \<and> (update loc e (PdToSet (exec \<llangle>atomic\<rrangle> (\<lambda> X. undefined) (lookup loc e)))) \<subseteq> E ` P \<union> {Err}}"
+       \<and> (update loc e (PdToSet (exec \<llangle>atomic\<rrangle> (\<lambda> X. undefined) (lookup loc e)))) \<subseteq> E ` P \<union> {Err}}"
   | "wp \<llangle>atomic\<rrangle> loc P env = {e | e. e \<in> (defined loc) 
-                        \<and> (update loc e (PdToSet (exec \<llangle>atomic\<rrangle> (\<lambda> X. undefined) (lookup loc e)))) \<subseteq> E ` P}"
+       \<and> (update loc e (PdToSet (exec \<llangle>atomic\<rrangle> (\<lambda> X. undefined) (lookup loc e)))) \<subseteq> E ` P}"
   | "wp_err (s1 ;; s2) loc P env = wp_err s1 loc (wp_err s2 loc P env) env"
   | "wp (s1 ;; s2) loc P env = wp s1 loc (wp s2 loc P env) env"
   | "wp_err (s1 <+ s2) loc P env = wp s1 loc P env \<union> (wp_err s1 loc P env \<inter> wp_err s2 loc P env)"
   | "wp (s1 <+ s2) loc P env = wp s1 loc P env \<union> (wp_err s1 loc P env \<inter> wp s2 loc P env)"
   | "wp_err (s1 >< s2) loc P env =  wp_err s1 loc P env \<inter> wp_err s2 loc P env"
-  | "wp (s1 >< s2) loc P env = (wp s1 loc P env \<inter> wp_err s2 loc P env) \<union> (wp_err s1 loc P env \<inter> wp s2 loc P env)"
-  | "wp_err (one s) loc P env = {e | e x. e \<in> defined loc \<and> lookup loc e = Leaf x } \<union> (wp_err s (loc \<triangleright> Left) P env \<inter> wp_err s (loc \<triangleright> Right) P env)"
-  | "wp (one s) loc P env = (wp_err s (loc \<triangleright> Left) P env \<inter> wp s (loc \<triangleright> Right) P env) \<union> (wp s (loc \<triangleright> Left) P env \<inter> wp_err s (loc \<triangleright> Right) P env)"
+  | "wp (s1 >< s2) loc P env = (wp s1 loc P env \<inter> wp_err s2 loc P env) 
+                               \<union> (wp_err s1 loc P env \<inter> wp s2 loc P env)"
+  | "wp_err (one s) loc P env = {e | e x. e \<in> defined loc \<and> lookup loc e = Leaf x } 
+                                \<union> (wp_err s (loc \<triangleright> Left) P env \<inter> wp_err s (loc \<triangleright> Right) P env)"
+  | "wp (one s) loc P env = (wp_err s (loc \<triangleright> Left) P env \<inter> wp s (loc \<triangleright> Right) P env) 
+                            \<union> (wp s (loc \<triangleright> Left) P env \<inter> wp_err s (loc \<triangleright> Right) P env)"
 (* wp and wp_err for the leaf case are like SKIP *)
-  | "wp_err (all s) loc P env = (P \<inter> {e | e x. e \<in> defined loc \<and> lookup loc e = Leaf x}) \<union> (wp_err s (loc \<triangleright> Left) (wp_err s (loc \<triangleright> Right) P env) env \<inter> wp_err s (loc \<triangleright> Right) (wp_err s (loc \<triangleright> Left) P env) env)"
+  | "wp_err (all s) loc P env = (P \<inter> {e | e x. e \<in> defined loc \<and> lookup loc e = Leaf x}) 
+                                \<union> (wp_err s (loc \<triangleright> Left) (wp_err s (loc \<triangleright> Right) P env) env 
+                                   \<inter> wp_err s (loc \<triangleright> Right) (wp_err s (loc \<triangleright> Left) P env) env)"
   | "wp (all s) loc P env = (P \<inter> {e | e x. e \<in> defined loc \<and> lookup loc e = Leaf x})
-                            \<union> wp s (loc \<triangleright> Left) (wp s (loc \<triangleright> Right) P env) env \<union> wp s (loc \<triangleright> Right) (wp s (loc \<triangleright> Left) P env) env"
+                            \<union> wp s (loc \<triangleright> Left) (wp s (loc \<triangleright> Right) P env) env 
+                            \<union> wp s (loc \<triangleright> Right) (wp s (loc \<triangleright> Left) P env) env"
   | "wp_err (some s) loc P env = {e | e x. e \<in> defined loc \<and> lookup loc e = Leaf x } \<union> 
                               (wp_err s (loc \<triangleright> Left) (wp_err s (loc \<triangleright> Right) P env) env
-                              \<inter> wp_err s (loc \<triangleright> Right) (wp_err s (loc \<triangleright> Left) P env) env
-                              \<inter> (wp_err s (loc \<triangleright> Left) P env \<union> wp_err s (loc \<triangleright> Left) (wp s (loc \<triangleright> Right) P env) env)
-                              \<inter> (wp_err  s (loc \<triangleright> Right) P env \<union> wp_err s (loc \<triangleright> Right) (wp s (loc \<triangleright> Left) P env) env))"
+                               \<inter> wp_err s (loc \<triangleright> Right) (wp_err s (loc \<triangleright> Left) P env) env
+                               \<inter> (wp_err s (loc \<triangleright> Left) P env 
+                                  \<union> wp_err s (loc \<triangleright> Left) (wp s (loc \<triangleright> Right) P env) env)
+                               \<inter> (wp_err  s (loc \<triangleright> Right) P env 
+                                  \<union> wp_err s (loc \<triangleright> Right) (wp s (loc \<triangleright> Left) P env) env))"
   | "wp (some s) loc P env = wp s (loc \<triangleright> Left) (wp s (loc \<triangleright> Right) P env) env
-                           \<union> wp s (loc \<triangleright> Right) (wp s (loc \<triangleright> Left) P env) env
-                           \<union> (wp s (loc \<triangleright> Left) P env \<inter> wp s (loc \<triangleright> Left) (wp_err s (loc \<triangleright> Right) P env) env)
-                           \<union> (wp s (loc \<triangleright> Right) P env \<inter> wp s (loc \<triangleright> Right) (wp_err s (loc \<triangleright> Left) P env) env)
+                             \<union> wp s (loc \<triangleright> Right) (wp s (loc \<triangleright> Left) P env) env
+                             \<union> (wp s (loc \<triangleright> Left) P env 
+                                \<inter> wp s (loc \<triangleright> Left) (wp_err s (loc \<triangleright> Right) P env) env)
+                             \<union> (wp s (loc \<triangleright> Right) P env 
+                                \<inter> wp s (loc \<triangleright> Right) (wp_err s (loc \<triangleright> Left) P env) env)
                         "
-    (* Fixed points and variables are computed with the pt type, not functions from sets to sets, because we need to carry around 
-   monotonicity side conditions. *)
+    (* Fixed points and variables are computed with the pt type, not functions from sets to sets, 
+       because we need to carry around monotonicity side conditions. *)
   | "wp \<lparr>X\<rparr> loc P env = Rep_pt (env (X, Tot) loc) P"
   | "wp_err \<lparr>X\<rparr> loc P env = Rep_pt (env (X, Par) loc) P"
   | "wp (mu X. s) loc P env = Rep_pt (fst 
@@ -160,12 +165,11 @@ theorem ap_mono:
   by (simp add: ap_def)
 
 lemma Sup_mono_two:
-  "\<forall>x\<in>A. \<forall>P. (fst (fst x) P:: 'a:: ccpo) \<le> fst (snd x) P 
-           \<and> (snd (fst x) P:: 'b:: ccpo) \<le> snd (snd x) P \<Longrightarrow>
-       Complete_Partial_Order.chain (\<le>) (fst ` A) \<Longrightarrow>
-       Complete_Partial_Order.chain (\<le>) (snd ` A) \<Longrightarrow> 
-       fst (fst (Sup A)) P \<le> fst (snd (Sup A)) P \<and> snd (fst (Sup A)) P \<le> snd (snd (Sup A))P"
-  apply (simp add: fst_Sup snd_Sup)
+  assumes "\<forall>x\<in>A. \<forall>P. (fst (fst x) P:: 'a:: ccpo) \<le> fst (snd x) P \<and> (snd (fst x) P:: 'b:: ccpo) \<le> snd (snd x) P"
+  and     "Complete_Partial_Order.chain (\<le>) (fst ` A)"
+  and     "Complete_Partial_Order.chain (\<le>) (snd ` A)"
+  shows   "fst (fst (Sup A)) P \<le> fst (snd (Sup A)) P \<and> snd (fst (Sup A)) P \<le> snd (snd (Sup A))P"
+  using assms apply (simp add: fst_Sup snd_Sup)
   apply (frule chain_fst_exist)
   apply (drule chain_snd_exist)
   apply (frule chain_fst_exist)
@@ -186,6 +190,10 @@ lemma Sup_fst: "Sup (fst ` A) = fst (Sup A)"
 lemma Sup_snd: "Sup (snd ` A) = snd (Sup A)" 
   by (simp add: snd_Sup)
 
+lemma 
+  " \<forall>loc::location. ap (Sup {}::(location \<Rightarrow> pt) \<times> (location \<Rightarrow> pt)) loc \<le> ap (Sup {}) loc"
+  apply (simp add: fst_Sup snd_Sup ap_def)
+  oops
 theorem mu_wp_mono: 
   assumes f_mono: "\<And> (env1:: lenv) env2 loc. \<forall> loc p. env1 p loc \<le> env2 p loc \<Longrightarrow> f loc env1 \<le> f loc env2"
     and g_mono: "\<And> (env1:: lenv) env2 loc. \<forall> loc p. env1 p loc \<le> env2 p loc \<Longrightarrow> g loc env1 \<le> g loc env2"
@@ -195,60 +203,22 @@ theorem mu_wp_mono:
              \<le> ap (\<mu> x. (\<lambda>loc. f loc (env2((x1, Tot):= fst x, (x1, Par):= snd x)),
                    \<lambda>loc. g loc (env2((x1, Tot):= fst x, (x1, Par):= snd x)))) loc"
   apply (rule parallel_fixp_induct)
-      apply (rule ccpo.admissibleI)
-      apply (simp add: fst_Sup snd_Sup ap_def Product_Order.less_eq_prod_def)
-      apply (rule allI)
-      apply (rename_tac loc)
-      apply (frule_tac P = loc in Sup_mono_two)
-        apply (rule chain_fst_exist, simp)
-       apply (rule chain_snd_exist, simp)
-      apply (rule conjI)
-       apply (metis Sup_apply Sup_fst Sup_snd)
-      apply (metis Sup_apply Sup_fst Sup_snd)
-     apply (simp add: fst_Sup ap_def)
-    apply (rule monoI)
-    apply (simp add: Product_Order.less_eq_prod_def)
-    apply(rule conjI)
-     apply (clarsimp simp add: le_fun_def)
-     apply (rule f_mono)
-     apply (clarsimp intro!: le_funI)
-    apply (clarsimp intro!: le_funI)
-    apply (rule g_mono)
-    apply clarsimp
-    apply (simp add: le_fun_def less_eq_pt)
-   apply (rule monoI)
-   apply (simp add: Product_Order.less_eq_prod_def)
-   apply(rule conjI)
-    apply (clarsimp simp add: le_fun_def)
-    apply (rule f_mono)
-    apply (clarsimp intro!: le_funI)
-   apply (clarsimp intro!: le_funI)
-   apply (rule g_mono)
-   apply (clarsimp intro!: le_funI)
-   apply (simp add: le_fun_def less_eq_pt)
-  apply (simp add: ap_def Product_Order.less_eq_prod_def)
-  apply(rule allI)
-  apply (rule conjI)
-   apply (rule f_mono)
-   apply (simp add: less_eq_pt)
-   apply (intro conjI impI allI)
-     apply (rule Rep_pt[simplified])
-    apply (rule Rep_pt[simplified])
-   apply (rule env_ordered[simplified less_eq_pt, rule_format, THEN conjunct2, THEN conjunct2, rule_format])
-  apply (rule g_mono)
-  apply clarsimp
-  by (rule env_ordered[rule_format])
+      apply (fastforce intro: chain_fst_exist chain_snd_exist ccpo.admissibleI
+                       dest: Sup_mono_two
+                       simp: fst_Sup snd_Sup ap_def)
+     apply (simp add: fst_Sup snd_Sup ap_def)
+    apply (fastforce intro: monoI 
+                     simp: f_mono g_mono le_fun_def Product_Order.less_eq_prod_def)+
+  by (fastforce intro: env_ordered less_eq_pt f_mono
+                simp: env_ordered g_mono Rep_pt[simplified] ap_def Product_Order.less_eq_prod_def)
+
 
 lemma ap_fstI:
-  assumes "ap f P \<le> ap g Q" 
-  shows "fst f P \<le> fst g Q" 
-  using assms
+  "ap f P \<le> ap g Q \<Longrightarrow> fst f P \<le> fst g Q"
   by (simp add: ap_def)
 
 lemma ap_sndI:
-  assumes "ap f P \<le> ap g Q" 
-  shows "snd f P \<le> snd g Q" 
-  using assms
+  "ap f P \<le> ap g Q \<Longrightarrow> snd f P \<le> snd g Q" 
   by (simp add: ap_def)
 
 lemma Rep_pt_mono: 
@@ -267,63 +237,63 @@ proof (induct s arbitrary: env1 env2 loc)
   case SKIP
   {
     case 1
-    then show ?case by simp
+    thus ?case by simp
   next
     case 2
-    then show ?case by auto
+    thus ?case by auto
   next
     case 3
-    then show ?case by simp
+    thus ?case by simp
   next
     case 4
-    then show ?case by auto
+    thus ?case by auto
   }
 next
   case ABORT
   {
     case 1
-    then show ?case by simp
+    thus ?case by simp
   next
     case 2
-    then show ?case by simp
+    thus ?case by simp
   next
     case 3
-    then show ?case by simp
+    thus ?case by simp
   next
     case 4
-    then show ?case by simp
+    thus ?case by simp
   }
 next
   case (FixVar x)
   {
     case 1
-    then show ?case by (simp add: less_eq_pt)
+    thus ?case by (simp add: less_eq_pt mono_def)
   next
     case 2
-    then show ?case by (simp add: less_eq_pt mono_def)
+    thus ?case by (simp add: less_eq_pt mono_def)
   next
     case 3
-    then show ?case by (simp add: less_eq_pt mono_def)
+    thus ?case by (simp add: less_eq_pt mono_def)
   next
     case 4
-    then show ?case  by (simp add: less_eq_pt mono_def)
+    thus ?case  by (simp add: less_eq_pt mono_def)
   }
 next
   case (Atomic x)
   {
     case 1
-    then show ?case by simp
+    thus ?case by simp
   next
     case 2
-    then show ?case 
+    thus ?case 
       apply (clarsimp split: option.split)
       by blast
   next
     case 3
-    then show ?case by simp
+    thus ?case by simp
   next
     case 4
-    then show ?case 
+    thus ?case 
       apply (clarsimp split: option.split)
       by blast
   }
@@ -331,464 +301,198 @@ next
   case (Seq s1 s2)
   {
     case 1
-    then show ?case 
+    show ?case 
       apply simp
-      apply (rule order_trans)
-       apply (rule Seq(2); simp?)
-       apply (rule Seq(5), simp)
-      by (rule Seq(1), simp)
+      by (metis (full_types) "1" order_trans Seq.hyps(1,2,5))
   next
     case 2
-    then show ?case 
-      apply simp
-      apply (rule Seq(2))
-       apply (rule Seq(6), simp)
-       apply simp
-      by simp   
+    thus ?case 
+      by (simp add: Seq.hyps(2,6))
   next
     case 3
-    then show ?case 
-      apply simp
-      apply (rule order_trans)
-       apply (rule Seq(4); simp?)
-       apply (rule Seq(7), simp)
-      by (rule Seq(3), simp)
+    show ?case 
+      apply (simp)
+      by (metis "3" Seq.hyps(3) Seq.hyps(4) Seq.hyps(7) dual_order.trans)
   next
     case 4
-    then show ?case 
-      apply simp
-      apply (rule Seq(4))
-       apply (rule Seq(8), simp)
-       apply simp
-      by simp
+    thus ?case 
+      by (simp add: Seq.hyps(4,8))
   }
 next
   case (Left_Choice s1 s2)
   {
     case 1
-    then show ?case 
+    thus ?case 
       apply (simp only: wp.simps)
-      apply (rule Un_mono)
-       apply (rule Left_Choice(1), simp)
-      apply (rule Int_mono)
-       apply (rule Left_Choice(3), simp)
-      by (rule Left_Choice(5), simp)
+      by (metis Int_mono Un_mono Left_Choice(1,3,5))
   next
     case 2
-    then show ?case 
+    thus ?case 
       apply (simp only: wp.simps)
-      apply (rule Un_mono)
-       apply (rule Left_Choice(2), simp, simp)
-      apply (rule Int_mono)
-       apply (rule Left_Choice(4), simp, simp)
-      by (rule Left_Choice(6), simp, simp)
+      by (metis Int_mono Un_mono Left_Choice(2,4,6))
   next
     case 3
-    then show ?case 
+    thus ?case 
       apply (simp only: wp_err.simps)
-      apply (rule Un_mono)
-       apply (rule Left_Choice(1), simp)
-      apply (rule Int_mono)
-       apply (rule Left_Choice(3), simp)
-      by (rule Left_Choice(7), simp)
+      by (metis Int_mono Un_mono Left_Choice(1,3,7))
   next
     case 4
-    then show ?case 
+    thus ?case 
       apply (simp only: wp_err.simps)
-      apply (rule Un_mono)
-       apply (rule Left_Choice(2), simp, simp)
-      apply (rule Int_mono)
-       apply (rule Left_Choice(4), simp, simp)
-      by (rule Left_Choice(8), simp, simp)
+      by (metis Int_mono Un_mono Left_Choice(2,4,8))
   }
 next
   case (Choice s1 s2)
   {
     case 1
-    then show ?case 
+    thus ?case 
       apply (simp only: wp.simps)
-      apply (rule Un_mono)
-       apply (rule Int_mono)
-        apply (rule Choice(1), simp)
-       apply (rule Choice(7), simp)
-      apply (rule Int_mono)
-       apply (rule Choice(3), simp)
-      by (rule Choice(5), simp)
+      by (metis Int_mono Un_mono Choice(1,3,5,7))
   next
     case 2
-    then show ?case 
+    thus ?case 
       apply (simp only: wp.simps)
-      apply (rule Un_mono)
-       apply (rule Int_mono)
-        apply (rule Choice(2), simp, simp)
-       apply (rule Choice(8), simp, simp)
-      apply (rule Int_mono)
-       apply (rule Choice(4), simp, simp)
-      by (rule Choice(6), simp, simp)
+      by (metis Int_mono Un_mono Choice(2,4,6,8))
   next
     case 3
-    then show ?case
+    thus ?case
       apply (simp only: wp_err.simps)
-      apply (rule Int_mono)
-       apply (rule Choice(3), simp)
-      by (rule Choice(7), simp)
+      by (metis Int_mono Choice(3,7))
   next
     case 4
-    then show ?case 
+    thus ?case 
       apply (simp only: wp_err.simps)
-      apply (rule Int_mono)
-       apply (rule Choice(4), simp, simp)
-      by (rule Choice(8), simp, simp)
+      by (metis Int_mono Choice(4,8))
   }
 next
   case (One s)
   {
     case 1
-    then show ?case 
-      apply (simp only: wp.simps)
-      apply (rule Un_mono)
-       apply (rule Int_mono)
-        apply (rule One(3), simp)
-       apply (rule One(1), simp)
-      apply (rule Int_mono)
-       apply (rule One(1), simp)
-      by (rule One(3), simp)
+    thus ?case 
+      apply (simp only: wp.simps)   
+      using One.hyps(1,3) Un_mono by blast
   next
     case 2
-    then show ?case 
-      apply (simp only: wp.simps)
-      apply (rule Un_mono)
-       apply (rule Int_mono)
-        apply (rule One(4), simp, simp)
-       apply (rule One(2), simp, simp)
-      apply (rule Int_mono)
-       apply (rule One(2), simp, simp)
-      by (rule One(4), simp, simp)
+    thus ?case 
+      apply (simp only: wp.simps) 
+      by (metis Int_mono Un_mono One.hyps(2,4))
   next
     case 3
-    then show ?case
+    thus ?case
       apply (simp only: wp_err.simps)
-      apply (rule Un_mono, simp)
-      apply (rule Int_mono)
-       apply (rule One(3), simp)
-      by (rule One(3), simp)
+      using One.hyps(3) Un_mono by blast+
   next
     case 4
-    then show ?case
+    thus ?case
       apply (simp only: wp_err.simps)
-      apply (rule Un_mono, simp)
-      apply (rule Int_mono)
-       apply (rule One(4), simp, simp)
-      by (rule One(4), simp, simp)
+      using One.hyps(4) Un_mono by blast+
   }
 next
   case (CSome s)
   {
     case 1
-    then show ?case 
+    thus ?case 
       apply (simp only: wp.simps)
-      apply (rule Un_mono)
-       apply (rule Un_mono)
-        apply (rule Un_mono)
-         apply (rule order_trans)
-          apply (rule CSome(1), simp)
-         apply (rule CSome(2), simp)
-          apply (rule CSome(1), simp)
-         apply auto[1]
-        apply (rule order_trans)
-         apply (rule CSome(1), simp)
-        apply (rule CSome(2), simp)
-         apply (rule CSome(1), simp)
-        apply auto[1]
-       apply (rule Int_mono)
-        apply (rule CSome(1), simp)
-       apply (rule order_trans)
-        apply (rule CSome(1),simp)
-       apply (rule CSome(2),simp)
-        apply (rule CSome(3),simp)
-       apply auto[1]
-      apply (rule Int_mono)
-       apply (rule CSome(1), simp)
-      apply (rule order_trans)
-       apply (rule CSome(1), simp)
-      apply (rule CSome(2), simp)
-       apply (rule CSome(3), simp)
-      by auto
+      apply (rule Un_mono)+
+         apply (metis order_trans CSome.hyps(1,2))
+        apply (metis order_trans CSome.hyps(1,2))
+       apply (metis Int_mono order_trans CSome.hyps(1,2,3))
+      by (metis Int_mono order_trans CSome.hyps(1,2,3))
   next
     case 2
-    then show ?case 
+    thus ?case 
       apply (simp only: wp.simps)
-      apply (rule Un_mono)
-       apply (rule Un_mono)
-        apply (rule Un_mono)
-         apply (rule CSome(2), simp)
-          apply (rule CSome(2), simp)
-          apply simp
-         apply simp
-        apply (rule CSome(2), simp)
-         apply (rule CSome(2), simp)
-         apply simp
-        apply simp
-       apply (rule Int_mono)
-        apply (rule CSome(2), simp)
-        apply simp
-       apply (rule CSome(2))
-        apply (rule CSome(4))
-         apply auto[1]
-        apply simp
-       apply simp
-      apply (rule Int_mono)
-       apply (rule CSome(2),simp)
-       apply auto[1]
-      apply (rule CSome(2), simp)
-       apply (rule CSome(4), simp)
-       apply simp
-      by simp
+      apply (rule Un_mono)+
+         apply (simp add: CSome.hyps(2))
+        apply (simp add: CSome.hyps(2))
+       apply (metis Int_mono CSome.hyps(2,4))
+      by (metis Int_mono CSome.hyps(2,4))
   next
     case 3
-    then show ?case 
+    thus ?case 
       apply (simp only: wp_err.simps)
-      apply (rule Un_mono)
-       apply simp
-      apply (rule Int_mono)
-       apply (rule Int_mono)
-        apply (rule Int_mono)
-         apply (rule order_trans)
-          apply (rule CSome(3), simp)
-         apply (rule CSome(4), simp)
-          apply (rule CSome(3), simp)
-         apply auto[1]
-        apply (rule order_trans)
-         apply (rule CSome(3), simp)
-        apply (rule CSome(4), rule CSome(3), simp)
-        apply (clarsimp, rule order_refl)
-       apply (rule order_trans)
-        apply (rule Un_mono)
-         apply (rule CSome(3), simp)
-        apply (rule CSome(4), simp)
-         apply blast
-        apply auto[1]
-       apply (rule Un_mono)
-        apply (rule CSome(3), simp)
-       apply (rule order_trans)
-        apply (rule CSome(3), simp)
-       apply (rule CSome(4), simp)
-        apply (rule CSome(1), simp)
-       apply auto[1]
-      apply (rule Un_mono)
-       apply (rule CSome(3), simp)
-      apply (rule order_trans)
-       apply (rule CSome(3), simp)
-      apply (rule CSome(4), simp)
-       apply (rule CSome(1), simp)
-      by auto
+      apply (rule Un_mono, blast)
+      apply (rule Int_mono)+
+         apply (metis CSome.hyps(3,4) subset_trans)
+        apply (metis CSome.hyps(3,4) subset_trans)
+       apply (metis "3" CSome.hyps(1,3,4) Un_mono order_refl order_trans)
+      by (metis "3" CSome.hyps(1,3,4) Un_mono order_refl order_trans)
   next
     case 4
-    then show ?case 
+    thus ?case 
       apply (simp only: wp_err.simps)
-      apply (rule Un_mono)
-       apply simp
-      apply (rule Int_mono)
-       apply (rule Int_mono)
-        apply (rule Int_mono)
-         apply (rule CSome(4), simp)
-          apply (rule CSome(4), simp, simp)
-         apply simp
-        apply (rule CSome(4),rule CSome(4))
-          apply (simp, simp, simp)
-       apply (rule Un_mono)
-        apply (rule CSome(4), simp, simp)
-       apply (rule CSome(4), simp)
-        apply (rule CSome(2), simp)
-        apply auto[1]
-       apply simp
-      apply (rule Un_mono)
-       apply (rule CSome(4), simp, simp)
-      apply (rule CSome(4), simp)
-       apply (rule CSome(2), simp)
-       apply auto[1]
-      by simp
+      apply (rule Un_mono,blast)
+      apply (rule Int_mono)+
+         apply (simp add: CSome.hyps(4) subset_trans)
+        apply (simp add: CSome.hyps(4) subset_trans)    
+       apply (metis CSome.hyps(2,4) Un_mono)
+      by (metis CSome.hyps(2,4) Un_mono)
   }
 
 next
   case (All s)
   {
     case 1
-    then show ?case 
+    thus ?case 
       apply simp
-      apply (rule conjI)
-       apply blast
+      apply (rule conjI, blast)
       apply (rule conjI)
        apply (rule le_supI1)
-       apply (rule le_supI2)
-       apply (rule order_trans)
-        apply (rule All(1), simp)
-       apply (rule All(2))
-        apply (rule All(1), simp)
-       apply (clarsimp)
-       apply (rule order_refl)
-      apply (rule le_supI2)
-      apply (rule order_trans)
-       apply (rule All(1), simp)
-      apply (rule All(2))
-       apply (rule All(1), simp)
-      apply (clarsimp)
-      by (rule order_refl)
+       by (rule le_supI2, metis "1" All.hyps(1,2) dual_order.trans)+ (* takes a few seconds *)
   next
     case 2
-    then show ?case 
+    thus ?case 
       apply simp
-      apply (rule conjI)
-       apply blast
+      apply (rule conjI, blast)
       apply (rule conjI)
        apply (rule le_supI1)
-       apply (rule le_supI2)
-       apply (rule All(2))
-        apply (rule All(2))
-         apply (simp)
-        apply (clarsimp)
-        apply (rule order_refl)
-       apply (clarsimp)
-       apply (rule order_refl)
-      apply (rule le_supI2)
-      apply (rule All(2))
-       apply (rule All(2))
-        apply (simp)
-       apply (clarsimp)
-       apply (rule order_refl)
-      apply (clarsimp)
-      by (rule order_refl)
+        apply(fastforce intro!: le_supI2 simp: dest: All.hyps(2))+
+      done
   next
     case 3
-    then show ?case 
+    thus ?case 
       apply simp
       apply (rule le_supI2)
-      apply (rule Int_mono)
-       apply (rule order_trans)
-        apply (rule All(3), simp)
-       apply (rule All(4))
-        apply (rule All(3), simp)
-       apply (clarsimp)
-       apply (rule order_refl)
-      apply (rule order_trans)
-       apply (rule All(3), simp)
-      apply (rule All(4))
-       apply (rule All(3), simp)
-      apply (clarsimp)
-      by (rule order_refl)
+      by (metis "3" All.hyps(3,4) Int_mono order_trans order_refl) (* takes soem time *)
   next
     case 4
-    then show ?case
+    thus ?case
       apply simp
-      apply (rule conjI)
-       apply blast
-      apply (rule le_supI2)
-      apply (rule Int_mono)
-       apply (rule All(4))
-        apply (rule All(4))
-         apply (simp)
-        apply (clarsimp)
-        apply (rule order_refl)
-       apply (clarsimp)
-       apply (rule order_refl)
-      apply (rule All(4))
-       apply (rule All(4))
-        apply (simp)
-       apply (clarsimp)
-       apply (rule order_refl)
-      apply (clarsimp)
-      by (rule order_refl)
+      apply (rule conjI, blast)
+      by(fastforce intro!: le_supI2 simp: dest: All.hyps(4))
   }
 next
   case (Mu x1 s)
   {
     case 1
-    then show ?case 
+    thus ?case 
       apply simp
       apply (rule Rep_pt_mono)
       apply (rule ap_fstI)
       apply (rule mu_wp_mono[rule_format])
-        apply (subst less_eq_pt)
-        apply (intro conjI)
-          apply (rule Rep_pt[simplified])
-         apply (rule Rep_pt[simplified])
-        apply (subst Abs_pt_inverse)
-         apply simp
-         apply (rule monoI)
-         apply (rule Mu(2), simp, clarsimp, rule order_refl)
-        apply (subst Abs_pt_inverse)
-         apply simp
-         apply (rule monoI)
-         apply (rule Mu(2), simp, clarsimp, rule order_refl)
-        apply (rule allI)
-        apply (rule Mu(1))
-        apply clarsimp
-       apply (subst less_eq_pt)
-       apply (intro conjI)
-         apply (rule Rep_pt[simplified])
-        apply (rule Rep_pt[simplified])
-       apply (subst Abs_pt_inverse)
-        apply simp
-        apply (rule monoI)
-        apply (rule Mu(4), simp, clarsimp, rule order_refl)
-       apply (subst Abs_pt_inverse)
-        apply simp
-        apply (rule monoI)
-        apply (rule Mu(4), simp, clarsimp, rule order_refl)
-       apply (rule allI)
-       apply (rule Mu(3))
-       apply clarsimp
-      by clarsimp
+        apply (metis Abs_pt_inverse less_eq_pt monoI Mu.hyps(1,2) dual_order.refl monoI Mu(2) mem_Collect_eq Rep_pt[simplified])
+       apply (metis mem_Collect_eq order_eq_refl Abs_pt_inverse monoI Mu.hyps(3,4) Abs_pt_inverse monoI Mu.hyps(3,4) mem_Collect_eq order_eq_refl  less_eq_pt)
+      by (simp add: "1")
   next
     case 2
-    then show ?case
+    thus ?case
       apply simp
-      apply (rule Rep_pt[simplified mono_def, simplified, rule_format])
-      by simp
+      by (fastforce intro!:  Rep_pt[simplified mono_def, simplified, rule_format])
   next
     case 3
-    then show ?case 
+    thus ?case 
       apply simp
       apply (rule Rep_pt_mono)
       apply (rule ap_sndI)
       apply (rule mu_wp_mono[rule_format])
-        apply (subst less_eq_pt)
-        apply (intro conjI)
-          apply (rule Rep_pt[simplified])
-         apply (rule Rep_pt[simplified])
-        apply (subst Abs_pt_inverse)
-         apply simp
-         apply (rule monoI)
-         apply (rule Mu(2), simp, clarsimp, rule order_refl)
-        apply (subst Abs_pt_inverse)
-         apply simp
-         apply (rule monoI)
-         apply (rule Mu(2), simp, clarsimp, rule order_refl)
-        apply (rule allI)
-        apply (rule Mu(1))
-        apply clarsimp
-       apply (subst less_eq_pt)
-       apply (intro conjI)
-         apply (rule Rep_pt[simplified])
-        apply (rule Rep_pt[simplified])
-       apply (subst Abs_pt_inverse)
-        apply simp
-        apply (rule monoI)
-        apply (rule Mu(4), simp, clarsimp, rule order_refl)
-       apply (subst Abs_pt_inverse)
-        apply simp
-        apply (rule monoI)
-        apply (rule Mu(4), simp, clarsimp, rule order_refl)
-       apply (rule allI)
-       apply (rule Mu(3))
-       apply clarsimp
-      by clarsimp
+        apply (metis Abs_pt_inverse less_eq_pt monoI Mu.hyps(1,2) dual_order.refl monoI Mu(2) mem_Collect_eq Rep_pt[simplified])
+       apply (metis mem_Collect_eq order_eq_refl Abs_pt_inverse monoI Mu.hyps(3,4) Abs_pt_inverse monoI Mu.hyps(3,4) mem_Collect_eq order_eq_refl  less_eq_pt)
+      by (simp add: "3")
   next
     case 4
-    then show ?case 
+    thus ?case 
       apply simp
-      apply (rule Rep_pt[simplified mono_def, simplified, rule_format])
-      by simp
+      by (fastforce intro!:  Rep_pt[simplified mono_def, simplified, rule_format])
   }
 qed
 
@@ -917,6 +621,7 @@ theorem wp_err_topDown:
 text \<open>
   The weakest must succeed precondition and weakest may fail precondition for repeat are the same
 \<close>
+
 (* We need to use the monotonicity proofs of wp/wp_err *)
 theorem eq_wp_repeat_wp_err_repeat: 
   "\<forall>loc P. wp (repeat s) loc P env = wp_err (repeat s) loc P env"
@@ -932,7 +637,8 @@ theorem eq_wp_repeat_wp_err_repeat:
       apply (intro mono_intros)
      apply force
     apply (intro mono_intros)
-   apply (simp add: fst_Sup snd_Sup Sup_pt)
-  by (simp add: Rep_pt_inject)
+   apply (fastforce simp:fst_Sup snd_Sup Sup_pt)
+  by (fastforce simp: Rep_pt_inject)
+
 end
 

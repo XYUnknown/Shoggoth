@@ -8,15 +8,15 @@ type_synonym env = "var \<Rightarrow> D"
 datatype
   strategy = SKIP
   | ABORT
-  | FixVar var              ("\<lparr>_\<rparr>")  
-  | Atomic "exp \<Rightarrow> exp option" ("\<llangle>_\<rrangle>")
-  | Seq strategy strategy            ("_;;/ _"  [60, 61] 60)
-  | Left_Choice strategy strategy     ("_<+/ _"  [60, 61] 60)
-  | Choice strategy strategy          ("_></ _"  [60, 61] 60) (* non-deterministic choice *)
-  | One strategy                 ("one")
+  | FixVar var                    ("\<lparr>_\<rparr>")  
+  | Atomic "exp \<Rightarrow> exp option"    ("\<llangle>_\<rrangle>")
+  | Seq strategy strategy         ("_;;/ _"  [60, 61] 60)
+  | Left_Choice strategy strategy ("_<+/ _"  [60, 61] 60)
+  | Choice strategy strategy      ("_></ _"  [60, 61] 60) (* non-deterministic choice *)
+  | One strategy                  ("one")
   | CSome strategy                ("some") (* avoid conflict with isabelle option type *)
-  | All strategy                 ("all")
-  | Mu var strategy              ("mu_._"   [60, 61] 60)
+  | All strategy                  ("all")
+  | Mu var strategy               ("mu_._"   [60, 61] 60)
 
 definition Try :: "strategy \<Rightarrow> strategy" ("try") where
   "Try s = s <+ SKIP"
