@@ -90,24 +90,32 @@ theorem mult_comm_plus_comm_bad: "wp (\<llangle>mult_comm\<rrangle> ;; \<llangle
 
 (* Example in section 5.2 *)
 (* A well composed strategy is a good strategy *)
+lemma cases_plus_zero: "plus_comm x = Some xa \<Longrightarrow>
+       a = xa \<Longrightarrow> plus_zero xa = None \<longrightarrow> Err \<in> range E \<Longrightarrow> \<exists>m::exp. x = Node PLUS m (Leaf (label.Nat (0::nat)))"
+proof -
+  fix a xa
+  show "plus_comm x = Some xa \<Longrightarrow>
+       a = xa \<Longrightarrow> plus_zero xa = None \<longrightarrow> Err \<in> range E \<Longrightarrow> \<exists>m::exp. x = Node PLUS m (Leaf (label.Nat (0::nat)))"
+    apply (cases "plus_zero xa")
+     apply blast 
+    apply (erule plus_zero.elims; simp)
+    by (erule plus_comm.elims; simp)
+qed
+
 theorem plus_comm_seq_plus_zero_good: "wp (\<llangle>plus_comm\<rrangle> ;; \<llangle>plus_zero\<rrangle>) \<epsilon> UNIV (\<lambda> x. undefined) = 
                                        {e | e m. e = (Node PLUS m (Leaf (Nat 0)))}"
-  apply simp
-  apply (rule set_eqI)
-  apply simp
-  apply (rename_tac x)
-  apply (case_tac "plus_comm x")
-   apply auto[1]
-  apply (simp split: option.split)
-  apply (rule iffI)
-   apply (erule imageE)
-   apply simp
-   apply (rename_tac a xa)
-   apply (case_tac "plus_zero xa")
-    apply blast
-   apply (erule plus_zero.elims; simp)
-   apply (erule plus_comm.elims; simp)
-  by auto
+proof (rule set_eqI)
+  fix x
+  show "(x \<in> wp (\<llangle>plus_comm\<rrangle>;; \<llangle>plus_zero\<rrangle>) \<epsilon> UNIV (\<lambda>x::int \<times> tag. undefined)) =
+       (x \<in> {u::exp. \<exists>(e::exp) m::exp. u = e \<and> e = Node PLUS m (Leaf (label.Nat (0::nat)))})"
+    apply (cases "plus_comm x")
+     apply auto[1]
+    apply (simp split: option.split)
+    apply (rule iffI)
+     apply (erule imageE)
+     apply (simp add: cases_plus_zero)
+    by auto
+qed
 
 theorem plus_zero_seq_plus_comm_good: "wp (\<llangle>plus_zero\<rrangle> ;; \<llangle>plus_comm\<rrangle>) \<epsilon> UNIV (\<lambda> x. undefined) = 
                   {e | e m n. e = (Node PLUS (Leaf (Nat 0)) (Node PLUS m n))}"
