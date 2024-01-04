@@ -8,7 +8,7 @@ theorem repeat_skip_div : "wp (repeat SKIP) \<epsilon> UNIV (\<lambda> x. undefi
   apply simp
   apply (rule fixp_induct)
      apply (rule ccpo.admissibleI)
-     apply (simp add: prod_Sup)
+     apply (simp add: fst_Sup snd_Sup)
      apply (simp add: Sup_pt)
      apply (subst Abs_pt_inverse)
       apply simp
@@ -18,7 +18,7 @@ theorem repeat_skip_div : "wp (repeat SKIP) \<epsilon> UNIV (\<lambda> x. undefi
       apply (intro mono_intros)
      apply simp
     apply (intro mono_intros)
-   apply (simp add: prod_Sup)
+   apply (simp add: fst_Sup snd_Sup)
    apply (simp add: Sup_pt)
    apply (subst Abs_pt_inverse)
     apply simp

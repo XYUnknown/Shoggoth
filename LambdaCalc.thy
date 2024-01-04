@@ -209,18 +209,18 @@ lemma wp_wp_err_repeat:
   apply (rule parallel_fixp_induct)
       apply (rule admissible_conj)
        apply (rule ccpo.admissibleI)
-       apply (simp  add: prod_Sup Sup_pt)
+       apply (simp add: fst_Sup snd_Sup Sup_pt)
        apply (subst Abs_pt_inverse)
         apply simp
         apply (intro mono_intros)
        apply auto[1]
       apply (rule ccpo.admissibleI)
-      apply (simp  add: prod_Sup Sup_pt)
+      apply (simp add: fst_Sup snd_Sup Sup_pt)
       apply (subst Abs_pt_inverse)
        apply simp
        apply (intro mono_intros)
       apply auto[1]
-     apply (simp add: prod_Sup Sup_pt)
+     apply (simp add: fst_Sup snd_Sup Sup_pt)
      apply (subst Abs_pt_inverse)
       apply simp
       apply (intro mono_intros)
@@ -284,16 +284,16 @@ lemma wp_wp_err_topDown:
   apply (rule admissible_all)
   apply (rule admissible_conj)
        apply (rule ccpo.admissibleI)
-       apply (simp add: prod_Sup Sup_pt)
+       apply (simp add: fst_Sup snd_Sup Sup_pt)
        apply (subst Abs_pt_inverse)
         apply (simp, intro mono_intros)
        apply simp
       apply (rule ccpo.admissibleI)
-      apply (simp add: prod_Sup Sup_pt)
+      apply (simp add: fst_Sup snd_Sup Sup_pt)
       apply (subst Abs_pt_inverse)
        apply (simp, intro mono_intros)
       apply simp
-     apply (simp add: prod_Sup Sup_pt)
+     apply (simp add: fst_Sup snd_Sup Sup_pt)
      apply (subst Abs_pt_inverse)
       apply (simp, intro mono_intros)
      apply simp
