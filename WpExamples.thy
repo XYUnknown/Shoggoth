@@ -117,25 +117,44 @@ proof (rule set_eqI)
     by auto
 qed
 
+lemma cases_plus_comm: "plus_zero x = Some xa \<Longrightarrow>
+                        a = xa \<Longrightarrow>
+                        plus_comm xa = None \<longrightarrow> Err \<in> range E \<Longrightarrow>
+                        \<exists>(m::exp) n::exp. x = Node PLUS (Leaf (label.Nat (0::nat))) (Node PLUS m n)"
+
+proof -
+  fix a xa
+  show "plus_zero x = Some xa \<Longrightarrow>
+        a = xa \<Longrightarrow>
+        plus_comm xa = None \<longrightarrow> Err \<in> range E \<Longrightarrow>
+        \<exists>(m::exp) n::exp. x = Node PLUS (Leaf (label.Nat (0::nat))) (Node PLUS m n)"
+    apply (cases "plus_comm xa")
+     apply auto[1]
+    apply (erule plus_zero.elims; simp)
+    by (erule plus_comm.elims; simp)
+qed
+
 theorem plus_zero_seq_plus_comm_good: "wp (\<llangle>plus_zero\<rrangle> ;; \<llangle>plus_comm\<rrangle>) \<epsilon> UNIV (\<lambda> x. undefined) = 
                   {e | e m n. e = (Node PLUS (Leaf (Nat 0)) (Node PLUS m n))}"
-  apply simp
-  apply (rule set_eqI)
-  apply simp
-  apply (rename_tac x)
-  apply (case_tac "plus_zero x")
-   apply simp
-   apply auto[1]
-  apply (simp split: option.split)
-  apply (rule iffI)
-   apply (erule imageE)
-   apply simp
-   apply (rename_tac a xa)
-   apply (case_tac "plus_comm xa")
-    apply auto[1]
-   apply (erule plus_zero.elims; simp)
-   apply (erule plus_comm.elims; simp)
-  by auto
+proof (rule set_eqI)
+  fix x
+  show "(x \<in> wp (\<llangle>plus_zero\<rrangle>;; \<llangle>plus_comm\<rrangle>) \<epsilon> UNIV (\<lambda>x::int \<times> tag. undefined)) =
+        (x \<in> {u::exp.
+          \<exists>(e::exp) (m::exp) n::exp. u = e \<and> e = Node PLUS (Leaf (label.Nat (0::nat))) (Node PLUS m n)})"
+  proof (cases "plus_zero x")
+    case None
+    then show ?thesis
+      by auto
+  next
+    case (Some a)
+    then show ?thesis
+      apply (simp split: option.split)
+      apply (rule iffI)
+      apply (erule imageE)
+       apply (simp add: cases_plus_comm)
+      by auto
+  qed
+qed
 
 theorem plus_comm_mult_comm_bad: "wp (\<llangle>plus_comm\<rrangle> ;; \<llangle>mult_comm\<rrangle>) \<epsilon> UNIV (\<lambda> x. undefined) = {}"
   apply (simp split: option.split)
@@ -148,140 +167,315 @@ theorem plus_comm_mult_comm_bad: "wp (\<llangle>plus_comm\<rrangle> ;; \<llangle
 
 theorem choice_mult_comm_plus_comm_good : "wp ((\<llangle>mult_comm\<rrangle> >< \<llangle>plus_comm\<rrangle>) ;; \<llangle>mult_comm\<rrangle>) \<epsilon> UNIV (\<lambda> x. undefined) 
                                       = {e | e m n. e = (Node MULT n m)}"
-  apply (simp split: option.split)
-  apply (rule set_eqI)
-  apply simp
-  apply (rename_tac x)
-  apply (case_tac "mult_comm x")
-   apply simp
-   apply (case_tac "plus_comm x")
-    apply simp
-    apply auto[1]
-   apply simp
-   apply (erule plus_comm.elims; simp)
-   apply auto[1]
-  apply simp
-  apply (case_tac "plus_comm x")
-   apply simp
-   apply (erule mult_comm.elims; simp)
-  apply simp
-  by (erule plus_comm.elims; simp)
+proof (rule set_eqI)
+  fix x
+  show "(x \<in> wp (\<llangle>mult_comm\<rrangle>>< \<llangle>plus_comm\<rrangle>;; \<llangle>mult_comm\<rrangle>) \<epsilon> UNIV (\<lambda>x::int \<times> tag. undefined)) =
+        (x \<in> {u::exp. \<exists>(e::exp) (m::exp) n::exp. u = e \<and> e = Node MULT n m})"
+  proof (cases "mult_comm x")
+    case None
+    then show ?thesis
+      apply (cases "plus_comm x")
+       apply auto[1]
+      apply (erule plus_comm.elims; simp)
+      by auto[1]
+  next
+    case (Some a)
+    then show ?thesis
+      apply (cases "plus_comm x")
+       apply (erule mult_comm.elims; simp)
+      by (erule plus_comm.elims; simp)
+  qed
+qed
 
 theorem lchoice_mult_comm_plus_comm_good : "wp ((\<llangle>mult_comm\<rrangle> <+ \<llangle>plus_comm\<rrangle>) ;; \<llangle>mult_comm\<rrangle>) \<epsilon> UNIV (\<lambda> x. undefined) 
                                       = {e | e m n. e = (Node MULT n m)}"
-  apply (simp split: option.split)
-  apply (rule set_eqI)
-  apply simp
-  apply (rename_tac x)
-  apply (case_tac "mult_comm x")
-   apply simp
-   apply (case_tac "plus_comm x")
-    apply simp
-    apply auto[1]
-   apply simp
-   apply  (erule plus_comm.elims; simp)
-   apply auto[1]
-  apply simp
-  by (erule mult_comm.elims; simp)
+proof (rule set_eqI)
+  fix x
+  show "(x \<in> wp (\<llangle>mult_comm\<rrangle><+ \<llangle>plus_comm\<rrangle>;; \<llangle>mult_comm\<rrangle>) \<epsilon> UNIV (\<lambda>x::int \<times> tag. undefined)) =
+        (x \<in> {u::exp. \<exists>(e::exp) (m::exp) n::exp. u = e \<and> e = Node MULT n m})"
+  proof (cases "mult_comm x")
+    case None
+    then show ?thesis 
+      apply (cases "plus_comm x")
+       apply auto[1]
+      apply  (erule plus_comm.elims; simp)
+      by auto[1]
+  next
+    case (Some a)
+    then show ?thesis 
+      apply simp
+      by (erule mult_comm.elims; simp)
+  qed
+qed
+
+lemma cases_conj_one: "{u::exp.
+     (mult_comm u = None \<longrightarrow>
+      Err
+      \<in> E ` {u::exp.
+              (mult_comm u = None \<longrightarrow>
+               Err \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m}) \<and>
+              (\<forall>x2::exp.
+                  mult_comm u = Some x2 \<longrightarrow>
+                  E x2 \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m})}) \<and>
+     (\<forall>x2::exp.
+         mult_comm u = Some x2 \<longrightarrow>
+         E x2
+         \<in> E ` {u::exp.
+                 (mult_comm u = None \<longrightarrow>
+                  Err \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m}) \<and>
+                 (\<forall>x2::exp.
+                     mult_comm u = Some x2 \<longrightarrow>
+                     E x2 \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m})})} \<inter>
+    {u::exp.
+     \<forall>x2::exp.
+        mult_zero u = Some x2 \<longrightarrow>
+        E x2
+        \<in> E ` {u::exp.
+                (mult_comm u = None \<longrightarrow>
+                 Err \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m}) \<and>
+                (\<forall>x2::exp.
+                    mult_comm u = Some x2 \<longrightarrow>
+                    E x2 \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m})}} =
+    {}"
+proof (rule set_eqI)
+  fix x
+  show "(x \<in> {u::exp.
+           (mult_comm u = None \<longrightarrow>
+            Err
+            \<in> E ` {u::exp.
+                    (mult_comm u = None \<longrightarrow>
+                     Err \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m}) \<and>
+                    (\<forall>x2::exp.
+                        mult_comm u = Some x2 \<longrightarrow>
+                        E x2 \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m})}) \<and>
+           (\<forall>x2::exp.
+               mult_comm u = Some x2 \<longrightarrow>
+               E x2
+               \<in> E ` {u::exp.
+                       (mult_comm u = None \<longrightarrow>
+                        Err \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m}) \<and>
+                       (\<forall>x2::exp.
+                           mult_comm u = Some x2 \<longrightarrow>
+                           E x2 \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m})})} \<inter>
+          {u::exp.
+           \<forall>x2::exp.
+              mult_zero u = Some x2 \<longrightarrow>
+              E x2
+              \<in> E ` {u::exp.
+                      (mult_comm u = None \<longrightarrow>
+                       Err \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m}) \<and>
+                      (\<forall>x2::exp.
+                          mult_comm u = Some x2 \<longrightarrow>
+                          E x2 \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m})}}) =
+    (x \<in> {})"
+  proof (cases "mult_comm x")
+    case None
+    then show ?thesis
+      by clarsimp
+  next
+    case (Some a)
+    then show ?thesis
+      apply clarsimp
+      apply (cases "mult_zero x")
+       apply clarsimp
+       apply (cases "mult_comm a")
+        apply blast
+       apply (erule mult_comm.elims; simp)
+       apply (erule imageE)
+       apply clarsimp
+      apply clarsimp
+      apply (cases "mult_comm a")
+       apply blast
+      apply (erule mult_comm.elims; simp)
+      apply (erule imageE)
+      by clarsimp
+  qed
+qed
+
+lemma cases_mult_comm: "mult_comm x = None \<Longrightarrow>
+       mult_zero x = Some xa \<Longrightarrow>
+       mult_comm xa = None \<longrightarrow> Err \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m} \<Longrightarrow>
+       \<forall>x2::exp.
+          mult_comm xa = Some x2 \<longrightarrow> E x2 \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m} \<Longrightarrow>
+       False"
+proof -
+  fix x xa
+  show "mult_comm x = None \<Longrightarrow>
+        mult_zero x = Some xa \<Longrightarrow>
+        mult_comm xa = None \<longrightarrow> Err \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m} \<Longrightarrow>
+        \<forall>x2::exp.
+           mult_comm xa = Some x2 \<longrightarrow> E x2 \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m} \<Longrightarrow>
+        False"
+    apply (cases "mult_comm xa")
+     apply force
+    by (erule mult_comm.elims; simp)
+qed
+
+lemma cases_conj_two: "{u::exp.
+     \<forall>x2::exp.
+        mult_comm u = Some x2 \<longrightarrow>
+        E x2
+        \<in> E ` {u::exp.
+                (mult_comm u = None \<longrightarrow>
+                 Err \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m}) \<and>
+                (\<forall>x2::exp.
+                    mult_comm u = Some x2 \<longrightarrow>
+                    E x2 \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m})}} \<inter>
+    {u::exp.
+     (mult_zero u = None \<longrightarrow>
+      Err
+      \<in> E ` {u::exp.
+              (mult_comm u = None \<longrightarrow>
+               Err \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m}) \<and>
+              (\<forall>x2::exp.
+                  mult_comm u = Some x2 \<longrightarrow>
+                  E x2 \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m})}) \<and>
+     (\<forall>x2::exp.
+         mult_zero u = Some x2 \<longrightarrow>
+         E x2
+         \<in> E ` {u::exp.
+                 (mult_comm u = None \<longrightarrow>
+                  Err \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m}) \<and>
+                 (\<forall>x2::exp.
+                     mult_comm u = Some x2 \<longrightarrow>
+                     E x2 \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m})})} =
+    {}"
+proof (rule set_eqI)
+  fix x
+  show "(x \<in> {u::exp.
+              \<forall>x2::exp.
+                 mult_comm u = Some x2 \<longrightarrow>
+                 E x2
+                 \<in> E ` {u::exp.
+                         (mult_comm u = None \<longrightarrow>
+                          Err \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m}) \<and>
+                         (\<forall>x2::exp.
+                             mult_comm u = Some x2 \<longrightarrow>
+                             E x2 \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m})}} \<inter>
+             {u::exp.
+              (mult_zero u = None \<longrightarrow>
+               Err
+               \<in> E ` {u::exp.
+                       (mult_comm u = None \<longrightarrow>
+                        Err \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m}) \<and>
+                       (\<forall>x2::exp.
+                           mult_comm u = Some x2 \<longrightarrow>
+                           E x2 \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m})}) \<and>
+              (\<forall>x2::exp.
+                  mult_zero u = Some x2 \<longrightarrow>
+                  E x2
+                  \<in> E ` {u::exp.
+                          (mult_comm u = None \<longrightarrow>
+                           Err \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m}) \<and>
+                          (\<forall>x2::exp.
+                              mult_comm u = Some x2 \<longrightarrow>
+                              E x2 \<in> E ` {u::exp. \<exists>m::exp. u = Node MULT (Leaf (label.Nat (0::nat))) m})})}) =
+       (x \<in> {})"
+  proof (cases "mult_comm x")
+    case None
+    then show ?thesis 
+    proof (cases "mult_zero x")
+      case None
+      then show ?thesis by clarsimp
+    next
+      case (Some a)
+      then show ?thesis 
+        apply clarsimp
+        apply (cases "mult_comm a")
+         apply force
+        using None cases_mult_comm by force
+    qed
+  next
+    case (Some a)
+    then show ?thesis
+      apply clarsimp
+      apply (cases "mult_zero x")
+       apply clarsimp
+      apply (cases "mult_comm a")
+       apply force
+      apply (erule mult_comm.elims; simp)
+      apply (erule imageE)
+      by clarsimp
+  qed
+qed
 
 theorem choice_mult_comm_id_bad : "wp ((\<llangle>mult_comm\<rrangle> >< \<llangle>mult_zero\<rrangle>) ;; \<llangle>mult_comm\<rrangle>) \<epsilon> 
       {e | e m. e = Node MULT (Leaf (Nat 0)) m} (\<lambda> x. undefined) = {}" 
   apply (simp split: option.split)
   apply (rule conjI)
-   apply (rule set_eqI)
-   apply simp
-   apply (rename_tac x)
-   apply (case_tac "mult_comm x")
-    apply clarsimp
-   apply clarsimp
-   apply (case_tac "mult_zero x")
-    apply clarsimp
-    apply (rename_tac xa)
-    apply (case_tac "mult_comm xa")
-     apply force
-    apply (erule mult_comm.elims; simp)
-    apply (erule imageE)
-    apply clarsimp
-   apply clarsimp
-   apply (rename_tac xa xb)
-   apply (case_tac "mult_comm xa")
-    apply force
-   apply (erule mult_comm.elims; simp)
-   apply (erule imageE)
-   apply clarsimp
-  apply (rule set_eqI)
-  apply simp
-  apply (rename_tac x)
-  apply (case_tac "mult_comm x")
-   apply clarsimp
-   apply (case_tac " mult_zero x")
-    apply clarsimp
-   apply clarsimp
-   apply (rename_tac xa)
-   apply (case_tac "mult_comm xa")
-    apply force
-   apply (erule mult_comm.elims; simp)
-  apply clarsimp
-  apply (case_tac " mult_zero x")
-   apply clarsimp
-  apply clarsimp
-  apply (rename_tac xa xb)
-  apply (case_tac "mult_comm xa")
-   apply force
-  apply (erule mult_comm.elims; simp)
-  apply (erule imageE)
-  by clarsimp
+   apply (simp add: cases_conj_one)
+  by (simp add: cases_conj_two)
 
 theorem lchoice_mult_comm_id_good : "wp ((\<llangle>mult_comm\<rrangle> <+ \<llangle>mult_zero\<rrangle>) ;; \<llangle>mult_comm\<rrangle>) \<epsilon> 
       {e | e m. e = Node MULT (Leaf (Nat 0)) m} (\<lambda> x. undefined) = {e | e m. e = Node MULT (Leaf (Nat 0)) m}"
-  apply (simp split: option.split)
-  apply (rule set_eqI)
-  apply simp
-  apply (rename_tac x)
-  apply (case_tac "mult_comm x")
-   apply clarsimp
-   apply (case_tac "mult_zero x")
-    apply clarsimp
-    apply auto[1]
-   apply clarsimp
-   apply (erule mult_comm.elims; simp)
-  apply clarsimp
-  apply (rename_tac a)
-  apply (case_tac "mult_comm a")
-   apply (erule mult_comm.elims; simp)
-  apply (rule iffI)
-   apply (erule disjE)
-    apply (erule imageE)
-    apply simp
-    apply (erule imageE)
-    apply clarsimp
-    apply (erule mult_comm.elims; simp)
-   apply clarsimp
-   apply (erule mult_comm.elims; simp)
-  by clarsimp
+proof (rule set_eqI)
+  fix x
+  show "(x \<in> wp (\<llangle>mult_comm\<rrangle><+ \<llangle>mult_zero\<rrangle>;; \<llangle>mult_comm\<rrangle>) \<epsilon> 
+           {u::exp. \<exists>(e::exp) m::exp. u = e \<and> e = Node MULT (Leaf (label.Nat (0::nat))) m}
+           (\<lambda>x::int \<times> tag. undefined)) =
+        (x \<in> {u::exp. \<exists>(e::exp) m::exp. u = e \<and> e = Node MULT (Leaf (label.Nat (0::nat))) m})"
+  proof (cases "mult_comm x")
+    case None
+    then show ?thesis
+      apply clarsimp
+      apply (cases "mult_zero x")
+       apply clarsimp
+       apply auto[1]
+      apply clarsimp
+      by (erule mult_comm.elims; simp)
+  next
+    case (Some a)
+    then show ?thesis
+      apply clarsimp
+      apply (cases "mult_comm a")
+       apply (erule mult_comm.elims; simp)
+      apply (rule iffI)
+      apply (erule disjE)
+        apply (erule imageE)
+        apply simp
+        apply (erule imageE)
+        apply clarsimp
+        apply (erule mult_comm.elims; simp)
+       apply clarsimp
+       apply (erule mult_comm.elims; simp)
+      by clarsimp
+  qed
+qed
 
 theorem one_plus_zero : "wp (one \<llangle>plus_zero\<rrangle>) \<epsilon> UNIV (\<lambda> x. undefined) = 
                         {e | l e m n. e = Node l (Node PLUS (Leaf (Nat 0)) m) n}
                       \<union> {e | l e m n. e = Node l n (Node PLUS (Leaf (Nat 0)) m)}"
-  apply (simp split: option.split)
-  apply (rule set_eqI)
-  apply simp
-  apply (rename_tac x)
-  apply (case_tac "plus_zero (lookup (pos.Left\<triangleleft>\<epsilon>) x)")
-   apply clarsimp
-   apply (case_tac "plus_zero (lookup (pos.Right\<triangleleft>\<epsilon>) x)")
-    apply clarsimp
-    apply auto[1]
-   apply clarsimp
-   apply (rotate_tac)
-   apply (erule plus_zero.elims; simp)
-   apply auto[1]
-  apply clarsimp
-  apply (case_tac "plus_zero (lookup (pos.Right\<triangleleft>\<epsilon>) x)")
-   apply clarsimp
-   apply (erule plus_zero.elims; simp)
-   apply auto[1]
-  apply clarsimp
-  apply (erule plus_zero.elims; simp)
-  by auto
+proof (rule set_eqI)
+  fix x
+  show "(x \<in> wp (one \<llangle>plus_zero\<rrangle>) \<epsilon> UNIV (\<lambda>x::int \<times> tag. undefined)) =
+        (x \<in> {u::exp.
+              \<exists>(l::label) (e::exp) (m::exp) n::exp.
+                 u = e \<and> e = Node l (Node PLUS (Leaf (label.Nat (0::nat))) m) n} \<union>
+             {u::exp.
+              \<exists>(l::label) (e::exp) (m::exp) n::exp.
+                 u = e \<and> e = Node l n (Node PLUS (Leaf (label.Nat (0::nat))) m)})"
+  proof (cases "plus_zero (lookup (pos.Left\<triangleleft>\<epsilon>) x)")
+    case None
+    then show ?thesis
+      apply clarsimp
+      apply (cases "plus_zero (lookup (pos.Right\<triangleleft>\<epsilon>) x)")
+       apply clarsimp
+       apply auto[1]
+      apply clarsimp
+      apply rotate_tac
+      apply (erule plus_zero.elims; simp)
+      by auto[1]
+  next
+    case (Some a)
+    then show ?thesis
+      apply clarsimp
+      apply (cases "plus_zero (lookup (pos.Right\<triangleleft>\<epsilon>) x)")
+       apply clarsimp
+       apply (erule plus_zero.elims; simp)
+       apply auto[1]
+      apply clarsimp
+      apply (erule plus_zero.elims; simp)
+      by auto
+  qed
+qed
 end
