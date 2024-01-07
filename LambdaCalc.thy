@@ -411,7 +411,6 @@ shows     "Abs (Abs (App (Idd n) (App e (Idd m)))) \<in> wp (topDown (\<llangle>
   apply (subst fixp_unfold, intro mono_intros, simp)
   done
 
-
 lemma descendRRR: 
   assumes "eta (Abs (App (Idd n) e)) = None" 
   and     "Abs (Abs (App (Idd n) e)) \<in> wp (\<llangle> beta \<rrangle> <+ \<llangle> eta \<rrangle>) (Right \<triangleleft> (Right \<triangleleft> (Right \<triangleleft>  \<epsilon>))) P env"
@@ -449,8 +448,293 @@ lemma term_normalised: "Abs (Abs (App (Idd (Suc 0)) (App (Idd (Suc 0)) (Idd 0)))
   apply (subst fixp_unfold, intro mono_intros, simp)
   done
 
+lemma cases_location: 
+  assumes "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+  shows 
+       "beta (lookup l (Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))))) = None \<and>
+       eta (lookup l (Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))))) = None"
+proof -
+  show "beta (lookup l (Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))))) = None \<and>
+        eta (lookup l (Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))))) = None"
+  proof (cases l)
+    case empty
+    thus ?thesis by simp
+  next
+    case (Lcons x21 x22)
+    thus ?thesis
+      using assms
+    proof (cases x21)
+      assume "x21 = Left"
+      and "l = x21\<triangleleft>x22"
+      and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+      thus ?thesis
+      proof (cases x22)
+        case empty
+        assume "x22 = empty"
+          and "x21 = Left"
+          and "l = x21\<triangleleft>x22"
+          and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+        thus ?thesis
+          by simp
+      next
+        case (Lcons x21a x22a)
+        assume "x22 = Lcons x21a x22a"
+          and "l = x21\<triangleleft>x22"
+          and "x21 = Left"
+          and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+        thus ?thesis  
+          apply simp
+          apply (cases x21a)
+           apply simp
+          by simp
+      qed
+      next
+        assume "x21 = Right"
+          and "l = x21\<triangleleft>x22"
+          and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+        thus ?thesis
+        proof (cases x22)
+          assume "x22 = empty"
+            and "x21 = Right"
+            and "l = x21\<triangleleft>x22"
+            and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+          thus ?thesis
+            by simp
+        next
+          case (Lcons x21a x22a)
+          assume "x22 = Lcons x21a x22a"
+            and "l = x21\<triangleleft>x22"
+            and "x21 = Right"
+            and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+          thus ?thesis
+          proof (cases x21a)
+            case Left
+            assume "x21a = Left"
+              and "x21 = Right"
+              and "x22 = x21a\<triangleleft>x22a"
+              and "l = x21\<triangleleft>x22"
+              and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+            thus ?thesis
+            proof (cases x22a)
+              case empty
+              assume "x22a = empty"
+                and "x21a = Left"
+                and "x21 = Right"
+                and "x22 = x21a\<triangleleft>x22a"
+                and "l = x21\<triangleleft>x22"
+                and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+              thus ?thesis
+                by simp
+            next
+              case (Lcons x21b x22b)
+              assume "x22a = Lcons x21b x22b"
+                and "x21a = Left"
+                and "x21 = Right"
+                and "x22 = x21a\<triangleleft>x22a"
+                and "l = x21\<triangleleft>x22"
+                and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+              thus ?thesis 
+                apply (cases x21b)
+                 apply simp
+                by simp
+            qed
+          next
+            case Right
+            assume "x21a = Right"
+              and "x21 = Right"
+              and "x22 = x21a\<triangleleft>x22a"
+              and "l = x21\<triangleleft>x22"
+              and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+            thus ?thesis 
+            proof (cases x22a)
+              case empty
+              assume "x22a = empty"
+                and "x21a = Right"
+                and "x21 = Right"
+                and "x22 = x21a\<triangleleft>x22a"
+                and "l = x21\<triangleleft>x22"
+                and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+              then show ?thesis
+                by simp
+            next
+              case (Lcons x21b x22b)
+              assume "x22a = Lcons x21b x22b"
+                and "x21a = Right"
+                and "x21 = Right"
+                and "x22 = x21a\<triangleleft>x22a"
+                and "l = x21\<triangleleft>x22"
+                and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+              then show ?thesis
+              proof (cases x21b)
+                case Left
+                assume "x21b = Left"
+                  and "x22a = Lcons x21b x22b"
+                  and "x21a = Right"
+                  and "x21 = Right"
+                  and "x22 = x21a\<triangleleft>x22a"
+                  and "l = x21\<triangleleft>x22"
+                  and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+                then show ?thesis
+                proof (cases x22b)
+                  case empty
+                  assume "x22b = empty"
+                    and "x21b = Left"
+                    and "x22a = Lcons x21b x22b"
+                    and "x21a = Right"
+                    and "x21 = Right"
+                    and "x22 = x21a\<triangleleft>x22a"
+                    and "l = x21\<triangleleft>x22"
+                    and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+                  then show ?thesis
+                    by simp
+                next
+                  case (Lcons x21c x22c)
+                  assume "x22b = Lcons x21c x22c"
+                    and "x21b = Left"
+                    and "x22a = Lcons x21b x22b"
+                    and "x21a = Right"
+                    and "x21 = Right"
+                    and "x22 = x21a\<triangleleft>x22a"
+                    and "l = x21\<triangleleft>x22"
+                    and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+                  then show ?thesis 
+                    apply (cases x21c)
+                     apply simp
+                    by simp
+                qed
+              next
+                case Right
+                assume "x21b = Right"
+                  and "x22a = Lcons x21b x22b"
+                  and "x21a = Right"
+                  and "x21 = Right"
+                  and "x22 = x21a\<triangleleft>x22a"
+                  and "l = x21\<triangleleft>x22"
+                  and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+                then show ?thesis
+                proof (cases x22b)
+                  case empty
+                  assume "x22b = empty"
+                    and "x21b = Right"
+                    and "x22a = Lcons x21b x22b"
+                    and "x21a = Right"
+                    and "x21 = Right"
+                    and "x22 = x21a\<triangleleft>x22a"
+                    and "l = x21\<triangleleft>x22"
+                    and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+                  then show ?thesis 
+                    by simp
+                next
+                  case (Lcons x21c x22c)
+                  assume "x22b = Lcons x21c x22c"
+                    and "x21b = Right"
+                    and "x22a = Lcons x21b x22b"
+                    and "x21a = Right"
+                    and "x21 = Right"
+                    and "x22 = x21a\<triangleleft>x22a"
+                    and "l = x21\<triangleleft>x22"
+                    and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+                  then show ?thesis
+                  proof (cases x21c)
+                    case Left
+                    assume "x21c = Left"
+                      and "x22b = Lcons x21c x22c"
+                      and "x21b = Right"
+                      and "x22a = Lcons x21b x22b"
+                      and "x21a = Right"
+                      and "x21 = Right"
+                      and "x22 = x21a\<triangleleft>x22a"
+                      and "l = x21\<triangleleft>x22"
+                      and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+                    then show ?thesis 
+                    proof (cases x22c)
+                      case empty
+                      assume "x22c = empty"
+                        and "x21c = Left"
+                        and "x22b = Lcons x21c x22c"
+                        and "x21b = Right"
+                        and "x22a = Lcons x21b x22b"
+                        and "x21a = Right"
+                        and "x21 = Right"
+                        and "x22 = x21a\<triangleleft>x22a"
+                        and "l = x21\<triangleleft>x22"
+                        and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+                      then show ?thesis
+                        by simp
+                    next
+                      case (Lcons x21d x22d)
+                      assume "x22c = (Lcons x21d x22d)"
+                        and "x21c = Left"
+                        and "x22b = Lcons x21c x22c"
+                        and "x21b = Right"
+                        and "x22a = Lcons x21b x22b"
+                        and "x21a = Right"
+                        and "x21 = Right"
+                        and "x22 = x21a\<triangleleft>x22a"
+                        and "l = x21\<triangleleft>x22"
+                        and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+                      then show ?thesis
+                        apply (cases x21d)
+                         apply simp
+                        by simp
+                    qed
+                  next
+                    case Right
+                    assume "x21c = Right"
+                      and "x22b = Lcons x21c x22c"
+                      and "x21b = Right"
+                      and "x22a = Lcons x21b x22b"
+                      and "x21a = Right"
+                      and "x21 = Right"
+                      and "x22 = x21a\<triangleleft>x22a"
+                      and "l = x21\<triangleleft>x22"
+                      and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+                    then show ?thesis
+                    proof (cases x22c)
+                      case empty
+                      assume "x22c = empty"
+                        and "x21c = Right"
+                        and "x22b = Lcons x21c x22c"
+                        and "x21b = Right"
+                        and "x22a = Lcons x21b x22b"
+                        and "x21a = Right"
+                        and "x21 = Right"
+                        and "x22 = x21a\<triangleleft>x22a"
+                        and "l = x21\<triangleleft>x22"
+                        and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+                      then show ?thesis 
+                        by simp
+                    next
+                      case (Lcons x21d x22d)
+                      assume "x22c = Lcons x21d x22d"
+                        and "x21c = Right"
+                        and "x22b = Lcons x21c x22c"
+                        and "x21b = Right"
+                        and "x22a = Lcons x21b x22b"
+                        and "x21a = Right"
+                        and "x21 = Right"
+                        and "x22 = x21a\<triangleleft>x22a"
+                        and "l = x21\<triangleleft>x22"
+                        and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
+                      then show ?thesis
+                        apply (cases x21d)
+                         apply simp
+                        by simp
+                    qed
+                  qed
+                qed
+              qed
+            qed
+          qed
+        qed
+      qed
+    qed
+  qed
+
+
+
 (* Section 5.3  A longer example of beta-eta normalisation *)
-(* (\<lambda>n \<lambda>f \<lambda>x. f (n f x)) (\<lambda>f \<lambda>x. f x) is left by normalise(beta/eta) in beta-eta normal form *)
+(* (\<lambda>n \<lambda>f \<lambda>x. f (n f x)) (\<lambda>f \<lambda>x. f x) is left by normalise(beta/eta) in beta-eta normal form *)  
 theorem long_exp_good : "App (Abs (Abs (Abs (App (Idd 1) (App (App (Idd 2) (Idd 1)) (Idd 0))))))
                 (Abs (Abs (App (Idd 1) (Idd 0)))) 
      \<in> wp (normalise (\<llangle> beta \<rrangle> <+ \<llangle> eta \<rrangle>)) \<epsilon> {e | e. betaEtaNormalForm e } env"
@@ -484,26 +768,7 @@ theorem long_exp_good : "App (Abs (Abs (Abs (App (Idd 1) (App (App (Idd 2) (Idd 
   apply (rule conjI)
    apply (rule term_normalised)
   apply (clarsimp)
-  apply (rename_tac l)
-  apply (case_tac l; simp)
-  apply (rename_tac x21 x22)
-  apply (case_tac x21; case_tac x22; simp)
-   apply (rename_tac x21a x22a)
-   apply (case_tac x21a;simp)
-  apply (rename_tac x21a x22a)
-  apply (case_tac x21a; simp; case_tac x22a; simp)
-   apply (rename_tac x21b x22b)
-   apply (case_tac x21b;simp)
-  apply (rename_tac x21b x22b)
-  apply (case_tac x21b; simp; case_tac x22b; simp)
-   apply (rename_tac x21c x22c)
-   apply (case_tac x21c; simp)
-  apply (rename_tac x21c x22c)
-  apply (case_tac x21c; simp; case_tac x22c; simp)
-   apply (rename_tac x21d x22d)
-   apply (case_tac x21d;simp)
-  apply (rename_tac x21d x22d)
-  apply (case_tac x21d;simp)
-  done
+  using cases_location
+  by blast
 end
 
