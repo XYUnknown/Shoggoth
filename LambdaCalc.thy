@@ -565,7 +565,7 @@ proof -
                 and "x22 = x21a\<triangleleft>x22a"
                 and "l = x21\<triangleleft>x22"
                 and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
-              then show ?thesis
+              thus ?thesis
                 by simp
             next
               case (Lcons x21b x22b)
@@ -575,7 +575,7 @@ proof -
                 and "x22 = x21a\<triangleleft>x22a"
                 and "l = x21\<triangleleft>x22"
                 and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
-              then show ?thesis
+              thus ?thesis
               proof (cases x21b)
                 case Left
                 assume "x21b = Left"
@@ -585,7 +585,7 @@ proof -
                   and "x22 = x21a\<triangleleft>x22a"
                   and "l = x21\<triangleleft>x22"
                   and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
-                then show ?thesis
+                thus ?thesis
                 proof (cases x22b)
                   case empty
                   assume "x22b = empty"
@@ -596,7 +596,7 @@ proof -
                     and "x22 = x21a\<triangleleft>x22a"
                     and "l = x21\<triangleleft>x22"
                     and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
-                  then show ?thesis
+                  thus ?thesis
                     by simp
                 next
                   case (Lcons x21c x22c)
@@ -608,7 +608,7 @@ proof -
                     and "x22 = x21a\<triangleleft>x22a"
                     and "l = x21\<triangleleft>x22"
                     and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
-                  then show ?thesis 
+                  thus ?thesis 
                     apply (cases x21c)
                      apply simp
                     by simp
@@ -622,7 +622,7 @@ proof -
                   and "x22 = x21a\<triangleleft>x22a"
                   and "l = x21\<triangleleft>x22"
                   and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
-                then show ?thesis
+                thus ?thesis
                 proof (cases x22b)
                   case empty
                   assume "x22b = empty"
@@ -633,7 +633,7 @@ proof -
                     and "x22 = x21a\<triangleleft>x22a"
                     and "l = x21\<triangleleft>x22"
                     and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
-                  then show ?thesis 
+                  thus ?thesis 
                     by simp
                 next
                   case (Lcons x21c x22c)
@@ -645,7 +645,7 @@ proof -
                     and "x22 = x21a\<triangleleft>x22a"
                     and "l = x21\<triangleleft>x22"
                     and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
-                  then show ?thesis
+                  thus ?thesis
                   proof (cases x21c)
                     case Left
                     assume "x21c = Left"
@@ -657,7 +657,7 @@ proof -
                       and "x22 = x21a\<triangleleft>x22a"
                       and "l = x21\<triangleleft>x22"
                       and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
-                    then show ?thesis 
+                    thus ?thesis 
                     proof (cases x22c)
                       case empty
                       assume "x22c = empty"
@@ -670,7 +670,7 @@ proof -
                         and "x22 = x21a\<triangleleft>x22a"
                         and "l = x21\<triangleleft>x22"
                         and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
-                      then show ?thesis
+                      thus ?thesis
                         by simp
                     next
                       case (Lcons x21d x22d)
@@ -684,7 +684,7 @@ proof -
                         and "x22 = x21a\<triangleleft>x22a"
                         and "l = x21\<triangleleft>x22"
                         and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
-                      then show ?thesis
+                      thus ?thesis
                         apply (cases x21d)
                          apply simp
                         by simp
@@ -700,7 +700,7 @@ proof -
                       and "x22 = x21a\<triangleleft>x22a"
                       and "l = x21\<triangleleft>x22"
                       and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
-                    then show ?thesis
+                    thus ?thesis
                     proof (cases x22c)
                       case empty
                       assume "x22c = empty"
@@ -713,7 +713,7 @@ proof -
                         and "x22 = x21a\<triangleleft>x22a"
                         and "l = x21\<triangleleft>x22"
                         and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
-                      then show ?thesis 
+                      thus ?thesis 
                         by simp
                     next
                       case (Lcons x21d x22d)
@@ -727,7 +727,7 @@ proof -
                         and "x22 = x21a\<triangleleft>x22a"
                         and "l = x21\<triangleleft>x22"
                         and "Abs (Abs (App (Idd (Suc (0::nat))) (App (Idd (Suc (0::nat))) (Idd (0::nat))))) \<in> defined l"
-                      then show ?thesis
+                      thus ?thesis
                         apply (cases x21d)
                          apply simp
                         by simp
