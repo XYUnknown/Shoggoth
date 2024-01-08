@@ -467,7 +467,6 @@ next
     apply (subst map_strategy_subst[simplified fun_upd_def])
      apply simp
     apply (auto simp add: fun_upd_def)[1]
-    thm Mu.prems(2)
     using Mu.prems(2) exp_err_div.distinct(5) map_strategy.simps(11) by presburger
 qed
 
@@ -561,6 +560,43 @@ proof (subst double_substitution)
     by (simp add: map_closed_strategy_unchanged map_strategy_irrelevant)
 qed
 
+lemma cases_soundness_lc:
+  assumes "\<And>(\<theta>::int \<Rightarrow> strategy) \<xi>::int \<Rightarrow> exp \<Rightarrow> powerdomain.
+           \<forall>y::int\<in>fv s2.
+              fv (\<theta> y) = {} \<and>
+              (\<forall>e::exp.
+                  ((\<theta> y, e) \<Up> \<longrightarrow> Div \<in> PdToSet (\<xi> y e)) \<and>
+                  \<xi> y e \<le> exec (\<theta> y) (\<lambda>x::int. undefined) e) \<Longrightarrow>
+           fv (map_strategy \<theta> s2) = {} \<and>
+           (\<forall>e::exp.
+               ((map_strategy \<theta> s2, e) \<Up> \<longrightarrow> Div \<in> PdToSet (exec s2 \<xi> e)) \<and>
+               exec s2 \<xi> e \<le> exec (map_strategy \<theta> s2) (\<lambda>x::int. undefined) e)"
+    and "\<forall>y::int\<in>fv s1 \<union> fv s2.
+          fv (\<theta> y) = {} \<and>
+          (\<forall>e::exp.
+              ((\<theta> y, e) \<Up> \<longrightarrow> Div \<in> PdToSet (\<xi> y e)) \<and>
+              \<xi> y e \<le> exec (\<theta> y) (\<lambda>x::int. undefined) e)"
+    and "map_strategy \<theta> s1 = s1'"
+    and "(s1', e) \<Down> Err"
+    and "(map_strategy \<theta> s2, e) \<Up>"
+    and "fv s1' = {}"
+    and "(s1', e) \<Up> \<longrightarrow> Div \<in> PdToSet (exec s1 \<xi> e)"
+    and "exec s1 \<xi> e \<le> exec s1' (\<lambda>x::int. undefined) e"
+  shows "Div \<in> PdToSet (exec s1 \<xi> e) \<or> Div \<in> PdToSet (exec s2 \<xi> e) \<and> Err \<in> PdToSet (exec s1 \<xi> e)"
+  using assms
+  apply (cases "Div \<in> PdToSet (exec s1 \<xi> e)")
+   apply simp
+  apply (rule disjI2)
+  apply (rule conjI)
+   apply (drule_tac x = \<theta> in meta_spec)
+   apply (drule_tac x = \<xi> in meta_spec)
+   apply (drule meta_mp)
+    apply simp
+   apply clarsimp
+  apply (frule_tac \<xi>=" (\<lambda>x. undefined)" in soundness)
+   apply fast
+  by (simp add: porcupine_eglimilner)
+
 lemma div_soundness_lemma: 
   assumes "\<forall> y \<in> fv s. rel (\<theta> y) (\<xi> y)"
   shows "rel (map_strategy \<theta> s) (exec s \<xi>)"
@@ -637,18 +673,8 @@ next
      apply (rename_tac e s1')
      apply (drule_tac x = e in spec)
      apply (erule conjE)
-     apply (case_tac "Div \<in> PdToSet (exec s1 \<xi> e)")
-      apply simp
-     apply (rule disjI2)
-     apply (rule conjI)
-      apply (drule_tac x = \<theta> in meta_spec)
-      apply (drule_tac x = \<xi> in meta_spec)
-      apply (drule meta_mp)
-       apply simp
-      apply clarsimp
-     apply (frule_tac \<xi>=" (\<lambda>x. undefined)" in soundness)
-      apply fast
-     apply (simp add: porcupine_eglimilner)
+    using cases_soundness_lc
+     apply blast
     apply (subgoal_tac "(exec s1 \<xi><+sexec s2 \<xi>)
          \<le> (exec (map_strategy \<theta> s1) (\<lambda>x. undefined)<+sexec (map_strategy \<theta> s2) (\<lambda>x. undefined))")
      apply (simp add: le_fun_def)
