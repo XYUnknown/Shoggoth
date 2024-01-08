@@ -99,9 +99,19 @@ fun eta :: "exp \<Rightarrow> exp option" where
   "eta (Abs (App f (Idd 0))) = (f \<downharpoonright> 0)"
 | "eta _ = None"
 
-
 (* Some helpers to simplify reasoning about repeat and topdown, avoiding
    the need to think about environments for those combinators. *)
+lemma cases_mu_one: "\<forall>y::int\<in>fv s - {x1}. \<forall>t::tag. env1 (y, t) = env2 (y, t) \<Longrightarrow>
+       (\<And>(a::location \<Rightarrow> pt) (b::location \<Rightarrow> pt) (loc::location) P::exp set.
+           wp s loc P (env1((x1, Tot) := a, (x1, Par) := b)) =
+           wp s loc P (env2((x1, Tot) := a, (x1, Par) := b))) \<Longrightarrow>
+       y \<in> fv s \<Longrightarrow> y = x1 \<longrightarrow> t \<noteq> Tot \<Longrightarrow> y = x1 \<longrightarrow> t \<noteq> Par \<Longrightarrow> env1 (y, t) = env2 (y, t)"
+  by (cases t; simp)
+
+lemma cases_mu_two: "\<forall>y::int\<in>fv s - {x1}. \<forall>t::tag. env1 (y, t) = env2 (y, t) \<Longrightarrow>
+       y \<in> fv s \<Longrightarrow> y = x1 \<longrightarrow> t \<noteq> Tot \<Longrightarrow> y = x1 \<longrightarrow> t \<noteq> Par \<Longrightarrow> env1 (y, t) = env2 (y, t)"
+  by (cases t; simp)
+
 lemma wp_env_irrelevant: 
   assumes "\<forall>y \<in> fv s. \<forall>t. env1 (y , t) = env2 (y , t)" 
   shows "wp     s loc P env1 = wp     s loc P env2"
@@ -173,12 +183,13 @@ next
         apply simp
        apply (rule Mu(2))
        apply clarsimp
-       apply (rename_tac t)
-       apply (case_tac t; simp)
+       using cases_mu_one
+       apply blast
       apply (rule Mu(1))
       apply clarsimp
       apply (rename_tac t)
-      by (case_tac t; simp)
+      using cases_mu_two
+      by blast
   next
     case 2
     then show ?case
@@ -190,12 +201,12 @@ next
         apply simp
        apply (rule Mu(2))
        apply clarsimp
-       apply (rename_tac t)
-       apply (case_tac t; simp)
+      using cases_mu_one
+       apply blast
       apply (rule Mu(1))
       apply clarsimp
-      apply (rename_tac t)
-      by (case_tac t; simp)
+      using cases_mu_two
+      by blast
   }
 qed auto
 
@@ -730,8 +741,6 @@ proof -
       qed
     qed
   qed
-
-
 
 (* Section 5.3  A longer example of beta-eta normalisation *)
 (* (\<lambda>n \<lambda>f \<lambda>x. f (n f x)) (\<lambda>f \<lambda>x. f x) is left by normalise(beta/eta) in beta-eta normal form *)  
