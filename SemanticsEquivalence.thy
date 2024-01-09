@@ -334,6 +334,41 @@ next
 *)
 qed (simp+)
 
+lemma cases_approx_mu_one: 
+  assumes "(\<And>(\<theta>::int \<Rightarrow> strategy) (\<xi>::int \<Rightarrow> exp \<Rightarrow> powerdomain) sc::strategy.
+           \<forall>y::int\<in>fv s.
+              fv (\<theta> y) = {} \<and> (\<forall>(e::exp) e'::exp_err_div. e' \<in> PdToSet (\<xi> y e) \<and> e' \<noteq> Div \<longrightarrow> (\<theta> y, e) \<Down> e') \<Longrightarrow>
+           sc = map_strategy \<theta> s \<Longrightarrow>
+           fv (map_strategy \<theta> s) = {} \<and>
+           (\<forall>(e::exp) e'::exp_err_div. e' \<in> PdToSet (exec s \<xi> e) \<and> e' \<noteq> Div \<longrightarrow> (map_strategy \<theta> s, e) \<Down> e'))"
+    and "\<forall>y::int\<in>fv s - {x1}.
+          fv (\<theta> y) = {} \<and> (\<forall>(e::exp) e'::exp_err_div. e' \<in> PdToSet (\<xi> y e) \<and> e' \<noteq> Div \<longrightarrow> (\<theta> y, e) \<Down> e')"
+    and "sc = mu x1. map_strategy (\<theta>(x1 := \<lparr>x1\<rparr>)) s"
+    and "Complete_Partial_Order.chain (\<le>) A"
+    and " A \<noteq> {}"
+    and "\<forall>x::exp \<Rightarrow> powerdomain\<in>A.
+          fv (map_strategy (\<lambda>a::int. if a = x1 then \<lparr>x1\<rparr> else \<theta> a) s) \<subseteq> {x1} \<and>
+          (\<forall>(e::exp) e'::exp_err_div.
+              e' \<in> PdToSet (x e) \<and> e' \<noteq> Div \<longrightarrow>
+              (mu x1. map_strategy (\<lambda>a::int. if a = x1 then \<lparr>x1\<rparr> else \<theta> a) s, e) \<Down> e')"
+    and "e' \<in> PdToSet (SUP f::exp \<Rightarrow> powerdomain\<in>A. f e)"
+    and "e' \<noteq> Div"
+    and "Complete_Partial_Order.chain (\<le>) ((\<lambda>b::exp \<Rightarrow> powerdomain. b e) ` A)"
+  shows "(mu x1. map_strategy (\<lambda>a::int. if a = x1 then \<lparr>x1\<rparr> else \<theta> a) s, e) \<Down> e'"
+  using assms
+  apply (cases "\<exists> a \<in> A. Div \<notin> PdToSet (a e)")
+   apply clarsimp
+   apply(frule_tac A="(\<lambda> b. b e) ` A" in no_div_Sup_ub[rotated 2])
+     apply simp
+    apply simp
+   apply simp
+  apply clarsimp
+  apply (frule div_Sup_ub[rotated])
+    apply simp
+   apply blast
+  apply simp
+  using Rep_powerdomain by auto[1]
+
 lemma approximation_lemma : 
   assumes "\<forall> y \<in> (fv s). approximate (\<theta> y) (\<xi> y)"
     and "sc = map_strategy \<theta> s"
@@ -393,19 +428,9 @@ next
        apply (rule conjI)
     using map_strategy_closed apply auto[1]
        apply clarsimp
+       apply (rename_tac A e e')
        apply (subgoal_tac "Complete_Partial_Order.chain (\<le>) ((\<lambda> b. b e) ` A)")
-        apply (case_tac "\<exists> a \<in> A. Div \<notin> PdToSet (a e)")
-         apply clarsimp
-         apply(frule_tac A="(\<lambda> b. b e) ` A" in no_div_Sup_ub[rotated 2])
-           apply simp
-          apply simp
-         apply simp
-        apply clarsimp
-        apply (frule div_Sup_ub[rotated])
-          apply simp
-         apply blast
-        apply simp
-    using Rep_powerdomain apply auto[1]
+        apply (erule cases_approx_mu_one, assumption+)
        apply (metis (no_types, lifting) chain_imageI le_funE)
       apply (rule monoI)
       apply (rule exec_mono)
@@ -449,7 +474,7 @@ lemma map_closed_strategy_unchanged:
   assumes "\<forall> y \<in> fv s. \<theta> y = \<lparr> y \<rparr>"
   shows "map_strategy \<theta> s = s"
   using assms
-apply(induct s arbitrary: \<theta>)
+  apply(induct s arbitrary: \<theta>)
   by simp+
 
 text \<open> The computational adequacy theorem one for non-diverging executions \<close>
@@ -535,6 +560,43 @@ proof (subst double_substitution)
     by (simp add: map_closed_strategy_unchanged map_strategy_irrelevant)
 qed
 
+lemma cases_soundness_lc:
+  assumes "\<And>(\<theta>::int \<Rightarrow> strategy) \<xi>::int \<Rightarrow> exp \<Rightarrow> powerdomain.
+           \<forall>y::int\<in>fv s2.
+              fv (\<theta> y) = {} \<and>
+              (\<forall>e::exp.
+                  ((\<theta> y, e) \<Up> \<longrightarrow> Div \<in> PdToSet (\<xi> y e)) \<and>
+                  \<xi> y e \<le> exec (\<theta> y) (\<lambda>x::int. undefined) e) \<Longrightarrow>
+           fv (map_strategy \<theta> s2) = {} \<and>
+           (\<forall>e::exp.
+               ((map_strategy \<theta> s2, e) \<Up> \<longrightarrow> Div \<in> PdToSet (exec s2 \<xi> e)) \<and>
+               exec s2 \<xi> e \<le> exec (map_strategy \<theta> s2) (\<lambda>x::int. undefined) e)"
+    and "\<forall>y::int\<in>fv s1 \<union> fv s2.
+          fv (\<theta> y) = {} \<and>
+          (\<forall>e::exp.
+              ((\<theta> y, e) \<Up> \<longrightarrow> Div \<in> PdToSet (\<xi> y e)) \<and>
+              \<xi> y e \<le> exec (\<theta> y) (\<lambda>x::int. undefined) e)"
+    and "map_strategy \<theta> s1 = s1'"
+    and "(s1', e) \<Down> Err"
+    and "(map_strategy \<theta> s2, e) \<Up>"
+    and "fv s1' = {}"
+    and "(s1', e) \<Up> \<longrightarrow> Div \<in> PdToSet (exec s1 \<xi> e)"
+    and "exec s1 \<xi> e \<le> exec s1' (\<lambda>x::int. undefined) e"
+  shows "Div \<in> PdToSet (exec s1 \<xi> e) \<or> Div \<in> PdToSet (exec s2 \<xi> e) \<and> Err \<in> PdToSet (exec s1 \<xi> e)"
+  using assms
+  apply (cases "Div \<in> PdToSet (exec s1 \<xi> e)")
+   apply simp
+  apply (rule disjI2)
+  apply (rule conjI)
+   apply (drule_tac x = \<theta> in meta_spec)
+   apply (drule_tac x = \<xi> in meta_spec)
+   apply (drule meta_mp)
+    apply simp
+   apply clarsimp
+  apply (frule_tac \<xi>=" (\<lambda>x. undefined)" in soundness)
+   apply fast
+  by (simp add: porcupine_eglimilner)
+
 lemma div_soundness_lemma: 
   assumes "\<forall> y \<in> fv s. rel (\<theta> y) (\<xi> y)"
   shows "rel (map_strategy \<theta> s) (exec s \<xi>)"
@@ -611,18 +673,8 @@ next
      apply (rename_tac e s1')
      apply (drule_tac x = e in spec)
      apply (erule conjE)
-     apply (case_tac "Div \<in> PdToSet (exec s1 \<xi> e)")
-      apply simp
-     apply (rule disjI2)
-     apply (rule conjI)
-      apply (drule_tac x = \<theta> in meta_spec)
-      apply (drule_tac x = \<xi> in meta_spec)
-      apply (drule meta_mp)
-       apply simp
-      apply clarsimp
-     apply (frule_tac \<xi>=" (\<lambda>x. undefined)" in soundness)
-      apply fast
-     apply (simp add: porcupine_eglimilner)
+    using cases_soundness_lc
+     apply blast
     apply (subgoal_tac "(exec s1 \<xi><+sexec s2 \<xi>)
          \<le> (exec (map_strategy \<theta> s1) (\<lambda>x. undefined)<+sexec (map_strategy \<theta> s2) (\<lambda>x. undefined))")
      apply (simp add: le_fun_def)
@@ -874,7 +926,7 @@ theorem div_adequacy:
     and "Div \<in> PdToSet (exec s (\<lambda>x. undefined) e)" 
   shows "(s,e) \<Up>"
   apply -
-  apply (rule_tac X = "\<lambda>(s, e). fv s = {} \<and> Div \<in> PdToSet (exec s (\<lambda>x. undefined) e)" in big_step_div.coinduct)
+  apply (rule big_step_div.coinduct[where X = "\<lambda>(s, e). fv s = {} \<and> Div \<in> PdToSet (exec s (\<lambda>x. undefined) e)"])
    apply (simp split: prod.split)
   using assms apply simp
   apply (simp split: prod.split)
