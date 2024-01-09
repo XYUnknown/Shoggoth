@@ -835,14 +835,14 @@ proof (rule antisym)
           apply (intro conjI)
              apply blast
             using lookup_exec_update_nonempty 
-            apply (fastforce simp: div_left_after_right defined_right_left)
+            apply (fastforce simp: div_left_after_right intro: defined_right_left)
            apply blast
           apply blast
          using lookup_exec_update_left_right_swap apply (fastforce)
         by (fastforce simp: defined_right_left)
     show "x \<notin> defined loc \<Longrightarrow> x \<in> ?rhs \<Longrightarrow>  x \<in> ?lhs"
       unfolding wp_sound_set_def
-      by (fastforce simp:defined_append)
+      by (fastforce intro: defined_append)
     qed
   qed
 qed
@@ -855,8 +855,10 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
                            \<inter> wp_err_sound_set s (loc \<triangleright> Right) (wp_err_sound_set s (loc \<triangleright> Left) P senv) senv
                            \<inter> (wp_err_sound_set s (loc \<triangleright> Left) P senv \<union> wp_err_sound_set s (loc \<triangleright> Left) (wp_sound_set s (loc \<triangleright> Right) P senv) senv)
                            \<inter> (wp_err_sound_set s (loc \<triangleright> Right) P senv \<union> wp_err_sound_set s (loc \<triangleright> Right) (wp_sound_set s (loc \<triangleright> Left) P senv) senv))"
+  (is "?lhs = ?rhs")
+proof (rule antisym)
+  show "?lhs \<subseteq> ?rhs"
   apply (simp add: wp_sound_set_def wp_err_sound_set_def)
-  apply (rule subset_antisym)
    apply (rule subsetI)
    apply (rename_tac x)
    apply simp
@@ -1071,494 +1073,44 @@ lemma some_wp_err_sound_set: "wp_err_sound_set (some s) loc P senv
       apply blast
      apply (rule disjI2)
      apply (rule subsetI)
-     apply (rename_tac xa)
+    apply (rename_tac xa)
+(* 3 *)
      apply (case_tac xa)
        apply blast
       apply clarsimp
       apply (rule imageI)
-      apply simp
+     apply simp
+(* 4 *)
       apply (rule conjI)
   using defined_right_after_left apply simp
-      apply (rule subsetI)
-      apply (rename_tac xa)
-      apply (case_tac xa)
-  using err_right_after_left apply simp
-       apply fast
-  using div_right_after_left apply auto[1]
-     apply blast
-    apply (rule disjI2)
-    apply (rule subsetI)
-    apply (rename_tac xa)
-    apply (case_tac xa)
-      apply blast
-     apply clarsimp
-     apply (rule imageI)
-     apply simp
-     apply (rule conjI)
-  using defined_left_after_right apply simp
-     apply (rule subsetI)
-     apply (rename_tac xa)
-     apply (case_tac xa)
-  using err_left_after_right apply simp
-  using lookup_exec_update_left_right_swap apply fast
-  using div_left_after_right apply auto[1]
+  apply (fastforce simp: err_right_after_left div_right_after_left intro: exp_err_div_intros split: exp_err_div.split)
+(* 3 *)
+
     apply blast
+(* 2 *)
+  using lookup_exec_update_left_right_swap
+  apply (fastforce intro!: disjI2 simp: defined_left_after_right div_left_after_right err_left_after_right intro: exp_err_div_intros split: exp_err_div.split)
    apply simp
-   apply (rule append_undefined_lookup_id)
-    apply simp
-   apply simp
-  apply (rule subsetI)
-  apply (rename_tac x)
-  apply simp
-  apply (subgoal_tac "x \<in> defined loc")
-   apply simp
-   apply (simp add: lookup_exec_update_some)
-   apply (erule disjE)
-    apply clarsimp
-    apply (frule_tac p=Left in lookup_id_append_undefined)
-     apply simp
-    apply (frule_tac p=Right in lookup_id_append_undefined)
-     apply simp
-    apply simp
-   apply (elim conjE disjE)
-      apply simp
-      apply auto[1]
-     apply simp
-     apply (intro conjI)
-          apply blast
-         apply blast
-        apply (rule subsetI)
-        apply clarsimp
-  using err_left_after_right apply fast
-       apply blast
-      apply blast
-     apply blast
-    apply simp
-    apply (intro conjI)
-         apply (rule subsetI)
-         apply clarsimp
-  using err_right_after_left apply auto[1]
-        apply blast
-       apply blast
-      apply blast
-     apply blast
-    apply blast
-   apply simp
-   apply (intro conjI)
-        apply (rule subsetI)
-        apply clarsimp
-  using err_right_after_left apply auto[1]
-       apply blast
-      apply (rule subsetI)
-      apply clarsimp
-  using err_left_after_right apply auto[1]
-     apply blast
-    apply blast
-   apply blast
-  using defined_append by blast
-(*
-proof 
-  show "?lhs \<subseteq> ?rhs1 \<union> ?rhs2 \<union> ?rhs3 \<union> ?rhs4"   
-    apply (rule subsetI)
-  apply (simp add: wp_sound_set_def wp_err_sound_set_def)
-   apply (rename_tac x)
-   apply (simp add: lookup_exec_update_some)
-   apply (case_tac "x \<in> defined (loc\<triangleright>pos.Right)")
-    apply (frule defined_right_left)
-    apply simp
-    apply (erule conjE)
-    apply (simp add: lookup_exec_update_some)
-    apply (elim conjE)
-    apply (case_tac "Err \<in> lookup_exec_update s (loc\<triangleright>pos.Left) x senv")
-     apply (case_tac "Err \<in> lookup_exec_update s (loc\<triangleright>pos.Right) x senv")
-      apply simp
-  apply blast
-     apply simp
-     apply (rule disjI2)
-     apply (rule disjI2)
-     apply (rule disjI2)
-     apply (rule conjI)
-      apply (rule subsetI)
-      apply (rename_tac xa)
-      apply (case_tac xa)
-        apply blast
-       apply auto[1]
-      apply blast
-     apply (rule subsetI)
-     apply (rename_tac xa)
-     apply (case_tac xa)
-       apply blast
-      apply clarsimp
-      apply (rule imageI)
-      apply simp
-      apply (rule conjI)
-       apply (rule defined_left_after_right)
-        apply simp
-       apply simp
-      apply (rule subsetI)
-      apply (rename_tac xa)
-      apply (case_tac xa)
-        apply blast
-  using lookup_exec_update_left_right_swap apply fast
-  using div_left_after_right apply simp
-     apply auto[1]
-    apply (case_tac "Err \<in> lookup_exec_update s (loc\<triangleright>pos.Right) x senv")
-     apply (rule disjI2)
-     apply (rule disjI2)
-     apply (rule disjI1)
-     apply (rule conjI)
-      apply simp
-      apply (rule subsetI)
-      apply (rename_tac xa)
-      apply(case_tac xa)
-        apply blast
-       apply blast
-      apply blast
-     apply simp
-     apply (rule subsetI)
-     apply (rename_tac xa)
-     apply(case_tac xa)
-       apply blast
-      apply simp
-      apply (rule imageI)
-      apply clarsimp
-      apply (rule conjI)
-       apply (rule defined_right_after_left)
-        apply simp
-       apply blast
-      apply (rule subsetI)
-      apply (rename_tac xa)
-      apply(case_tac xa)
-        apply blast
-       apply fast
-  using div_right_after_left apply simp
-     apply blast
-    apply (rule disjI1)
-    apply simp
-    apply (rule subsetI)
-    apply (rename_tac xa)
-    apply(case_tac xa)
-      apply blast
-     apply clarsimp
-     apply (rule imageI)
-     apply simp
-     apply (rule conjI)
-      apply (rule defined_right_after_left)
-       apply simp
-      apply simp
-     apply (rule subsetI)
-     apply (rename_tac xa)
-     apply(case_tac xa)
-  using err_right_after_left apply simp
-      apply blast
-  using div_right_after_left apply simp
-    apply blast
-   apply simp
-   apply (erule conjE)
-   apply (simp add: lookup_exec_update_some)
-  apply blast
+  using append_undefined_lookup_id apply fastforce
   done
-
-
-  show "?rhs1 \<union> ?rhs2 \<union> ?rhs3 \<union> ?rhs4 \<subseteq> ?lhs"
-  apply (simp add: wp_sound_set_def wp_err_sound_set_def)
-  apply (rule subsetI)
-  apply (rename_tac x)
-  apply (simp add: lookup_exec_update_some)
-  apply (subgoal_tac "x \<in> defined loc")
-   apply simp
-   apply (elim disjE)
-      apply (simp add: lookup_exec_update_some)
-      apply (intro conjI)
-           apply clarsimp
-           apply (rename_tac xa)
-           apply (drule_tac c="E xa" in subsetD)
-            apply blast
-  using err_right_after_left  apply blast
-          apply blast
-         apply blast
-        apply clarsimp
-        apply (rotate_tac 1)
-        apply (frule_tac s=s and senv=senv in lookup_exec_update_nonempty)
-        apply(erule exE)
-        apply (rename_tac xb)
-        apply (case_tac xb)
-          apply auto[1]
-  using div_right_after_left apply blast
-        apply blast
-       apply clarsimp
-       apply blast
-      apply clarsimp
-  using defined_left_right apply blast
-     apply (simp add: lookup_exec_update_some)
-     apply (intro conjI)
-          apply clarsimp
-  using err_right_after_left apply blast
-         apply clarsimp
-         apply (rotate_tac 1)
-         apply (frule_tac s=s and senv=senv in lookup_exec_update_nonempty)
-         apply(erule exE)
-         apply (rename_tac xb)
-         apply (case_tac xb)
-           apply blast
-  using div_left_after_right apply blast
-         apply blast
-        apply clarsimp
-  using err_left_after_right apply auto[1]
-       apply blast
-      apply clarsimp
-  using lookup_exec_update_left_right_swap apply blast
-     apply clarsimp
-  using defined_right_left apply blast
-    apply (simp add: lookup_exec_update_some)
-    apply (intro conjI)
-         apply blast
-        apply blast
-       apply blast
-      apply clarsimp
-      apply (rotate_tac 4)
-      apply (frule_tac s=s and senv=senv in lookup_exec_update_nonempty)
-      apply (erule exE)
-      apply (rename_tac xb)
-      apply (case_tac xb)
-        apply blast
-  using div_right_after_left apply blast
-      apply blast
-     apply blast
-    apply clarsimp
-  using defined_left_right apply blast
-   apply (simp add: lookup_exec_update_some)
-   apply (intro conjI)
-        apply blast
-       apply clarsimp
-       apply (rotate_tac 4)
-       apply (frule_tac s=s and senv=senv in lookup_exec_update_nonempty)
-       apply (erule exE)
-       apply (rename_tac xb)
-       apply (case_tac xb)
-         apply blast
-  using div_left_after_right apply blast
-       apply blast
-      apply blast
-     apply blast
-    apply clarsimp
-  using lookup_exec_update_left_right_swap apply blast
-   apply clarsimp
-  using defined_right_left apply blast
-  using defined_append by blast
-
-  proof(rule Un_least)+
-    show  "?rhs1 \<subseteq> ?lhs"
-      apply (simp add: wp_sound_set_def wp_err_sound_set_def)
-      apply clarsimp
-
-      
-      sorry
-    show  "?rhs2 \<subseteq> ?lhs"
-      apply (simp add: wp_sound_set_def wp_err_sound_set_def)
-      apply clarsimp
-
-      sorry
-    show  "?rhs3 \<subseteq> ?lhs"
-      apply (simp add: wp_sound_set_def wp_err_sound_set_def)
-      apply clarsimp
-
-      sorry
-    show  "?rhs4 \<subseteq> ?lhs"
-      apply (simp add: wp_sound_set_def wp_err_sound_set_def)
-      apply clarsimp
-
-      sorry
+  show "?rhs \<subseteq> ?lhs"
+  proof 
+    fix x
+    show "x \<in> ?rhs \<Longrightarrow> x \<in> ?lhs"
+    proof (cases "x \<in> defined loc")
+      show "x \<in> defined loc \<Longrightarrow> x \<in> ?rhs \<Longrightarrow> x \<in> ?lhs"
+        apply (simp add: wp_sound_set_def wp_err_sound_set_def lookup_exec_update_some)
+        apply (erule disjE)
+         using lookup_id_append_undefined apply fastforce
+         apply (elim conjE disjE)
+         by (fastforce intro: defined_append simp: err_right_after_left err_left_after_right)+
+      show "x \<notin> defined loc \<Longrightarrow> x \<in> ?rhs \<Longrightarrow> x \<in> ?lhs"
+        unfolding wp_err_sound_set_def
+        by(fastforce intro: defined_append)
+    qed
   qed
 qed
 
-*)
-(* old proof * )
-  apply (simp add: wp_sound_set_def wp_err_sound_set_def)
-  apply (rule subset_antisym)
-   apply (rule subsetI)
-   apply (rename_tac x)
-   apply (simp add: lookup_exec_update_some)
-   apply simp
-   apply (case_tac "x \<in> defined (loc\<triangleright>pos.Right)")
-    apply (frule defined_right_left)
-    apply simp
-    apply (erule conjE)
-    apply (simp add: lookup_exec_update_some)
-    apply (elim conjE)
-    apply (case_tac "Err \<in> lookup_exec_update s (loc\<triangleright>pos.Left) x senv")
-     apply (case_tac "Err \<in> lookup_exec_update s (loc\<triangleright>pos.Right) x senv")
-      apply simp
-  apply blast
-     apply simp
-     apply (rule disjI2)
-     apply (rule disjI2)
-     apply (rule disjI2)
-     apply (rule conjI)
-      apply (rule subsetI)
-      apply (rename_tac xa)
-      apply (case_tac xa)
-        apply blast
-       apply auto[1]
-      apply blast
-     apply (rule subsetI)
-     apply (rename_tac xa)
-     apply (case_tac xa)
-       apply blast
-      apply clarsimp
-      apply (rule imageI)
-      apply simp
-      apply (rule conjI)
-       apply (rule defined_left_after_right)
-        apply simp
-       apply simp
-      apply (rule subsetI)
-      apply (rename_tac xa)
-      apply (case_tac xa)
-        apply blast
-  using lookup_exec_update_left_right_swap apply fast
-  using div_left_after_right apply simp
-     apply auto[1]
-    apply (case_tac "Err \<in> lookup_exec_update s (loc\<triangleright>pos.Right) x senv")
-     apply (rule disjI2)
-     apply (rule disjI2)
-     apply (rule disjI1)
-     apply (rule conjI)
-      apply simp
-      apply (rule subsetI)
-      apply (rename_tac xa)
-      apply(case_tac xa)
-        apply blast
-       apply blast
-      apply blast
-     apply simp
-     apply (rule subsetI)
-     apply (rename_tac xa)
-     apply(case_tac xa)
-       apply blast
-      apply simp
-      apply (rule imageI)
-      apply clarsimp
-      apply (rule conjI)
-       apply (rule defined_right_after_left)
-        apply simp
-       apply blast
-      apply (rule subsetI)
-      apply (rename_tac xa)
-      apply(case_tac xa)
-        apply blast
-       apply fast
-  using div_right_after_left apply simp
-     apply blast
-    apply (rule disjI1)
-    apply simp
-    apply (rule subsetI)
-    apply (rename_tac xa)
-    apply(case_tac xa)
-      apply blast
-     apply clarsimp
-     apply (rule imageI)
-     apply simp
-     apply (rule conjI)
-      apply (rule defined_right_after_left)
-       apply simp
-      apply simp
-     apply (rule subsetI)
-     apply (rename_tac xa)
-     apply(case_tac xa)
-  using err_right_after_left apply simp
-      apply blast
-  using div_right_after_left apply simp
-    apply blast
-   apply simp
-   apply (erule conjE)
-   apply (simp add: lookup_exec_update_some)
-   apply blast
-  apply (rule subsetI)
-  apply (rename_tac x)
-  apply (simp add: lookup_exec_update_some)
-  apply (subgoal_tac "x \<in> defined loc")
-   apply simp
-   apply (elim disjE)
-      apply (simp add: lookup_exec_update_some)
-      apply (intro conjI)
-           apply clarsimp
-           apply (rename_tac xa)
-           apply (drule_tac c="E xa" in subsetD)
-            apply blast
-  using err_right_after_left  apply blast
-          apply blast
-         apply blast
-        apply clarsimp
-        apply (rotate_tac 1)
-        apply (frule_tac s=s and senv=senv in lookup_exec_update_nonempty)
-        apply(erule exE)
-        apply (rename_tac xb)
-        apply (case_tac xb)
-          apply auto[1]
-  using div_right_after_left apply blast
-        apply blast
-       apply clarsimp
-       apply blast
-      apply clarsimp
-  using defined_left_right apply blast
-     apply (simp add: lookup_exec_update_some)
-     apply (intro conjI)
-          apply clarsimp
-  using err_right_after_left apply blast
-         apply clarsimp
-         apply (rotate_tac 1)
-         apply (frule_tac s=s and senv=senv in lookup_exec_update_nonempty)
-         apply(erule exE)
-         apply (rename_tac xb)
-         apply (case_tac xb)
-           apply blast
-  using div_left_after_right apply blast
-         apply blast
-        apply clarsimp
-  using err_left_after_right apply auto[1]
-       apply blast
-      apply clarsimp
-  using lookup_exec_update_left_right_swap apply blast
-     apply clarsimp
-  using defined_right_left apply blast
-    apply (simp add: lookup_exec_update_some)
-    apply (intro conjI)
-         apply blast
-        apply blast
-       apply blast
-      apply clarsimp
-      apply (rotate_tac 4)
-      apply (frule_tac s=s and senv=senv in lookup_exec_update_nonempty)
-      apply (erule exE)
-      apply (rename_tac xb)
-      apply (case_tac xb)
-        apply blast
-  using div_right_after_left apply blast
-      apply blast
-     apply blast
-    apply clarsimp
-  using defined_left_right apply blast
-   apply (simp add: lookup_exec_update_some)
-   apply (intro conjI)
-        apply blast
-       apply clarsimp
-       apply (rotate_tac 4)
-       apply (frule_tac s=s and senv=senv in lookup_exec_update_nonempty)
-       apply (erule exE)
-       apply (rename_tac xb)
-       apply (case_tac xb)
-         apply blast
-  using div_left_after_right apply blast
-       apply blast
-      apply blast
-     apply blast
-    apply clarsimp
-  using lookup_exec_update_left_right_swap apply blast
-   apply clarsimp
-  using defined_right_left apply blast
-  using defined_append by blast
-*)
 
 
 subsection \<open>Mu lemmas\<close>
@@ -1567,18 +1119,15 @@ lemma update_big_union_equals_big_union_update:
   assumes "x \<in> defined loc"
   shows
     "update loc x (\<Union>xa\<in>A. PdToSet (snd xa (lookup loc x))) = (\<Union>xa\<in>A. update loc x (PdToSet (snd xa (lookup loc x))))"
-  using assms proof (induct loc arbitrary: x)
+  using assms 
+proof (induct loc arbitrary: x)
   case empty
   thus ?case 
     by simp
 next
   case (Lcons pos loc)
   thus ?case
-    apply (case_tac pos)
-     apply (case_tac x)
-      apply auto[1]
-     apply auto[1]
-    by fastforce
+    by (cases pos; fastforce)
 qed
 
 lemma wp_mu_admissible : "ccpo.admissible Sup (\<le>)
