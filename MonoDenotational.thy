@@ -1,3 +1,9 @@
+(*  Title:         MonoDenotational.thy
+    Authors:       Xueying Qin, U Edinburgh; Liam O'Connor, U Edinburgh; Peter Hoefner, ANU
+    Contributions: Ohad Kammar, U Edinburgh; Rob van Glabbeek, U Edinburgh; Michel Steuwer, U Edinburgh
+    Maintainer:    Xueying Qin <xueying.qin@ed.ac.uk>
+*)
+
 section \<open>The Monotonicity Proofs for the Denotational Semantics\<close>
 
 theory MonoDenotational
@@ -39,7 +45,6 @@ proof (induct rule: iterates.induct)
   case (step x)
   thus ?case 
     apply clarsimp
-    using case_prod_conv fst_conv image_iff iterates.step
     by (metis (mono_tags, lifting) case_prod_conv fst_conv image_iff iterates.step)
 next
   case (Sup M)

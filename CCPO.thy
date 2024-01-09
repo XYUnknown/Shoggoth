@@ -1,3 +1,9 @@
+(*  Title:         CCPO.thy
+    Authors:       Xueying Qin, U Edinburgh; Liam O'Connor, U Edinburgh; Peter Hoefner, ANU
+    Contributions: Ohad Kammar, U Edinburgh; Rob van Glabeek, U Edinburgh; Michel Steuwer, U Edinburgh
+    Maintainer:    Xueying Qin <xueying.qin@ed.ac.uk>
+*)
+
 section \<open>Chain Complete Partial Order\<close>
 
 text \<open>The Chain-Complete Partial Order for defining the denotational semantics of extended System S\<close>
@@ -10,6 +16,22 @@ datatype label = PLUS | MULT | Nat nat | APP | ABS | Var nat | EMPTY
 datatype exp = Leaf label | Node label exp exp 
 print_theorems
 datatype exp_err_div = Err | E exp  | Div 
+
+(* intros for datatype )*)
+lemma EI:
+  "(case x of E p \<Rightarrow> p \<in> P | _ \<Rightarrow> False) \<Longrightarrow> (x \<in> E ` P)"
+  by (fastforce split: exp_err_div.splits)
+
+lemma ErrI:
+  "(case x of Err \<Rightarrow> True | _ \<Rightarrow> False) \<Longrightarrow> (x = Err)"
+  by (fastforce split: exp_err_div.splits)
+
+lemma DivI:
+  "(case x of Div \<Rightarrow> True | _ \<Rightarrow> False) \<Longrightarrow> (x = Div)"
+  by (fastforce split: exp_err_div.splits)
+
+lemmas exp_err_div_intros = EI ErrI DivI
+
 
 typedef powerdomain = "{x | x :: exp_err_div set .  x \<noteq> {}}"
   by auto
@@ -72,20 +94,18 @@ lemma porcupine_eglimilner :
   apply (simp add: porcupine_less_eq_def pd_less_eq)
   apply (rule iffI)
    using Rep_powerdomain_inject exp_err_div_less_eq apply fastforce
-  using Rep_powerdomain exp_err_div_less_eq by auto[1]
+   using Rep_powerdomain exp_err_div_less_eq  by auto[1]
 
 declare porcupine_less_eq_def[simp]
 
 lemma pd_ord_anti_sym : "(a :: powerdomain) \<le> b \<Longrightarrow> b \<le> a \<Longrightarrow> a = b "
-  apply (simp add: pd_less_eq exp_err_div_less_eq)
-  apply (rule Rep_powerdomain_inject[THEN iffD1])
-  by fastforce
+  by (fastforce intro: Rep_powerdomain_inject[THEN iffD1] simp: pd_less_eq exp_err_div_less_eq)
 
 instantiation powerdomain :: preorder
 begin
 instance
-  apply intro_classes
-  by (fastforce simp: pd_less pd_less_eq exp_err_div_less_eq pd_ord_anti_sym)+
+  apply(intro_classes)
+    by (fastforce simp: pd_less pd_less_eq exp_err_div_less_eq pd_ord_anti_sym)+
 end
 
 instantiation powerdomain :: order
@@ -134,8 +154,8 @@ lemma no_div_means_eq:
   assumes "Div \<notin> Rep_powerdomain pd1"
     and "pd1 \<le> pd2"
   shows "pd1 = pd2"
-  apply (rule Rep_powerdomain_inject[THEN iffD1])
-  using assms by (simp add: porcupine_eglimilner)
+  using assms 
+   by(fastforce simp: porcupine_eglimilner)
 
 lemma no_div_collapses:
   assumes "Complete_Partial_Order.chain (\<le>) (A :: powerdomain set)" 
@@ -143,8 +163,9 @@ lemma no_div_collapses:
   and "pd2 \<in> A"
   and "Div \<notin> Rep_powerdomain pd1"
 shows "pd2 \<le> pd1"
-  using assms apply(simp add: chain_def no_div_means_eq)
-  using no_div_means_eq by blast
+  using assms 
+  by(fastforce dest: no_div_means_eq
+               simp: chain_def) 
 
 text \<open>If any element of the chain has no Div, that is the upper bound 
        @{text "no_div_Sup_ub"}: 
@@ -179,9 +200,8 @@ theorem div_Sup_ub :
   assumes "A \<noteq> {}" 
   shows "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow>
           (\<forall>p \<in> A. Div \<in> Rep_powerdomain p) \<Longrightarrow> Sup A = Abs_powerdomain (\<Union> (Rep_powerdomain ` A))"
-  using Rep_powerdomain assms 
-  apply (simp add: pd_Sup)
-  by (rule pd_ord_anti_sym; simp add: porcupine_eglimilner)
+  using assms Rep_powerdomain 
+  by (simp add: pd_Sup porcupine_eglimilner pd_ord_anti_sym)
 
 text \<open> Div is the bottom element \<close>
 theorem bottom_element: "Abs_powerdomain {Div} \<le> x"
@@ -201,9 +221,9 @@ lemma powerdomain_supA:
   and "x1 \<in> A"
 shows "x1 \<le> Sup A"
  apply(cases "\<exists>x\<in>A. Div \<notin> Rep_powerdomain x")
-  using assms  no_div_Sup_ub no_div_collapses apply fastforce
-  using assms  apply (auto simp: porcupine_eglimilner)[1]
- by (metis (mono_tags, lifting) Abs_powerdomain_inverse UN_I div_Sup_ub empty_not_insert 
+  using assms apply (fastforce simp: no_div_Sup_ub no_div_collapses)
+  using assms  apply (auto simp add: porcupine_eglimilner)[1]
+ by (metis (mono_tags, lifting) Abs_powerdomain_inverse UN_I div_Sup_ub empty_not_insert
                                 mem_Collect_eq mk_disjoint_insert)
 
 lemma powerdomain_supA':
@@ -226,14 +246,9 @@ proof -
   moreover 
   { assume "A\<noteq>{} \<and> \<not>(\<exists>x\<in>A. Div \<notin> Rep_powerdomain x)"
     hence ?thesis
-      using assms apply clarsimp
-      apply (subst div_Sup_ub)
-         apply (simp_all  add : porcupine_eglimilner)
-      apply (subst Abs_powerdomain_inverse)
-       apply fastforce
-      apply (subst Abs_powerdomain_inverse)
-      using Rep_powerdomain apply (force)
-      by blast
+      using assms apply (subst div_Sup_ub; clarsimp)
+      using  Rep_powerdomain porcupine_eglimilner apply (clarsimp)
+      by fastforce
   }
   ultimately show ?thesis
     by blast
@@ -251,11 +266,9 @@ type_synonym D = "exp \<Rightarrow> powerdomain"
 
 instance "fun" :: (type, ccpo) ccpo
   apply intro_classes
-   apply (simp_all add: le_fun_def)
-   apply (metis (mono_tags, lifting) ccpo_Sup_upper chain_imageI image_iff le_funE)
-  apply (clarsimp, rule ccpo_Sup_least)
-   by (fastforce simp: chain_def le_fun_def)+
-
+  unfolding le_fun_def
+  by (fastforce intro!: ccpo_Sup_least simp: chain_imageI  ccpo_Sup_upper)+
+  
 abbreviation "PdToSet == Rep_powerdomain"
 abbreviation "SetToPd == Abs_powerdomain"
 
