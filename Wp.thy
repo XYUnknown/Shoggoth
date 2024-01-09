@@ -1,3 +1,9 @@
+(*  Title:         Wp.thy
+    Authors:       Xueying Qin, U Edinburgh; Liam O'Connor, U Edinburgh; Peter Hoefner, ANU
+    Contributions: Ohad Kammar, U Edinburgh; Rob van Glabbeek, U Edinburgh; Michel Steuwer, U Edinburgh
+    Maintainer:    Xueying Qin <xueying.qin@ed.ac.uk>
+*)
+
 section \<open>The location-based weakest precondition calculus\<close>
 
 theory Wp
@@ -35,9 +41,7 @@ lemma bigU_mono [simp]:
   assumes "\<forall> x \<in> A. mono x" 
   shows "mono (\<lambda>x. \<Union>t \<in> A. t x)"
   using assms
-  unfolding mono_def
-  by fastforce
-
+  unfolding mono_def by fastforce
 
 instance 
 proof 
@@ -45,23 +49,18 @@ proof
   show "(x < y) = (x \<le> y \<and> \<not> y \<le> x)"
     by fastforce
   show "x \<le> x"
-    using Rep_pt less_eq_pt by fastforce
+    using Rep_pt by (fastforce simp: less_eq_pt)
   show "x \<le> y \<Longrightarrow> y \<le> z \<Longrightarrow> x \<le> z"
-    using less_eq_pt by fastforce
+    by (fastforce simp: less_eq_pt)
   show "x \<le> y \<Longrightarrow> y \<le> x \<Longrightarrow> x = y"
-    by (metis Rep_pt_inject le_fun_def less_eq_pt order_class.order_eq_iff)
+    using  Rep_pt_inject
+    by (fastforce simp: le_funI less_eq_pt order_class.order_eq_iff)
   show "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow> x \<in> A \<Longrightarrow> x \<le> Sup A"
-    apply (simp add: Sup_pt less_eq_pt)
-    apply (subst Abs_pt_inverse)
-     using  Abs_pt_inverse Rep_pt apply (simp add: SUP_mono' monoD monoI)
-    by (metis (no_types, lifting) Abs_pt_inverse Rep_pt SUP_mono' UN_I mem_Collect_eq monoD 
-                                  monoI subsetI)
+    using Abs_pt_inverse Rep_pt
+    by (fastforce simp add: SUP_mono' monoD monoI Sup_pt less_eq_pt)
   show "Complete_Partial_Order.chain (\<le>) A \<Longrightarrow> (\<And>x. x \<in> A \<Longrightarrow> x \<le> z) \<Longrightarrow> Sup A \<le> z"
-    apply (simp add: Sup_pt less_eq_pt)
-    apply (subst Abs_pt_inverse)
-     using  Abs_pt_inverse Rep_pt apply (simp add: SUP_mono' monoD monoI)
-    by (metis (no_types, lifting) Abs_pt_inverse Rep_pt SUP_le_iff SUP_mono' mem_Collect_eq 
-                                  monoD monoI)
+    using Abs_pt_inverse Rep_pt 
+    by (fastforce simp add: SUP_mono' monoD monoI Sup_pt less_eq_pt)
  qed
 end
 
@@ -161,28 +160,14 @@ theorem ap_mono:
     and "\<forall>x y. (x::'a::ccpo) \<le> y \<longrightarrow> (g x::'b::ccpo) \<le> g' y" 
     and "x \<le> y"
   shows "ap (f, g) x \<le> ap (f', g') y"
-  using assms 
-  by (simp add: ap_def)
+  by (simp add: assms ap_def)
 
 lemma Sup_mono_two:
   assumes "\<forall>x\<in>A. \<forall>P. (fst (fst x) P:: 'a:: ccpo) \<le> fst (snd x) P \<and> (snd (fst x) P:: 'b:: ccpo) \<le> snd (snd x) P"
   and     "Complete_Partial_Order.chain (\<le>) (fst ` A)"
   and     "Complete_Partial_Order.chain (\<le>) (snd ` A)"
-  shows   "fst (fst (Sup A)) P \<le> fst (snd (Sup A)) P \<and> snd (fst (Sup A)) P \<le> snd (snd (Sup A))P"
-  using assms apply (simp add: fst_Sup snd_Sup)
-  apply (frule chain_fst_exist)
-  apply (drule chain_snd_exist)
-  apply (frule chain_fst_exist)
-  apply (drule chain_snd_exist)
-  apply (rule conjI)
-   apply (subst Sup_below)
-    apply (rule chain_imageI, simp, simp add: le_fun_def)
-   apply clarsimp 
-   apply (metis (mono_tags, lifting) below_Sup chain_imageI fst_conv image_eqI le_funE)
-  apply (subst Sup_below)
-   apply (rule chain_imageI, simp, simp add: le_fun_def)
-  apply clarsimp
-  by (metis (mono_tags, lifting) below_Sup chain_imageI fst_conv image_eqI le_funE snd_conv)
+shows   "fst (fst (Sup A)) P \<le> fst (snd (Sup A)) P \<and> snd (fst (Sup A)) P \<le> snd (snd (Sup A))P" 
+  by (metis (no_types, lifting) assms MonoDenotational.Sup_mono le_fun_def less_eq_prod_def fst_Sup snd_Sup)
 
 lemma Sup_fst: "Sup (fst ` A) = fst (Sup A)" 
   by (simp add: fst_Sup)
@@ -190,10 +175,6 @@ lemma Sup_fst: "Sup (fst ` A) = fst (Sup A)"
 lemma Sup_snd: "Sup (snd ` A) = snd (Sup A)" 
   by (simp add: snd_Sup)
 
-lemma 
-  " \<forall>loc::location. ap (Sup {}::(location \<Rightarrow> pt) \<times> (location \<Rightarrow> pt)) loc \<le> ap (Sup {}) loc"
-  apply (simp add: fst_Sup snd_Sup ap_def)
-  oops
 theorem mu_wp_mono: 
   assumes f_mono: "\<And> (env1:: lenv) env2 loc. \<forall> loc p. env1 p loc \<le> env2 p loc \<Longrightarrow> f loc env1 \<le> f loc env2"
     and g_mono: "\<And> (env1:: lenv) env2 loc. \<forall> loc p. env1 p loc \<le> env2 p loc \<Longrightarrow> g loc env1 \<le> g loc env2"
@@ -206,12 +187,8 @@ theorem mu_wp_mono:
       apply (fastforce intro: chain_fst_exist chain_snd_exist ccpo.admissibleI
                        dest: Sup_mono_two
                        simp: fst_Sup snd_Sup ap_def)
-     apply (simp add: fst_Sup snd_Sup ap_def)
-    apply (fastforce intro: monoI 
-                     simp: f_mono g_mono le_fun_def Product_Order.less_eq_prod_def)+
-  by (fastforce intro: env_ordered less_eq_pt f_mono
-                simp: env_ordered g_mono Rep_pt[simplified] ap_def Product_Order.less_eq_prod_def)
-
+  by (fastforce intro: monoI f_mono g_mono
+                simp:  fst_Sup snd_Sup env_ordered le_fun_def ap_def Product_Order.less_eq_prod_def)+
 
 lemma ap_fstI:
   "ap f P \<le> ap g Q \<Longrightarrow> fst f P \<le> fst g Q"
@@ -237,46 +214,46 @@ proof (induct s arbitrary: env1 env2 loc)
   case SKIP
   {
     case 1
-    thus ?case by simp
+    thus ?case by fastforce
   next
     case 2
-    thus ?case by auto
+    thus ?case by fastforce
   next
     case 3
-    thus ?case by simp
+    thus ?case by fastforce
   next
     case 4
-    thus ?case by auto
+    thus ?case by fastforce
   }
 next
   case ABORT
   {
     case 1
-    thus ?case by simp
+    thus ?case by fastforce
   next
     case 2
-    thus ?case by simp
+    thus ?case by fastforce
   next
     case 3
-    thus ?case by simp
+    thus ?case by fastforce
   next
     case 4
-    thus ?case by simp
+    thus ?case by fastforce
   }
 next
   case (FixVar x)
   {
     case 1
-    thus ?case by (simp add: less_eq_pt mono_def)
+    thus ?case by (simp add: less_eq_pt)
   next
     case 2
-    thus ?case by (simp add: less_eq_pt mono_def)
+    thus ?case by(simp add: less_eq_pt monoD)
   next
     case 3
-    thus ?case by (simp add: less_eq_pt mono_def)
+    thus ?case by (simp add: less_eq_pt)
   next
     case 4
-    thus ?case  by (simp add: less_eq_pt mono_def)
+    thus ?case by (simp add: less_eq_pt monoD)
   }
 next
   case (Atomic x)
@@ -285,17 +262,13 @@ next
     thus ?case by simp
   next
     case 2
-    thus ?case 
-      apply (clarsimp split: option.split)
-      by blast
+    thus ?case by (fastforce split: option.split) 
   next
     case 3
-    thus ?case by simp
+    thus ?case by fastforce
   next
     case 4
-    thus ?case 
-      apply (clarsimp split: option.split)
-      by blast
+    thus ?case by (fastforce split: option.split)
   }
 next
   case (Seq s1 s2)
@@ -303,16 +276,16 @@ next
     case 1
     show ?case 
       apply simp
-      by (metis (full_types) "1" order_trans Seq.hyps(1,2,5))
+      by (metis "1" Seq.hyps(1,2,5) order_trans)
   next
     case 2
     thus ?case 
-      by (simp add: Seq.hyps(2,6))
+      by (simp only: wp.simps add: Seq.hyps(2,6))
   next
     case 3
     show ?case 
-      apply (simp)
-      by (metis "3" Seq.hyps(3) Seq.hyps(4) Seq.hyps(7) dual_order.trans)
+      apply simp
+      by (metis "3" Seq.hyps(3,4,7) dual_order.trans)
   next
     case 4
     thus ?case 
@@ -323,13 +296,13 @@ next
   {
     case 1
     thus ?case 
-      apply (simp only: wp.simps)
-      by (metis Int_mono Un_mono Left_Choice(1,3,5))
+      apply simp
+      using "1" Left_Choice(1,3,5) by blast
   next
     case 2
     thus ?case 
       apply (simp only: wp.simps)
-      by (metis Int_mono Un_mono Left_Choice(2,4,6))
+      by (metis "2" Left_Choice(2,4,6) Int_mono Un_mono)
   next
     case 3
     thus ?case 
@@ -380,12 +353,12 @@ next
     case 3
     thus ?case
       apply (simp only: wp_err.simps)
-      using One.hyps(3) Un_mono by blast+
+      using One.hyps(3) Un_mono by blast
   next
     case 4
     thus ?case
       apply (simp only: wp_err.simps)
-      using One.hyps(4) Un_mono by blast+
+      using One.hyps(4) Un_mono by blast
   }
 next
   case (CSome s)
@@ -421,12 +394,9 @@ next
     case 4
     thus ?case 
       apply (simp only: wp_err.simps)
-      apply (rule Un_mono,blast)
-      apply (rule Int_mono)+
+      apply (rule Un_mono)+
          apply (simp add: CSome.hyps(4) subset_trans)
-        apply (simp add: CSome.hyps(4) subset_trans)    
-       apply (metis CSome.hyps(2,4) Un_mono)
-      by (metis CSome.hyps(2,4) Un_mono)
+      by (metis CSome.hyps(2,4) Int_mono Un_mono)
   }
 
 next
@@ -434,26 +404,23 @@ next
   {
     case 1
     thus ?case 
-      apply simp
-      apply (rule conjI, blast)
-      apply (rule conjI)
-       apply (rule le_supI1)
-       by (rule le_supI2, metis "1" All.hyps(1,2) dual_order.trans)+ (* takes a few seconds *)
+      apply (simp only: wp.simps)
+      apply (rule Un_mono)+
+        apply blast
+      by (metis (full_types) All.hyps(1,2) Un_absorb1 Un_subset_iff)+
   next
     case 2
     thus ?case 
-      apply simp
-      apply (rule conjI, blast)
-      apply (rule conjI)
-       apply (rule le_supI1)
-        apply(fastforce intro!: le_supI2 simp: dest: All.hyps(2))+
-      done
+      apply (simp only: wp.simps)
+      apply (rule Un_mono)+
+        apply blast
+      by (simp add: All.hyps(2))+
   next
     case 3
     thus ?case 
       apply simp
       apply (rule le_supI2)
-      by (metis "3" All.hyps(3,4) Int_mono order_trans order_refl) (* takes soem time *)
+      by (metis "3" All.hyps(3,4) Int_mono order_trans order_refl) (* takes some time *)
   next
     case 4
     thus ?case
@@ -470,14 +437,16 @@ next
       apply (rule Rep_pt_mono)
       apply (rule ap_fstI)
       apply (rule mu_wp_mono[rule_format])
-        apply (metis Abs_pt_inverse less_eq_pt monoI Mu.hyps(1,2) dual_order.refl monoI Mu(2) mem_Collect_eq Rep_pt[simplified])
-       apply (metis mem_Collect_eq order_eq_refl Abs_pt_inverse monoI Mu.hyps(3,4) Abs_pt_inverse monoI Mu.hyps(3,4) mem_Collect_eq order_eq_refl  less_eq_pt)
-      by (simp add: "1")
+        apply (metis Abs_pt_inverse less_eq_pt monoI Mu.hyps(1,2) dual_order.refl monoI Mu(2)
+                     mem_Collect_eq Rep_pt[simplified])
+       apply (metis mem_Collect_eq order_eq_refl Abs_pt_inverse monoI Mu.hyps(3,4) Abs_pt_inverse 
+                    monoI Mu.hyps(3,4) mem_Collect_eq order_eq_refl  less_eq_pt)
+      by (fastforce simp: "1")
   next
     case 2
     thus ?case
       apply simp
-      by (fastforce intro!:  Rep_pt[simplified mono_def, simplified, rule_format])
+      by (fastforce intro!: Rep_pt[simplified mono_def, simplified, rule_format])
   next
     case 3
     thus ?case 
@@ -485,14 +454,16 @@ next
       apply (rule Rep_pt_mono)
       apply (rule ap_sndI)
       apply (rule mu_wp_mono[rule_format])
-        apply (metis Abs_pt_inverse less_eq_pt monoI Mu.hyps(1,2) dual_order.refl monoI Mu(2) mem_Collect_eq Rep_pt[simplified])
-       apply (metis mem_Collect_eq order_eq_refl Abs_pt_inverse monoI Mu.hyps(3,4) Abs_pt_inverse monoI Mu.hyps(3,4) mem_Collect_eq order_eq_refl  less_eq_pt)
-      by (simp add: "3")
+        apply (metis Abs_pt_inverse less_eq_pt monoI Mu.hyps(1,2) dual_order.refl monoI Mu(2) 
+                     mem_Collect_eq Rep_pt[simplified])
+       apply (metis mem_Collect_eq order_eq_refl Abs_pt_inverse monoI Mu.hyps(3,4) Abs_pt_inverse 
+                    monoI Mu.hyps(3,4) mem_Collect_eq order_eq_refl  less_eq_pt)
+      by (fastforce simp: "3")
   next
     case 4
     thus ?case 
       apply simp
-      by (fastforce intro!:  Rep_pt[simplified mono_def, simplified, rule_format])
+      by (fastforce intro!: Rep_pt[simplified mono_def, simplified, rule_format])
   }
 qed
 
@@ -500,21 +471,21 @@ named_theorems mono_intros
 
 lemma mono_prod [mono_intros]: 
   "\<lbrakk>mono f ; mono g\<rbrakk> \<Longrightarrow> mono (\<lambda>x. (f x, g x))"
-  by (simp add: monoI monotoneD)
+  by (fastforce simp: monoI monotoneD)
 
 lemma mono_const [mono_intros]:
   "mono (\<lambda>x. P)" 
-  by (simp add: mono_def)
+  by (fastforce simp: mono_def)
 
 lemma mono_id [mono_intros]:
   "mono (\<lambda>x. x)" 
-  by (simp add: mono_def)
+  by (fastforce simp: mono_def)
 
 lemma mono_fun [mono_intros]: 
   assumes "\<And>x. mono (f x)" 
   shows   "mono (\<lambda>y. \<lambda>x. f x y)"
   using assms unfolding mono_def 
-  by (simp add: le_funI)
+  by (fastforce simp: assms mono_def le_funI)
 
 lemma mono_union [mono_intros]: 
   "\<lbrakk>mono f ; mono g\<rbrakk> \<Longrightarrow> mono (\<lambda>x. f x \<union> g x)" 
@@ -534,7 +505,7 @@ lemma mono_Abs_pt [mono_intros]:
   assumes "\<And>y. mono (\<lambda>x. f x y)" 
   and     "\<And>x. mono (\<lambda>y. f x y)"
   shows   "mono (\<lambda>y. Abs_pt (\<lambda>x. f x y))"
-  by (simp add: assms Abs_pt_inverse less_eq_pt monoD monoI)
+  by (fastforce simp: assms Abs_pt_inverse less_eq_pt monoD monoI)
 
 lemma mono_Rep_pt [mono_intros]:
   "mono (Rep_pt pt)"
@@ -542,103 +513,83 @@ lemma mono_Rep_pt [mono_intros]:
 
 lemma mono_Rep_pt_app_const [mono_intros]:
   "mono f \<Longrightarrow> mono (\<lambda>x. Rep_pt (f x) P)" 
-  unfolding mono_def
-  by (simp add: less_eq_pt)
+  by (fastforce simp: mono_def less_eq_pt)
 
 lemma mono_fst [mono_intros]:
   "mono f \<Longrightarrow> mono (\<lambda>x. fst (f x))" 
-  unfolding mono_def
-  by (simp add: fst_mono)
+  by (fastforce simp: mono_def fst_mono)
 
 lemma mono_snd [mono_intros]:
   "mono f \<Longrightarrow> mono (\<lambda>x. snd (f x))" 
-  unfolding mono_def
-  by (simp add: snd_mono)
+  by (fastforce simp: mono_def snd_mono)
 
 lemma mono_fst_app_const [mono_intros]:
   "mono f \<Longrightarrow> mono (\<lambda>x. fst (f x) c)" 
   unfolding mono_def
-  by (metis le_fun_def fst_mono)
+  using le_fun_def fst_mono by fast
 
 lemma mono_snd_app_const [mono_intros]:
   "mono f \<Longrightarrow> mono (\<lambda>x. snd (f x) c)" 
   unfolding mono_def
-  by (metis le_fun_def snd_mono)
+  using le_fun_def snd_mono by fast
 
 lemma mono_env_update [mono_intros]:
   "mono (\<lambda>y. (env((v, Tot):= fst y, (v, Par):= snd y)))"
-  unfolding mono_def le_fun_def
-  by fastforce
+  by (fastforce simp: mono_def le_fun_def)
 
 lemma mono_env_update_app_const [mono_intros]:
   "mono (\<lambda>y. (env((v, Tot):= fst y, (v, Par):= snd y)) c)"
-  unfolding mono_def
-  by force
+  by (fastforce simp: mono_def)
 
 lemma mono_env_update_app_const2 [mono_intros]:
   "mono (\<lambda>y. (env((v, Tot):= fst y, (v, Par):= snd y)) c1 c2)"
-  unfolding mono_def
-  by (simp add: le_fun_def)
+  by (fastforce simp: mono_def le_fun_def)
 
 lemma mono_wp_intro [mono_intros]:
   "\<lbrakk>mono f ; mono g\<rbrakk> \<Longrightarrow> mono (\<lambda>x. wp s loc (f x) (g x))" 
   unfolding mono_def
-  apply (intro allI impI)
-  by (metis le_funE order.trans  wp_wp_err_mono(1,2))
+  by (metis le_funE order.trans wp_wp_err_mono(1,2))
 
 lemma mono_wp_err_intro [mono_intros]:
   "\<lbrakk>mono f ; mono g\<rbrakk> \<Longrightarrow> mono (\<lambda>x. wp_err s loc (f x) (g x))" 
   unfolding mono_def
-  apply (intro allI impI)
   by (metis le_funE order.trans  wp_wp_err_mono(3,4))
 
 
 subsection \<open>The weakest preconditions for some strategies\<close>
 theorem wp_try[simp]: 
   "wp (try s) loc P env = wp s loc P env \<union> (wp_err s loc P env \<inter> (P \<inter> (defined loc)))"
-  using Try_def by simp
+  by (fastforce simp: Try_def)
 
 theorem wp_err_try[simp]: 
   "wp_err (try s) loc P env = wp s loc P env \<union> (wp_err s loc P env \<inter> (P \<inter> (defined loc)))"
-  using Try_def by simp
+  by (fastforce simp: Try_def)
 
 theorem wp_repeat[simp]: 
   "wp (repeat s) loc P env = wp (mu 0. try (s ;; \<lparr>0\<rparr>)) loc P env"
-  using Repeat_def by simp
+  by (fastforce simp: Repeat_def)
 
 theorem wp_err_repeat[simp]: 
   "wp_err (repeat s) loc P env = wp_err (mu 0. try (s ;; \<lparr>0\<rparr>)) loc P env"
-  using Repeat_def by simp
+  by (fastforce simp: Repeat_def)
 
 theorem wp_topDown: 
   "wp (topDown s) loc P env = wp (mu 0. (s <+ one \<lparr>0\<rparr>)) loc P env"
-  using TopDown_def by simp
+  by (fastforce simp: TopDown_def)
 
 theorem wp_err_topDown: 
  "wp_err (topDown s) loc P env = wp_err (mu 0. (s <+ one \<lparr>0\<rparr>)) loc P env"
-  using TopDown_def by simp
+  by (fastforce simp: TopDown_def)
 
 text \<open>
   The weakest must succeed precondition and weakest may fail precondition for repeat are the same
 \<close>
 
-(* We need to use the monotonicity proofs of wp/wp_err *)
 theorem eq_wp_repeat_wp_err_repeat: 
   "\<forall>loc P. wp (repeat s) loc P env = wp_err (repeat s) loc P env"
   apply (simp add: Repeat_def)
-  apply (rule fixp_induct)
-     apply (rule admissible_all)
-     apply (rule admissible_all)
-     apply (rule ccpo.admissibleI)
-     apply (simp add: fst_Sup snd_Sup Sup_pt)
-     apply (subst Abs_pt_inverse, simp)
-      apply (intro mono_intros)
-     apply (subst Abs_pt_inverse, simp)
-      apply (intro mono_intros)
-     apply force
-    apply (intro mono_intros)
-   apply (fastforce simp:fst_Sup snd_Sup Sup_pt)
-  by (fastforce simp: Rep_pt_inject)
+  apply(rule fixp_induct)
+  unfolding ccpo.admissible_def
+    by (fastforce intro!: mono_intros simp: fst_Sup snd_Sup Sup_pt)+
 
 end
-
