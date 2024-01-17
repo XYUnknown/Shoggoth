@@ -66,10 +66,7 @@ next
        apply (rule someI_ex)
       by (force simp: someI_ex)+
     thus ?case
-      apply clarsimp
-      apply (frule iterates.Sup [where f = "(\<lambda>(x, y). (f x, g y))"])
-       apply force
-      by (metis (mono_tags, lifting) fst_Sup imageI)
+      by (metis (no_types, lifting) iterates.Sup fst_Sup image_iff subset_iff)
   qed
 qed
 
@@ -105,9 +102,8 @@ next
        apply (rule someI_ex, fastforce)
       by force
     thus ?case
-      using Sup.hyps apply clarsimp
-      apply (frule iterates.Sup [where f = "(\<lambda>(x, y). (f x, g y))"], force)
-      by (metis (no_types, lifting) image_iff snd_Sup)
+      using Sup.hyps
+      by (metis (no_types, lifting) iterates.Sup image_iff snd_Sup subset_iff)
   qed
 qed
 
@@ -317,10 +313,10 @@ theorem some_s_mono [simp]:
 theorem all_s_mono [simp]:
   "a \<le> b \<Longrightarrow> all_s a \<le> all_s b"
   unfolding le_fun_def all_s_def porcupine_eglimilner porcupine_less_eq_def
-  apply(subst Abs_powerdomain_inverse)
-   using  Rep_powerdomain apply clarsimp 
+  apply (subst Abs_powerdomain_inverse)
+  using  Rep_powerdomain apply clarsimp 
     apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
-  apply(subst Abs_powerdomain_inverse)
+  apply (subst Abs_powerdomain_inverse)
    using  Rep_powerdomain apply clarsimp 
     apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)
   apply(subst Abs_powerdomain_inverse)
@@ -329,7 +325,8 @@ theorem all_s_mono [simp]:
    apply clarsimp
   apply (rule conjI)
    apply fastforce
-  apply clarsimp
+   apply clarsimp
+
    apply (rule powerdomain.Abs_powerdomain_inject[THEN iffD2], clarsimp)
    using  Rep_powerdomain apply clarsimp 
     apply (metis ex_in_conv exp.exhaust exp_err_div.exhaust)

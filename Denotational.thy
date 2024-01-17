@@ -1,6 +1,6 @@
 (*  Title:         Denotational.thy
     Authors:       Xueying Qin, U Edinburgh; Liam O'Connor, U Edinburgh; Peter Hoefner, ANU
-    Contributions: Ohad Kammar, U Edinburgh; Rob van Glabeek, U Edinburgh; Michel Steuwer, U Edinburgh
+    Contributions: Ohad Kammar, U Edinburgh; Rob van Glabbeek, U Edinburgh; Michel Steuwer, U Edinburgh
     Maintainer:    Xueying Qin <xueying.qin@ed.ac.uk>
 *)
 
