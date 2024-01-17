@@ -836,7 +836,8 @@ next
       apply (simp add: map_strategy_subst[simplified fun_upd_def])
      apply (simp add: fun_upd_def)
     apply (rename_tac x e)
-    apply (rule_tac y = "exec t (semantics_subst (\<theta>(x1 := map_strategy \<theta> (mu x1. t)))  (\<lambda>x. undefined)) e" in order_trans)
+    apply (rule order_trans)
+    (*apply (rule_tac y = "exec t (semantics_subst (\<theta>(x1 := map_strategy \<theta> (mu x1. t)))  (\<lambda>x. undefined)) e" in order_trans)*)
      apply (rule_tac f = "exec t (\<xi>(x1 := x))" and g = "exec t (semantics_subst (\<theta>(x1 := map_strategy \<theta> (mu x1. t))) (\<lambda>x. undefined))" in le_funD)
      apply (subgoal_tac "exec t (\<xi>(x1 := x)) = exec t (\<lambda>y. if y \<in> fv t then (\<xi>(x1 := x)) y else (\<lambda>x. SetToPd {Div}))")
       apply simp
