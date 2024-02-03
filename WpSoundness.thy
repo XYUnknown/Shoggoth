@@ -455,7 +455,7 @@ lemma PdToSet_one:
       \<union> {d | l e1 e2 d. e = Node l e1 e2 \<and> d = Div \<and> Div \<in> PdToSet (s e1)}
       \<union> {E (Node l e1 x) | l x e1 e2. e = Node l e1 e2 \<and> E x \<in> PdToSet (s e2)}
       \<union> {d | l e1 e2 d. e = Node l e1 e2 \<and> d = Div \<and> Div \<in> PdToSet (s e2)}
-                   \<union> {err | e1 e2 l err. err = Err \<and> (e = Leaf l \<or> (e = Node l e1 e2 \<and> Err \<in> PdToSet (s e1) \<inter> PdToSet (s e2)))}"
+      \<union> {err | e1 e2 l err. err = Err \<and> (e = Leaf l \<or> (e = Node l e1 e2 \<and> Err \<in> PdToSet (s e1) \<inter> PdToSet (s e2)))}"
   unfolding one_s_def
   apply (subst Abs_powerdomain_inverse; simp)
   apply (cases e; simp)
@@ -463,14 +463,14 @@ lemma PdToSet_one:
 
 lemma lookup_exec_update_one:
   assumes "e \<in> defined loc" 
-  shows  "lookup_exec_update (one s) loc e senv 
-                                  = {E x | x. e \<in> defined (loc \<triangleright> Left) \<and> E x \<in> lookup_exec_update s (loc \<triangleright> Left) e senv}
-                                  \<union> {d. d = Div \<and> e \<in> defined (loc \<triangleright> Left) \<and> Div \<in> lookup_exec_update s (loc \<triangleright> Left) e senv}
-                                  \<union> {E y | y. e \<in> defined (loc \<triangleright> Right) \<and>  E y \<in> lookup_exec_update s (loc \<triangleright> Right) e senv}
-                                  \<union> {d. d = Div \<and> e \<in> defined (loc \<triangleright> Right) \<and> Div \<in> lookup_exec_update s (loc \<triangleright> Right) e senv}
-                                  \<union> {err. err = Err \<and> (e \<in> defined (loc \<triangleright> Left) 
-                                                  \<longrightarrow>  e \<in> defined (loc \<triangleright> Right) 
-                                                  \<longrightarrow> Err \<in> lookup_exec_update s (loc \<triangleright> Left) e senv \<inter> lookup_exec_update s (loc \<triangleright> Right) e senv)}"
+  shows  "lookup_exec_update (one s) loc e senv = 
+              {E x | x. e \<in> defined (loc \<triangleright> Left) \<and> E x \<in> lookup_exec_update s (loc \<triangleright> Left) e senv}
+            \<union> {d. d = Div \<and> e \<in> defined (loc \<triangleright> Left) \<and> Div \<in> lookup_exec_update s (loc \<triangleright> Left) e senv}
+            \<union> {E y | y. e \<in> defined (loc \<triangleright> Right) \<and>  E y \<in> lookup_exec_update s (loc \<triangleright> Right) e senv}
+            \<union> {d. d = Div \<and> e \<in> defined (loc \<triangleright> Right) \<and> Div \<in> lookup_exec_update s (loc \<triangleright> Right) e senv}
+            \<union> {err. err = Err \<and> (e \<in> defined (loc \<triangleright> Left) 
+                    \<longrightarrow>  e \<in> defined (loc \<triangleright> Right) 
+                    \<longrightarrow> Err \<in> lookup_exec_update s (loc \<triangleright> Left) e senv \<inter> lookup_exec_update s (loc \<triangleright> Right) e senv)}"
   using assms 
 proof (induct loc arbitrary: e)
   case empty
@@ -546,24 +546,26 @@ qed
 
 subsection \<open>All Lemmas\<close>
 lemma PdToSet_all:
-  "PdToSet ((all_s s) e) = {E (Node l x1 x2) | l x1 x2 e1 e2. e = Node l e1 e2 \<and> E x1 \<in> PdToSet (s e1) \<and> E x2 \<in> PdToSet (s e2)}
-                   \<union> {E (Leaf l) | l. e = Leaf l }
-                   \<union> {d | l e1 e2 d. (e = Node l e1 e2 \<and> d = Div \<and> Div \<in> PdToSet (s e1) \<union> PdToSet (s e2)) }
-                   \<union> {err | e1 e2 l err. err = Err \<and> (e = Node l e1 e2 \<and> Err \<in> PdToSet (s e1) \<union> PdToSet (s e2))}"
+  "PdToSet ((all_s s) e) = 
+       {E (Node l x1 x2) | l x1 x2 e1 e2. e = Node l e1 e2 \<and> E x1 \<in> PdToSet (s e1) \<and> E x2 \<in> PdToSet (s e2)}
+     \<union> {E (Leaf l) | l. e = Leaf l }
+     \<union> {d | l e1 e2 d. (e = Node l e1 e2 \<and> d = Div \<and> Div \<in> PdToSet (s e1) \<union> PdToSet (s e2)) }
+     \<union> {err | e1 e2 l err. err = Err \<and> (e = Node l e1 e2 \<and> Err \<in> PdToSet (s e1) \<union> PdToSet (s e2))}"
   unfolding all_s_def
   apply (subst Abs_powerdomain_inverse, simp)
   by (metis Rep_powerdomain[simplified] equals0I exp_err_div.exhaust exp.exhaust)+
 
 lemma lookup_exec_update_all:
   assumes "e \<in> defined loc" 
-  shows  "lookup_exec_update (all s) loc e senv 
-                                    = {E y | x y. e \<in> defined (loc \<triangleright> Left) \<and> x \<in> defined (loc \<triangleright> Right) \<and> E x \<in> lookup_exec_update s (loc \<triangleright> Left) e senv
-                                            \<and> E y \<in> lookup_exec_update s (loc \<triangleright> Right) x senv}
-                                      \<union> {E e | l. lookup loc e = Leaf l}
-                                      \<union> {d. d = Div \<and> e \<in> defined (loc \<triangleright> Left) \<and> Div \<in> lookup_exec_update s (loc \<triangleright> Left) e senv}
-                                      \<union> {d. d = Div \<and> e \<in> defined (loc \<triangleright> Right) \<and> Div \<in> lookup_exec_update s (loc \<triangleright> Right) e senv}
-                                      \<union> {err. err = Err \<and> e \<in> defined (loc \<triangleright> Left) \<and> Err \<in> lookup_exec_update s (loc \<triangleright> Left) e senv}
-                                      \<union> {err. err = Err \<and> e \<in> defined (loc \<triangleright> Right) \<and> Err \<in> lookup_exec_update s (loc \<triangleright> Right) e senv}"
+  shows  "lookup_exec_update (all s) loc e senv  = 
+              {E y | x y. e \<in> defined (loc \<triangleright> Left) \<and> x \<in> defined (loc \<triangleright> Right) 
+                          \<and> E x \<in> lookup_exec_update s (loc \<triangleright> Left) e senv
+                          \<and> E y \<in> lookup_exec_update s (loc \<triangleright> Right) x senv}
+            \<union> {E e | l. lookup loc e = Leaf l}
+            \<union> {d. d = Div \<and> e \<in> defined (loc \<triangleright> Left) \<and> Div \<in> lookup_exec_update s (loc \<triangleright> Left) e senv}
+            \<union> {d. d = Div \<and> e \<in> defined (loc \<triangleright> Right) \<and> Div \<in> lookup_exec_update s (loc \<triangleright> Right) e senv}
+            \<union> {err. err = Err \<and> e \<in> defined (loc \<triangleright> Left) \<and> Err \<in> lookup_exec_update s (loc \<triangleright> Left) e senv}
+            \<union> {err. err = Err \<and> e \<in> defined (loc \<triangleright> Right) \<and> Err \<in> lookup_exec_update s (loc \<triangleright> Right) e senv}"
   using assms 
 proof (induct loc arbitrary: e)
   case empty
@@ -627,7 +629,8 @@ lemma all_wp_sound_set_aux:
                                   image_iff mem_Collect_eq subset_iff)
 
 (* wp_sound_set rule for all (simplified wp rule) *)
-lemma all_wp_sound_set: "wp_sound_set (all s) loc P senv = (P \<inter> {e | e x. e \<in> defined loc \<and> lookup loc e = Leaf x})
+lemma all_wp_sound_set: 
+   "wp_sound_set (all s) loc P senv = (P \<inter> {e | e x. e \<in> defined loc \<and> lookup loc e = Leaf x})
                           \<union> wp_sound_set s (loc \<triangleright> Left) (wp_sound_set s (loc \<triangleright> Right) P senv) senv
                           \<union> wp_sound_set s (loc \<triangleright> Right) (wp_sound_set s (loc \<triangleright> Left) P senv) senv"
 ( is "?lhs = ?rhs1 \<union> ?rhs2 \<union> ?rhs3")
@@ -670,11 +673,13 @@ proof(rule subset_antisym)
 qed
 
 (* wp_err_sound_set rule for all (simplified wp rule) *)
-lemma all_wp_err_sound_set: "wp_err_sound_set (all s) loc P senv 
-                      = (P \<inter> {e | e x. e \<in> defined loc \<and> lookup loc e = Leaf x})
-                        \<union> (wp_err_sound_set s (loc \<triangleright> Left) (wp_err_sound_set s (loc \<triangleright> Right) P senv) senv
-                        \<inter> wp_err_sound_set s (loc \<triangleright> Right) (wp_err_sound_set s (loc \<triangleright> Left) P senv) senv)"
+lemma all_wp_err_sound_set: 
+  "wp_err_sound_set (all s) loc P senv = 
+         (P \<inter> {e | e x. e \<in> defined loc \<and> lookup loc e = Leaf x})
+       \<union> (wp_err_sound_set s (loc \<triangleright> Left) (wp_err_sound_set s (loc \<triangleright> Right) P senv) senv
+           \<inter> wp_err_sound_set s (loc \<triangleright> Right) (wp_err_sound_set s (loc \<triangleright> Left) P senv) senv)"
 (is "?lhs = ?rhs1 \<union> ?rhs2")
+
 proof(rule antisym)
   show "?lhs \<subseteq> ?rhs1\<union>?rhs2"
   proof 
@@ -685,8 +690,103 @@ proof(rule antisym)
         unfolding wp_err_sound_set_def
         by(fastforce simp: lookup_exec_update_all append_undefined_lookup_id) 
       show "\<not>x \<notin> defined (loc\<triangleright>pos.Left) \<Longrightarrow>  x \<in> ?lhs \<Longrightarrow> x \<in> ?rhs1 \<union> ?rhs2"
+      
+  apply (simp add: wp_err_sound_set_def)
+   apply (rule disjI2)
+   apply (erule conjE)
+   apply (simp add: lookup_exec_update_all)
+   apply (clarsimp)
+   apply (intro conjI)
+     apply (rule subsetI)
+     apply (rename_tac xa)
+          apply (frule defined_left_right)
+(* 3 *)
+          apply (case_tac xa)
+(* 5 *)
+            apply simp
+(* 4 *)
+      apply simp
+      apply (rule imageI)
+      apply clarsimp
+      apply (rename_tac x1)
+      apply (frule lookup_exec_update_defined[rule_format], simp)
+      apply (rule conjI)
+       apply (rule defined_left_right, simp)
+           apply (rule subsetI)
+(* 4 *)
+      apply (rename_tac xb)
+           apply (case_tac xb)
+(* 6 *)
+             apply simp
+(* 5 *)
+            apply (drule_tac c = xb in subsetD)
+(* 6 *)
+             apply simp
+        using div_right_after_left defined_left_right
+        apply metis
+(* 5 *)
+        apply (fastforce dest: div_right_after_left)
+        apply (fastforce dest: div_right_after_left)
+(* 3 *)
+     apply simp
+     apply blast
+    apply (rule defined_left_right,simp)
+   apply (rule subsetI)
+   apply (rename_tac xa)
+        apply (case_tac xa)
+(* 3 *)
+          apply simp
+(* 2 *)
+    apply (rename_tac x1)
+    apply simp
+    apply (rule imageI)
+    apply simp
+    apply (rule)
+     apply (rule defined_right_left, rule lookup_exec_update_defined[rule_format], rule defined_left_right, simp, simp)
+         apply (rule subsetI)
+         apply (rename_tac xb)
+(* 2*)
+         apply (case_tac xb)
+(* 4 *)
+      apply simp
+(* 3 *)
+        using  defined_left_right defined_right_after_left mem_Collect_eq subset_iff lookup_exec_update_left_right_swap[THEN iffD2]
+        apply metis
+        apply (fastforce intro: exp_err_div_intros split: exp_err_div.splits)
+          apply (smt (verit, ccfv_threshold))
+          apply (frule lookup_exec_update_left_right_swap[THEN iffD2])
+(* 5 *)
+            apply(fastforce dest: defined_left_right)
+(* 4 *)
+            apply(fastforce dest: defined_left_right)
+(* 3*)
+        using  defined_left_right defined_right_after_left mem_Collect_eq subset_iff
+          apply (smt (verit, ccfv_threshold))
+(* 2*) 
+         apply (fastforce dest: defined_left_right div_left_after_right)
+(* 1 *)
+        apply (fastforce dest: defined_left_right)
+        done
+    qed
+  qed
+  show "?rhs1 \<union> ?rhs2 \<subseteq> ?lhs"
+    unfolding  wp_err_sound_set_def
+    by (fastforce simp: lookup_id_append_undefined lookup_exec_update_all dest: defined_append)
+  qed
+ 
+
+
+  proof 
+    fix x
+    show "x \<in> ?lhs \<Longrightarrow> x \<in> ?rhs1 \<union> ?rhs2"
+    proof (cases "x \<notin> defined (loc\<triangleright>pos.Left)")
+      show "x \<notin> defined (loc\<triangleright>pos.Left) \<Longrightarrow>  x \<in> ?lhs \<Longrightarrow> x \<in> ?rhs1 \<union> ?rhs2"
+        unfolding wp_err_sound_set_def
+        by(fastforce simp: lookup_exec_update_all append_undefined_lookup_id) 
+      show "\<not>x \<notin> defined (loc\<triangleright>pos.Left) \<Longrightarrow>  x \<in> ?lhs \<Longrightarrow> x \<in> ?rhs1 \<union> ?rhs2"
       proof -
-        have e1: "\<And>xa. x \<in> defined (loc\<triangleright>pos.Left) \<Longrightarrow>
+        fix xa
+           have "x \<in> defined (loc\<triangleright>pos.Left) \<Longrightarrow>
           x \<in> defined loc \<Longrightarrow>
           {l. \<exists>xa y. l = E y \<and> xa \<in> defined (loc\<triangleright>pos.Right) \<and> E xa \<in> lookup_exec_update s (loc\<triangleright>pos.Left) x senv \<and> E y \<in> lookup_exec_update s (loc\<triangleright>pos.Right) xa senv} \<subseteq> insert Err (E ` P) \<Longrightarrow>
           {l. l = E x \<and> (\<exists>l. lookup loc x = Leaf l)} \<subseteq> insert Err (E ` P) \<Longrightarrow>
@@ -695,31 +795,33 @@ proof(rule antisym)
           {err. err = Err \<and> Err \<in> lookup_exec_update s (loc\<triangleright>pos.Left) x senv} \<subseteq> insert Err (E ` P) \<Longrightarrow>
           {err. err = Err \<and> x \<in> defined (loc\<triangleright>pos.Right) \<and> Err \<in> lookup_exec_update s (loc\<triangleright>pos.Right) x senv} \<subseteq> insert Err (E ` P) \<Longrightarrow>
           xa \<in> lookup_exec_update s (loc\<triangleright>pos.Left) x senv \<Longrightarrow> xa \<in> insert Err (E ` {l \<in> defined (loc\<triangleright>pos.Right). lookup_exec_update s (loc\<triangleright>pos.Right) l senv \<subseteq> insert Err (E ` P)})"
-
-     apply (frule defined_left_right)
-    apply (rename_tac xa)
-    apply (case_tac xa)
+    apply (cases xa)
        apply fastforce
-      apply simp
-      apply (rule imageI)
       apply clarsimp
-     apply (frule lookup_exec_update_defined[rule_format])
-  apply simp
-      apply (rule conjI)
-       apply (fastforce simp: defined_left_right)
-           apply (rule subsetI)
-(* 2 *)
-           apply (rename_tac xb)
-           apply (case_tac xb)
-(* 4 *)
-             apply fastforce
-(* 3 *)
-       apply (drule subsetD)
- apply (force dest: defined_left_right)
- apply (force dest: defined_left_right)
-(* 2 *)
-       apply (force dest: defined_left_right div_right_after_left)+
-  done
+             apply (smt (z3) imageI defined_left_right div_right_after_left err_right_after_left lookup_exec_update_defined[rule_format] exp_err_div.exhaust 
+mem_Collect_eq subset_iff
+            )
+            apply(fastforce)
+            done
+          hence
+ e1: "\<And>xa. x \<in> defined (loc\<triangleright>pos.Left) \<Longrightarrow>
+          x \<in> defined loc \<Longrightarrow>
+          {l. \<exists>xa y. l = E y \<and> xa \<in> defined (loc\<triangleright>pos.Right) \<and> E xa \<in> lookup_exec_update s (loc\<triangleright>pos.Left) x senv \<and> E y \<in> lookup_exec_update s (loc\<triangleright>pos.Right) xa senv} \<subseteq> insert Err (E ` P) \<Longrightarrow>
+          {l. l = E x \<and> (\<exists>l. lookup loc x = Leaf l)} \<subseteq> insert Err (E ` P) \<Longrightarrow>
+          {d. d = Div \<and> Div \<in> lookup_exec_update s (loc\<triangleright>pos.Left) x senv} \<subseteq> insert Err (E ` P) \<Longrightarrow>
+          {d. d = Div \<and> x \<in> defined (loc\<triangleright>pos.Right) \<and> Div \<in> lookup_exec_update s (loc\<triangleright>pos.Right) x senv} \<subseteq> insert Err (E ` P) \<Longrightarrow>
+          {err. err = Err \<and> Err \<in> lookup_exec_update s (loc\<triangleright>pos.Left) x senv} \<subseteq> insert Err (E ` P) \<Longrightarrow>
+          {err. err = Err \<and> x \<in> defined (loc\<triangleright>pos.Right) \<and> Err \<in> lookup_exec_update s (loc\<triangleright>pos.Right) x senv} \<subseteq> insert Err (E ` P) \<Longrightarrow>
+          xa \<in> lookup_exec_update s (loc\<triangleright>pos.Left) x senv \<Longrightarrow> xa \<in> insert Err (E ` {l \<in> defined (loc\<triangleright>pos.Right). lookup_exec_update s (loc\<triangleright>pos.Right) l senv \<subseteq> insert Err (E ` P)})"
+          
+          proof-
+          {
+            fix xa
+        }
+          thus  ?thesis
+            sledgehammer
+            apply fastforce
+
 
   have e3: "\<And>xa. x \<in> defined (loc\<triangleright>pos.Left) \<Longrightarrow>
           x \<in> defined loc \<Longrightarrow>
